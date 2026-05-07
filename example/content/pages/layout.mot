@@ -1,0 +1,25 @@
+<import Layout from "components/Layout">
+<import ProductCard from "components/ProductCard">
+
+<Layout title="Layout Slot Demo" subtitle="Children are rendered through the component default slot">
+    <style>
+        .layout-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+    </style>
+    <p>This paragraph is defined in the page and rendered inside the layout component.</p>
+
+    <let products dynamic select name, price, description, category from products where in_stock eq 1 limit 2>
+        <div class="layout-grid">
+            <for product in products>
+                <ProductCard
+                    name=product.name
+                    price=product.price
+                    description=product.description
+                    category=product.category />
+            </for>
+        </div>
+    </let>
+</Layout>

@@ -1,0 +1,47 @@
+# Build artifacts
+build/
+*.o
+*.a
+runtime-wasm/build/
+
+# macOS debug symbols
+*.dSYM/
+
+# Compiled binaries
+example/origin/server
+
+# WASM runtime binaries
+example/edge/src/mot-runtime.wasm
+example/edge/src/ygg-runtime.wasm
+
+# Wrangler temporary files
+.wrangler/
+
+# Generated files
+example/.tmp/
+example/edge/debug-maps/
+example/edge/src/*.generated.js
+*.bc
+*.vsix
+
+# Node.js
+node_modules/
+package-lock.json
+example/.logs/
+
+# Database files
+*.db
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/

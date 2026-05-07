@@ -1,0 +1,141 @@
+{
+  "page": "s",
+  "vmMode": "s",
+  "debugMode": "s",
+  "vmUsed": "s",
+  "originUrl": "s",
+  "bytecodeSize": 0,
+  "totalDurationMs": 0,
+  "dependencies": [
+    "s"
+  ],
+  "executionPaths": [
+    "s",
+    "s"
+  ],
+  "spans": [
+    {
+      "name": "s",
+      "status": "s",
+      "durationMs": 0,
+      "bytes": 0
+    }
+  ],
+  "dataFetches": [
+    {
+      "queryRef": 0,
+      "signature": 0,
+      "name": "s",
+      "status": "s",
+      "durationMs": 0,
+      "rowCount": 0,
+      "page": "s",
+      "fetchMode": "s",
+      "componentPath": "s",
+      "componentCallKind": "s",
+      "error": null
+    }
+  ],
+  "componentLoads": [
+    {
+      "path": "s",
+      "source": "s",
+      "artifactSource": "s",
+      "status": "s",
+      "durationMs": 0,
+      "sizeBytes": 0,
+      "error": null
+    }
+  ],
+  "componentRenders": [
+    {
+      "path": "s",
+      "phase": "s",
+      "status": "s",
+      "durationMs": 0,
+      "renderEngine": "s",
+      "callKind": "s",
+      "componentOpcode": null,
+      "loadSource": "s",
+      "artifactSource": "s",
+      "sizeBytes": 0,
+      "error": null
+    }
+  ],
+  "componentSourceMaps": {
+    "components/Header": {
+      "source": "s",
+      "sourceMap": {
+        "version": 0,
+        "file": "s",
+        "sources": [
+          "s"
+        ],
+        "names": [],
+        "mappings": "s"
+      }
+    }
+  },
+  "bytecodeDebug": {
+    "spans": [
+      {
+        "line": 0
+      }
+    ],
+    "queries": [
+      {
+        "queryRef": 0,
+        "line": 0
+      }
+    ],
+    "componentRefs": [
+      {
+        "path": "s"
+      }
+    ],
+    "functionComponents": [
+      {
+        "chunkKind": 0,
+        "chunkIndex": 0,
+        "name": "s",
+        "sourcePath": "s"
+      }
+    ],
+    "functionChunkSizes": [],
+    "mainChunkSize": 0,
+    "dataRequirements": [
+      {
+        "name": "s"
+      }
+    ],
+    "sourceMap": {
+      "version": 0,
+      "file": "s",
+      "sources": [
+        "s"
+      ],
+      "names": [],
+      "mappings": "s"
+    },
+    "error": null
+  },
+  "vmStepDebug": {
+    "mode": "s",
+    "enabled": true,
+    "truncated": false,
+    "totalSteps": 0,
+    "maxSteps": 0,
+    "steps": [
+      {
+        "opcode": 0,
+        "opcodeName": "s",
+        "line": 0,
+        "sourcePath": "s"
+      }
+    ],
+    "sources": {
+      "pages/index.mot": "s"
+    }
+  },
+  "error": null
+}

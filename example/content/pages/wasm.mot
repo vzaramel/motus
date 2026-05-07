@@ -1,0 +1,5 @@
+<import Layout from "components/Layout">
+
+<Layout title="WASM VM Smoke Test" subtitle="Simple page to validate wasm rendering path">
+    <p><output "edge wasm render ok"></p>
+</Layout>

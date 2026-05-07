@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Playground — Motus</title>
+    <meta name="description" content="Motus is a compiled XML-based template language for streaming HTML from the edge.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230a1520'/><circle cx='16' cy='16' r='4' fill='%2300ffb3'/></svg>">
+</head>
+<body>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #0a1520;
+        color: #e8f0ec;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    a { color: #4cc496; }
+    .layout-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 72px 20px 0 20px;
+    }
+</style><style>
+    .header {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 1000;
+        background: rgba(6,12,16,0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(0,255,179,0.08);
+        height: 64px;
+    }
+    .header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        font-size: 1.2rem;
+        color: #e8f0ec;
+        text-decoration: none;
+    }
+    .header-brand svg {
+        width: 28px;
+        height: 28px;
+        color: #4cc496;
+    }
+    .header nav {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .header nav a {
+        color: rgba(232,240,236,0.55);
+        text-decoration: none;
+        padding: 7px 14px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: color 0.2s, background 0.2s;
+    }
+    .header nav a:hover {
+        color: #e8f0ec;
+        background: rgba(255,255,255,0.06);
+    }
+    .header-cta {
+        border: 1px solid rgba(0,255,179,0.3) !important;
+        color: #00ffb3 !important;
+        background: rgba(0,255,179,0.04);
+    }
+    .header-cta:hover {
+        background: rgba(0,255,179,0.1) !important;
+        border-color: rgba(0,255,179,0.5) !important;
+    }
+</style><header class="header"><div class="header-content"><a href="/motus/" class="header-brand"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="2" x2="16" y2="30"/><path d="M16 6 C12 6 8 10 8 14 C8 18 12 18 16 14"/><path d="M16 6 C20 6 24 10 24 14 C24 18 20 18 16 14"/><path d="M16 14 C11 14 6 18 6 22 C6 26 11 26 16 22"/><path d="M16 14 C21 14 26 18 26 22 C26 26 21 26 16 22"/><path d="M12 30 C12 26 14 24 16 24 C18 24 20 26 20 30"/></svg>
+            Motus
+        </a><nav><a href="/motus/">Home</a><a href="/motus/docs">Docs</a><a href="/motus/playground" class="header-cta">Playground</a></nav></div></header><div class="layout-container"><main><style>
+        .layout-container {
+            max-width: min(99vw, 2200px);
+            padding: 80px 10px 10px 10px;
+        }
+
+        .playground-shell {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: clamp(620px, calc(100vh - 100px), 1200px);
+        }
+
+        .playground-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 32px;
+        }
+
+        .playground-run {
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(0,255,179,0.3);
+            background: rgba(0,255,179,0.06);
+            color: #00ffb3;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .playground-run:hover {
+            background: rgba(0,255,179,0.12);
+            border-color: rgba(0,255,179,0.5);
+        }
+        .playground-run:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        .playground-status {
+            font-size: 0.88em;
+            color: rgba(232,240,236,0.5);
+            min-height: 1em;
+        }
+
+        .playground-grid {
+            display: grid;
+            grid-template-columns: minmax(420px, 1fr) minmax(420px, 1fr);
+            gap: 8px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .playground-form {
+            margin: 0;
+            min-height: 0;
+            height: 100%;
+        }
+
+        .playground-editor {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            border: 1px solid rgba(0,255,179,0.12);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #0f1e2c;
+        }
+
+        .playground-source {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            border: 1px solid rgba(0,255,179,0.12);
+            border-radius: 8px;
+            padding: 8px;
+            resize: none;
+            display: none;
+            background: #0f1e2c;
+            color: #e8f0ec;
+        }
+
+        .playground-output {
+            border: 1px solid rgba(0,255,179,0.12);
+            border-radius: 8px;
+            background: #0f1e2c;
+            color: #e8f0ec;
+            padding: 8px;
+            min-height: 0;
+            overflow: auto;
+        }
+
+        @media (max-width: 980px) {
+            .playground-shell {
+                min-height: auto;
+            }
+            .playground-grid {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+            .playground-editor,
+            .playground-source,
+            .playground-output {
+                min-height: 46vh;
+                height: 46vh;
+            }
+        }
+    </style><section class="playground-shell"><div class="playground-toolbar"><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><div id="playground-status" class="playground-status"></div></div><section class="playground-grid"><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><div id="playground-output" class="playground-output"></div></section></section><script>
+        (function () {
+            var form = document.getElementById('playground-form');
+            var editorEl = document.getElementById('playground-editor');
+            var sourceEl = document.getElementById('playground-source');
+            var statusEl = document.getElementById('playground-status');
+            var outputEl = document.getElementById('playground-output');
+            var runButton = document.getElementById('playground-run');
+            var editor = null;
+            var ACE_CDN_URL = 'https://cdn.jsdelivr.net/npm/ace-builds@1.36.2/src-min-noconflict/ace.js';
+
+            if (!form || !editorEl || !sourceEl || !statusEl || !outputEl || !runButton) return;
+
+            var defaultSource = [
+                '<defcomp DemoCard | title, body |>',
+                '    <style>',
+                '        .demo-card {',
+                '            border: 1px solid #cbd5e1;',
+                '            border-radius: 10px;',
+                '            padding: 14px;',
+                '            background: #ffffff;',
+                '        }',
+                '        .demo-card h3 {',
+                '            margin: 0 0 8px 0;',
+                '            color: #0f172a;',
+                '        }',
+                '        .demo-card p {',
+                '            margin: 0;',
+                '            color: #334155;',
+                '            line-height: 1.5;',
+                '        }',
+                '    </style>',
+                '    <article class="demo-card">',
+                '        <h3><output title></h3>',
+                '        <p><output body></p>',
+                '    </article>',
+                '</defcomp>',
+                '',
+                '<DemoCard',
+                '    title="Playground Works"',
+                '    body="Compiled at origin and rendered at edge through wasm VM." />'
+            ].join('\n');
+
+            sourceEl.value = defaultSource;
+
+            function setupAceEditor() {
+                editor = window.ace.edit('playground-editor');
+                editor.session.setMode('ace/mode/html');
+                editor.setTheme('ace/theme/tomorrow_night');
+                editor.setOptions({
+                    fontSize: '13px',
+                    showPrintMargin: false,
+                    useWorker: false,
+                });
+                editor.setValue(defaultSource, -1);
+                editor.commands.addCommand({
+                    name: 'run-playground',
+                    bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
+                    exec: function () {
+                        runPlayground();
+                    },
+                });
+                editorEl.style.display = 'block';
+                sourceEl.style.display = 'none';
+            }
+
+            function useTextareaFallback() {
+                editorEl.style.display = 'none';
+                sourceEl.style.display = 'block';
+            }
+
+            function readSource() {
+                if (editor) return editor.getValue();
+                return sourceEl.value || '';
+            }
+
+            function loadAceEditorIfNeeded() {
+                if (window.ace && typeof window.ace.edit === 'function') {
+                    setupAceEditor();
+                    return Promise.resolve();
+                }
+                return new Promise(function (resolve) {
+                    var script = document.createElement('script');
+                    script.src = ACE_CDN_URL;
+                    script.async = true;
+                    script.onload = resolve;
+                    script.onerror = resolve;
+                    document.head.appendChild(script);
+                }).then(function () {
+                    if (window.ace && typeof window.ace.edit === 'function') {
+                        setupAceEditor();
+                    } else {
+                        useTextareaFallback();
+                    }
+                });
+            }
+
+            async function runPlayground() {
+                var source = readSource();
+                if (!source.trim()) {
+                    statusEl.textContent = 'Source is empty.';
+                    outputEl.innerHTML = '';
+                    return;
+                }
+
+                runButton.disabled = true;
+                statusEl.textContent = 'Compiling...';
+
+                try {
+                    var response = await fetch('/_mot/playground/render', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ source: source }),
+                    });
+                    var payload = await response.json().catch(function () { return {}; });
+                    if (!response.ok) {
+                        throw new Error(payload.error || ('Request failed with status ' + response.status));
+                    }
+                    outputEl.innerHTML = payload.html || '';
+                    statusEl.textContent = 'Done';
+                } catch (err) {
+                    statusEl.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+                    outputEl.innerHTML = '';
+                } finally {
+                    runButton.disabled = false;
+                }
+            }
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                runPlayground();
+            });
+
+            runButton.addEventListener('click', function () {
+                runPlayground();
+            });
+
+            sourceEl.addEventListener('keydown', function (event) {
+                var isEnter = event.key === 'Enter';
+                if (!isEnter) return;
+                if (!event.ctrlKey && !event.metaKey) return;
+                event.preventDefault();
+                runPlayground();
+            });
+
+            loadAceEditorIfNeeded().then(runPlayground);
+        })();
+    </script></main></div><style>
+    .footer {
+        margin-top: 0;
+        background: #060c10;
+        border-top: 1px solid rgba(0,255,179,0.08);
+        padding: 56px 24px 32px;
+        color: rgba(232,240,236,0.4);
+    }
+    .footer-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr;
+        gap: 48px;
+        align-items: start;
+    }
+    .footer-brand {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #e8f0ec;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .footer-brand-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #00ffb3;
+        box-shadow: 0 0 8px rgba(0,255,179,0.4);
+    }
+    .footer-desc {
+        font-size: 0.88rem;
+        line-height: 1.7;
+        max-width: 320px;
+        margin: 0;
+    }
+    .footer-col h5 {
+        color: rgba(232,240,236,0.6);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin: 0 0 14px 0;
+        font-weight: 600;
+    }
+    .footer-col a {
+        display: block;
+        font-size: 0.88rem;
+        color: rgba(232,240,236,0.4);
+        text-decoration: none;
+        margin-bottom: 10px;
+        transition: color 0.2s;
+    }
+    .footer-col a:hover { color: #4cc496; }
+    .footer-bottom {
+        max-width: 1200px;
+        margin: 36px auto 0;
+        padding-top: 24px;
+        border-top: 1px solid rgba(255,255,255,0.04);
+        font-size: 0.78rem;
+        color: rgba(232,240,236,0.2);
+        text-align: center;
+    }
+    .footer-bottom p { margin: 0; }
+    @media (max-width: 640px) {
+        .footer-inner { grid-template-columns: 1fr; gap: 32px; }
+    }
+</style><footer class="footer"><div class="footer-inner"><div><div class="footer-brand"><span class="footer-brand-dot"></span>
+                Motus
+            </div><p class="footer-desc">A compiled XML language for streaming HTML from the edge. Bytecode today, WASM everywhere tomorrow.</p></div><div class="footer-col"><h5>Pages</h5><a href="/motus/">Home</a><a href="/motus/docs">Docs</a></div><div class="footer-col"><h5>Tools</h5><a href="/motus/playground">Playground</a></div></div><div class="footer-bottom"><p>Powered by Motus &mdash; Streaming HTML from the Edge</p></div></footer>
+<!-- Motus Edge Runtime | vm: wasm | 30137 bytes | deps: none -->
+<script data-mot-dev="live-reload">
+(function() {
+  var es, timer;
+  function connect() {
+    es = new EventSource('/_mot/dev/events');
+    es.addEventListener('change', function() {
+      console.log('[mot-dev] Content changed, reloading...');
+      window.location.reload();
+    });
+    es.addEventListener('connected', function() {
+      console.log('[mot-dev] Live-reload connected');
+    });
+    es.onerror = function() {
+      es.close();
+      clearTimeout(timer);
+      timer = setTimeout(connect, 2000);
+    };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

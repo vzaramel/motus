@@ -1,0 +1,26 @@
+{
+  "normalizeU32": 4294967295,
+  "normalizeDataRequirement": {
+    "queryRef": 4294967294,
+    "signature": 4294967293,
+    "isSingle": true,
+    "name": "products"
+  },
+  "buildDataRpcPayload": {
+    "queryRef": 4294967295,
+    "signature": 123,
+    "params": {
+      "category": "audio",
+      "page": 2
+    },
+    "single": false
+  },
+  "buildDataRpcUrl": "http://localhost:8091/data/products%2Flist",
+  "normalizeComponentPath": "components/ui/Card",
+  "normalizeComponentRef": {
+    "name": "Card",
+    "path": "components/ui/Card"
+  },
+  "componentRouteName": "ui/Card",
+  "buildComponentRpcUrl": "http://localhost:8091/component/ui%2FCard"
+}

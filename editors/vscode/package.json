@@ -1,0 +1,69 @@
+{
+  "name": "motus",
+  "displayName": "Motus Language Support",
+  "description": "Language support for Motus - XML-based templating language",
+  "version": "0.1.0",
+  "publisher": "motus",
+  "main": "./extension.js",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "activationEvents": [
+    "onLanguage:motus",
+    "onLanguage:mot",
+    "workspaceContains:**/*.mot"
+  ],
+  "categories": [
+    "Programming Languages",
+    "Formatters",
+    "Snippets"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "motus.restartLSP",
+        "title": "Motus: Restart LSP Server",
+        "description": "Restart the Motus language server"
+      },
+      {
+        "command": "motus.showOutput",
+        "title": "Motus: Show Output",
+        "description": "Show the Motus output channel"
+      },
+      {
+        "command": "motus.compile",
+        "title": "Motus: Compile Current File",
+        "description": "Compile the current .mot file"
+      }
+    ],
+    "languages": [
+      {
+        "id": "motus",
+        "aliases": ["Motus", "mot"],
+        "extensions": [".mot"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "motus",
+        "scopeName": "source.mot",
+        "path": "./syntaxes/motus.json"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Motus Configuration",
+      "properties": {
+        "motus.serverPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Motus LSP server executable"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "postinstall": "echo 'Extension installed'"
+  }
+}

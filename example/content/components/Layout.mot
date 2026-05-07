@@ -1,0 +1,34 @@
+<import Header from "components/Header" dynamic>
+<import Footer from "components/Footer" dynamic>
+
+<defcomp Layout | title, subtitle |>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #0a1520;
+        color: #e8f0ec;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    a { color: #4cc496; }
+    .layout-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 72px 20px 0 20px;
+    }
+</style>
+
+<Header title=title subtitle=subtitle />
+
+<div class="layout-container">
+    <main>
+        <children>
+    </main>
+</div>
+
+<Footer />
+</defcomp>

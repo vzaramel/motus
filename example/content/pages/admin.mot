@@ -1,0 +1,165 @@
+<require-auth role="admin" />
+<import Layout from "components/Layout">
+
+<Layout title="Admin Dashboard" subtitle="Protected page rendered through shared layout">
+    <style>
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+        }
+        .logout-btn {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .logout-btn:hover { background: #1f2937; }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .card h2 { margin: 0 0 15px; color: #333; font-size: 1.2em; }
+        .card p { margin: 0; color: #666; line-height: 1.6; }
+        .stat { font-size: 2.5em; font-weight: bold; color: #667eea; }
+        .section-title {
+            font-size: 1.5em;
+            margin: 40px 0 20px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .data-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .data-table th, .data-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .data-table th { background: #f9f9f9; font-weight: 600; color: #333; }
+        .data-table tr:hover td { background: #f5f5f5; }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+    </style>
+
+    <div class="actions">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card">
+            <h2>Latest Product</h2>
+            <let latestProduct dynamic single select name from products order by id desc limit 1>
+                <p class="stat"><output latestProduct.name></p>
+            </let>
+            <p>Most recently added product</p>
+        </div>
+
+        <div class="card">
+            <h2>Latest Category</h2>
+            <let latestCategory dynamic single select name from categories order by id desc limit 1>
+                <p class="stat"><output latestCategory.name></p>
+            </let>
+            <p>Most recent category entry</p>
+        </div>
+
+        <div class="card">
+            <h2>Latest Post</h2>
+            <let latestPost dynamic single select title from posts order by id desc limit 1>
+                <p class="stat"><output latestPost.title></p>
+            </let>
+            <p>Most recently published article</p>
+        </div>
+
+        <div class="card">
+            <h2>Admin Account</h2>
+            <let adminUser dynamic single select username from users where role eq "admin" limit 1>
+                <p class="stat"><output adminUser.username></p>
+            </let>
+            <p>Primary admin user</p>
+        </div>
+    </div>
+
+    <h2 class="section-title">Product Inventory</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <let products dynamic select name, category, price, in_stock from products order by id limit 10>
+                <for product in products>
+                    <tr>
+                        <td><output product.name></td>
+                        <td><output product.category></td>
+                        <td>$<output product.price></td>
+                        <td>
+                            <if product.in_stock eq 1>
+                                <span class="badge badge-success">In Stock</span>
+                            <else>
+                                <span class="badge badge-warning">Out of Stock</span>
+                            </else>
+                            </if>
+                        </td>
+                    </tr>
+                </for>
+            </let>
+        </tbody>
+    </table>
+
+    <h2 class="section-title">Recent Posts</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+            </tr>
+        </thead>
+        <tbody>
+            <let posts dynamic select title, author from posts order by id desc limit 5>
+                <for post in posts>
+                    <tr>
+                        <td><output post.title></td>
+                        <td><output post.author></td>
+                    </tr>
+                </for>
+            </let>
+        </tbody>
+    </table>
+
+    <script>
+        async function logout() {
+            await fetch('/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+            window.location.href = '/login';
+        }
+    </script>
+</Layout>

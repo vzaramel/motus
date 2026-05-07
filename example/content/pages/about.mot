@@ -1,0 +1,61 @@
+<import Layout from "components/Layout">
+
+
+<Layout title="About Motus" subtitle="Why this runtime model exists">
+
+    <style>
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            margin: 0 0 12px 0;
+            color: #1f2937;
+        }
+        .card p {
+            margin: 0;
+            line-height: 1.7;
+            color: #4b5563;
+        }
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .pill {
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+    </style>
+
+    <section class="card">
+        <h2>What this example demonstrates</h2>
+        <p>
+            Motus compiles templates into bytecode at the origin and executes that bytecode at the edge, streaming HTML to the browser.
+            This keeps page generation dynamic while reducing origin work on repeated requests.
+        </p>
+        <div class="pill-row">
+            <span class="pill">Origin Compile</span>
+            <span class="pill">Edge Render</span>
+            <span class="pill">Streaming HTML</span>
+            <span class="pill">Component Bytecode</span>
+        </div>
+    </section>
+    
+    <section class="card">
+        <h2>Current architecture goals</h2>
+        <p>
+            The project is evolving toward mixed execution: VM bytecode for dynamic/user-defined modules and native wasm modules for precompiled system components.
+            The same data and component contract is shared between edge and browser runtimes.
+        </p>
+    </section>
+    
+</Layout>

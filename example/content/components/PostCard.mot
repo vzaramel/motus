@@ -1,0 +1,19 @@
+<defcomp PostCard | title, author, content |>
+    <style>
+        .post-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .post-title { font-size: 1.3em; font-weight: 600; margin: 0 0 10px 0; color: #333; }
+        .post-meta { color: #888; font-size: 0.9em; margin-bottom: 12px; }
+        .post-content { color: #555; line-height: 1.6; margin: 0; }
+    </style>
+    <article class="post-card">
+        <h3 class="post-title"><output title></h3>
+        <div class="post-meta">By <output author></div>
+        <p class="post-content"><output content></p>
+    </article>
+</defcomp>

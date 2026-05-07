@@ -1,0 +1,6 @@
+# Representative pages for JS/WASM parity checks.
+# Keep this list small and stable for CI runtime.
+
+wasm
+layout
+index

@@ -1,0 +1,28 @@
+{
+  "name": "motus-edge",
+  "version": "1.0.0",
+  "description": "Motus Edge Runtime - Cloudflare Worker",
+  "type": "module",
+  "main": "src/worker.js",
+  "scripts": {
+    "dev": "npm run build:system-components && npm run build:wasm && wrangler dev --var MOT_VM:wasm",
+    "dev:wasm": "npm run build:system-components && npm run build:wasm && wrangler dev --var MOT_VM:wasm",
+    "dev:debug": "npm run build:system-components && npm run build:wasm:debug && wrangler dev --var MOT_VM:wasm --var MOT_DEBUG:1",
+    "test:contract": "node test-host-contract.mjs",
+    "test:contract-snapshot": "node test-contract-snapshot.mjs",
+    "test:trace": "node test-render-trace.mjs",
+    "test:bytecode-debug": "node test-bytecode-debug.mjs",
+    "test:devtools-inline": "node test-devtools-inline.mjs",
+    "test:browser-wasm-inline": "node test-browser-wasm-inline.mjs",
+    "test:reactive-wasm-module": "node test-reactive-wasm-module.mjs",
+    "deploy": "wrangler deploy",
+    "build:system-components": "node ../precompile-system-components.mjs",
+    "build:wasm:core": "cd ../../runtime-wasm && ./build.sh wasm && cp build/mot-runtime.wasm ../example/edge/src/",
+    "build:wasm:core:debug": "cd ../../runtime-wasm && ./build.sh wasm-debug && cp build/mot-runtime.wasm ../example/edge/src/",
+    "build:wasm:debug": "npm run build:wasm:core:debug",
+    "build:wasm": "npm run build:wasm:core"
+  },
+  "devDependencies": {
+    "wrangler": "^3.114.17"
+  }
+}

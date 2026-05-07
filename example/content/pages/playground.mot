@@ -1,0 +1,285 @@
+<import Layout from "components/Layout">
+
+<Layout title="Playground" subtitle="">
+    <style>
+        .layout-container {
+            max-width: min(99vw, 2200px);
+            padding: 80px 10px 10px 10px;
+        }
+
+        .playground-shell {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: clamp(620px, calc(100vh - 100px), 1200px);
+        }
+
+        .playground-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 32px;
+        }
+
+        .playground-run {
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(0,255,179,0.3);
+            background: rgba(0,255,179,0.06);
+            color: #00ffb3;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .playground-run:hover {
+            background: rgba(0,255,179,0.12);
+            border-color: rgba(0,255,179,0.5);
+        }
+        .playground-run:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        .playground-status {
+            font-size: 0.88em;
+            color: rgba(232,240,236,0.5);
+            min-height: 1em;
+        }
+
+        .playground-grid {
+            display: grid;
+            grid-template-columns: minmax(420px, 1fr) minmax(420px, 1fr);
+            gap: 8px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .playground-form {
+            margin: 0;
+            min-height: 0;
+            height: 100%;
+        }
+
+        .playground-editor {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            border: 1px solid rgba(0,255,179,0.12);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #0f1e2c;
+        }
+
+        .playground-source {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            border: 1px solid rgba(0,255,179,0.12);
+            border-radius: 8px;
+            padding: 8px;
+            resize: none;
+            display: none;
+            background: #0f1e2c;
+            color: #e8f0ec;
+        }
+
+        .playground-output {
+            border: 1px solid rgba(0,255,179,0.12);
+            border-radius: 8px;
+            background: #0f1e2c;
+            color: #e8f0ec;
+            padding: 8px;
+            min-height: 0;
+            overflow: auto;
+        }
+
+        @media (max-width: 980px) {
+            .playground-shell {
+                min-height: auto;
+            }
+            .playground-grid {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+            .playground-editor,
+            .playground-source,
+            .playground-output {
+                min-height: 46vh;
+                height: 46vh;
+            }
+        }
+    </style>
+
+    <section class="playground-shell">
+        <div class="playground-toolbar">
+            <button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button>
+            <div id="playground-status" class="playground-status"></div>
+        </div>
+
+        <section class="playground-grid">
+            <form id="playground-form" class="playground-form">
+                <div id="playground-editor" class="playground-editor"></div>
+                <textarea id="playground-source" class="playground-source" spellcheck="false"></textarea>
+            </form>
+            <div id="playground-output" class="playground-output"></div>
+        </section>
+    </section>
+
+    <script>
+        (function () {
+            var form = document.getElementById('playground-form');
+            var editorEl = document.getElementById('playground-editor');
+            var sourceEl = document.getElementById('playground-source');
+            var statusEl = document.getElementById('playground-status');
+            var outputEl = document.getElementById('playground-output');
+            var runButton = document.getElementById('playground-run');
+            var editor = null;
+            var ACE_CDN_URL = 'https://cdn.jsdelivr.net/npm/ace-builds@1.36.2/src-min-noconflict/ace.js';
+
+            if (!form || !editorEl || !sourceEl || !statusEl || !outputEl || !runButton) return;
+
+            var defaultSource = [
+                '<defcomp DemoCard | title, body |>',
+                '    <style>',
+                '        .demo-card {',
+                '            border: 1px solid #cbd5e1;',
+                '            border-radius: 10px;',
+                '            padding: 14px;',
+                '            background: #ffffff;',
+                '        }',
+                '        .demo-card h3 {',
+                '            margin: 0 0 8px 0;',
+                '            color: #0f172a;',
+                '        }',
+                '        .demo-card p {',
+                '            margin: 0;',
+                '            color: #334155;',
+                '            line-height: 1.5;',
+                '        }',
+                '    </style>',
+                '    <article class="demo-card">',
+                '        <h3><output title></h3>',
+                '        <p><output body></p>',
+                '    </article>',
+                '</defcomp>',
+                '',
+                '<DemoCard',
+                '    title="Playground Works"',
+                '    body="Compiled at origin and rendered at edge through wasm VM." />'
+            ].join('\n');
+
+            sourceEl.value = defaultSource;
+
+            function setupAceEditor() {
+                editor = window.ace.edit('playground-editor');
+                editor.session.setMode('ace/mode/html');
+                editor.setTheme('ace/theme/tomorrow_night');
+                editor.setOptions({
+                    fontSize: '13px',
+                    showPrintMargin: false,
+                    useWorker: false,
+                });
+                editor.setValue(defaultSource, -1);
+                editor.commands.addCommand({
+                    name: 'run-playground',
+                    bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
+                    exec: function () {
+                        runPlayground();
+                    },
+                });
+                editorEl.style.display = 'block';
+                sourceEl.style.display = 'none';
+            }
+
+            function useTextareaFallback() {
+                editorEl.style.display = 'none';
+                sourceEl.style.display = 'block';
+            }
+
+            function readSource() {
+                if (editor) return editor.getValue();
+                return sourceEl.value || '';
+            }
+
+            function loadAceEditorIfNeeded() {
+                if (window.ace && typeof window.ace.edit === 'function') {
+                    setupAceEditor();
+                    return Promise.resolve();
+                }
+                return new Promise(function (resolve) {
+                    var script = document.createElement('script');
+                    script.src = ACE_CDN_URL;
+                    script.async = true;
+                    script.onload = resolve;
+                    script.onerror = resolve;
+                    document.head.appendChild(script);
+                }).then(function () {
+                    if (window.ace && typeof window.ace.edit === 'function') {
+                        setupAceEditor();
+                    } else {
+                        useTextareaFallback();
+                    }
+                });
+            }
+
+            async function runPlayground() {
+                var source = readSource();
+                if (!source.trim()) {
+                    statusEl.textContent = 'Source is empty.';
+                    outputEl.innerHTML = '';
+                    return;
+                }
+
+                runButton.disabled = true;
+                statusEl.textContent = 'Compiling...';
+
+                try {
+                    var response = await fetch('/_mot/playground/render', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ source: source }),
+                    });
+                    var payload = await response.json().catch(function () { return {}; });
+                    if (!response.ok) {
+                        throw new Error(payload.error || ('Request failed with status ' + response.status));
+                    }
+                    outputEl.innerHTML = payload.html || '';
+                    statusEl.textContent = 'Done';
+                } catch (err) {
+                    statusEl.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+                    outputEl.innerHTML = '';
+                } finally {
+                    runButton.disabled = false;
+                }
+            }
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                runPlayground();
+            });
+
+            runButton.addEventListener('click', function () {
+                runPlayground();
+            });
+
+            sourceEl.addEventListener('keydown', function (event) {
+                var isEnter = event.key === 'Enter';
+                if (!isEnter) return;
+                if (!event.ctrlKey && !event.metaKey) return;
+                event.preventDefault();
+                runPlayground();
+            });
+
+            loadAceEditorIfNeeded().then(runPlayground);
+        })();
+    </script>
+</Layout>

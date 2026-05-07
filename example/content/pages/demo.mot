@@ -1,0 +1,393 @@
+<import Layout from "components/Layout">
+<import ProductCard from "components/ProductCard">
+<import PostCard from "components/PostCard">
+
+<Layout title="Motus Demo" subtitle="Layout + component rendering demo">
+    <style>
+        .hero {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            font-size: 1.4em;
+            margin: 0 0 16px 0;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        .posts-section { margin-bottom: 32px; }
+        .playground {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .playground h2 {
+            margin: 0 0 10px 0;
+            color: #1f2937;
+        }
+        .playground p {
+            margin: 0 0 12px 0;
+            color: #4b5563;
+        }
+        .playground-editor {
+            width: 100%;
+            height: 260px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .playground textarea {
+            width: 100%;
+            min-height: 260px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px;
+            resize: vertical;
+            display: none;
+        }
+        .playground button {
+            margin-top: 10px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            border-radius: 8px;
+            padding: 9px 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .playground button:hover {
+            background: #1d4ed8;
+        }
+        .playground-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .playground-controls label {
+            font-size: 0.9em;
+            color: #334155;
+            font-weight: 600;
+        }
+        .playground-theme-buttons {
+            display: inline-flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .playground-theme-btn {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 5px 9px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        .playground-theme-btn.active {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+            color: #ffffff;
+        }
+        .playground-shortcut {
+            font-size: 0.85em;
+            color: #64748b;
+        }
+        .playground-shortcut kbd {
+            background: #e2e8f0;
+            border-radius: 4px;
+            padding: 2px 6px;
+            color: #1e293b;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+        .playground-status {
+            margin-top: 10px;
+            font-size: 0.95em;
+            color: #475569;
+            min-height: 1.2em;
+        }
+        .playground-output {
+            margin-top: 14px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 14px;
+            background: #f8fafc;
+        }
+    </style>
+
+    <section class="hero">
+        <p>This demo page uses the shared layout component and renders SQL-backed components from bytecode.</p>
+    </section>
+
+    <section class="playground">
+        <h2>Live Component Playground</h2>
+        <p>Write a Motus component, compile it at origin, then render via edge WASM VM.</p>
+        <form id="playground-form">
+            <div class="playground-controls">
+                <label>Editor theme</label>
+                <div id="playground-theme-buttons" class="playground-theme-buttons">
+                    <button type="button" class="playground-theme-btn" data-theme="textmate">Textmate</button>
+                    <button type="button" class="playground-theme-btn" data-theme="github">GitHub</button>
+                    <button type="button" class="playground-theme-btn" data-theme="tomorrow">Tomorrow</button>
+                    <button type="button" class="playground-theme-btn" data-theme="one_dark">One Dark</button>
+                </div>
+                <span class="playground-shortcut">
+                    Run shortcut:
+                    <kbd>Ctrl</kbd>+<kbd>Enter</kbd>
+                    /
+                    <kbd>Cmd</kbd>+<kbd>Enter</kbd>
+                </span>
+            </div>
+            <div id="playground-editor" class="playground-editor"></div>
+            <textarea id="playground-source" spellcheck="false"></textarea>
+            <button type="submit" id="playground-run">Compile and Render</button>
+        </form>
+        <div id="playground-status" class="playground-status"></div>
+        <div id="playground-output" class="playground-output"></div>
+    </section>
+
+    <script>
+        (function () {
+            var form = document.getElementById('playground-form');
+            var editorEl = document.getElementById('playground-editor');
+            var themeButtonsEl = document.getElementById('playground-theme-buttons');
+            var sourceEl = document.getElementById('playground-source');
+            var statusEl = document.getElementById('playground-status');
+            var outputEl = document.getElementById('playground-output');
+            var runButton = document.getElementById('playground-run');
+            var editor = null;
+            var ACE_CDN_URL = 'https://cdn.jsdelivr.net/npm/ace-builds@1.36.2/src-min-noconflict/ace.js';
+            var THEME_STORAGE_KEY = 'mot.playground.ace.theme';
+            var selectedTheme = 'textmate';
+
+            if (!form || !editorEl || !themeButtonsEl || !sourceEl || !statusEl || !outputEl || !runButton) return;
+
+            var defaultSource = [
+                '<defcomp DemoBadge | title, subtitle |>',
+                '    <style>',
+                '        .demo-badge {',
+                '            border: 1px solid #cbd5e1;',
+                '            border-radius: 10px;',
+                '            padding: 14px;',
+                '            background: #ffffff;',
+                '            box-shadow: 0 1px 3px rgba(0,0,0,0.08);',
+                '        }',
+                '        .demo-badge h3 {',
+                '            margin: 0 0 6px 0;',
+                '            color: #0f172a;',
+                '        }',
+                '        .demo-badge p {',
+                '            margin: 0;',
+                '            color: #334155;',
+                '        }',
+                '    </style>',
+                '    <article class="demo-badge">',
+                '        <h3><output title></h3>',
+                '        <p><output subtitle></p>',
+                '    </article>',
+                '</defcomp>',
+                '',
+                '<DemoBadge',
+                '    title="Live Playground"',
+                '    subtitle="Compiled at origin and rendered by edge WASM VM." />'
+            ].join('\n');
+
+            sourceEl.value = defaultSource;
+
+            function aceThemeFromSelection(value) {
+                var selected = String(value || '').trim();
+                if (!selected) selected = 'textmate';
+                return 'ace/theme/' + selected;
+            }
+
+            function setThemeUi(theme) {
+                var buttons = themeButtonsEl.querySelectorAll('.playground-theme-btn');
+                for (var i = 0; i < buttons.length; i++) {
+                    var buttonTheme = buttons[i].getAttribute('data-theme') || '';
+                    if (buttonTheme === theme) buttons[i].classList.add('active');
+                    else buttons[i].classList.remove('active');
+                }
+            }
+
+            function applyThemeToEditor() {
+                if (!editor) return;
+                editor.setTheme(aceThemeFromSelection(selectedTheme));
+            }
+
+            function setupAceEditor() {
+                editor = window.ace.edit('playground-editor');
+                editor.session.setMode('ace/mode/html');
+                editor.setOptions({
+                    fontSize: '13px',
+                    showPrintMargin: false,
+                    useWorker: false,
+                });
+                editor.setValue(defaultSource, -1);
+                applyThemeToEditor();
+                editor.commands.addCommand({
+                    name: 'run-playground',
+                    bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
+                    exec: function () {
+                        runPlayground();
+                    },
+                });
+                editorEl.style.display = 'block';
+                sourceEl.style.display = 'none';
+            }
+
+            function useTextareaFallback() {
+                editorEl.style.display = 'none';
+                sourceEl.style.display = 'block';
+            }
+
+            function readSource() {
+                if (editor) return editor.getValue();
+                return sourceEl.value || '';
+            }
+
+            function loadStoredTheme() {
+                var stored = '';
+                try {
+                    stored = window.localStorage.getItem(THEME_STORAGE_KEY) || '';
+                } catch (_) {
+                    stored = '';
+                }
+                if (!stored) return;
+                var buttons = themeButtonsEl.querySelectorAll('.playground-theme-btn');
+                for (var i = 0; i < buttons.length; i++) {
+                    if ((buttons[i].getAttribute('data-theme') || '') === stored) {
+                        selectedTheme = stored;
+                        return;
+                    }
+                }
+            }
+
+            function saveTheme(value) {
+                try {
+                    window.localStorage.setItem(THEME_STORAGE_KEY, value);
+                } catch (_) {
+                    // Ignore storage failures.
+                }
+            }
+
+            function loadAceEditorIfNeeded() {
+                if (window.ace && typeof window.ace.edit === 'function') {
+                    setupAceEditor();
+                    return Promise.resolve();
+                }
+                return new Promise(function (resolve) {
+                    var script = document.createElement('script');
+                    script.src = ACE_CDN_URL;
+                    script.async = true;
+                    script.onload = resolve;
+                    script.onerror = resolve;
+                    document.head.appendChild(script);
+                }).then(function () {
+                    if (window.ace && typeof window.ace.edit === 'function') {
+                        setupAceEditor();
+                    } else {
+                        useTextareaFallback();
+                    }
+                });
+            }
+
+            async function runPlayground() {
+                var source = readSource();
+                if (!source.trim()) {
+                    statusEl.textContent = 'Source is empty.';
+                    outputEl.innerHTML = '';
+                    return;
+                }
+
+                runButton.disabled = true;
+                statusEl.textContent = 'Compiling and rendering...';
+
+                try {
+                    var response = await fetch('/_mot/playground/render', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ source: source }),
+                    });
+                    var payload = await response.json().catch(function () { return {}; });
+                    if (!response.ok) {
+                        throw new Error(payload.error || ('Request failed with status ' + response.status));
+                    }
+                    outputEl.innerHTML = payload.html || '';
+                    statusEl.textContent = 'Rendered via edge WASM VM.';
+                } catch (err) {
+                    statusEl.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+                    outputEl.innerHTML = '';
+                } finally {
+                    runButton.disabled = false;
+                }
+            }
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                runPlayground();
+            });
+
+            themeButtonsEl.addEventListener('click', function (event) {
+                var target = event.target;
+                if (!target || !target.classList || !target.classList.contains('playground-theme-btn')) return;
+                var theme = target.getAttribute('data-theme') || '';
+                if (!theme) return;
+                selectedTheme = theme;
+                setThemeUi(selectedTheme);
+                applyThemeToEditor();
+                saveTheme(selectedTheme);
+            });
+
+            sourceEl.addEventListener('keydown', function (event) {
+                var isEnter = event.key === 'Enter';
+                if (!isEnter) return;
+                if (!event.ctrlKey && !event.metaKey) return;
+                event.preventDefault();
+                runPlayground();
+            });
+
+            loadStoredTheme();
+            setThemeUi(selectedTheme);
+            loadAceEditorIfNeeded().then(runPlayground);
+        })();
+    </script>
+
+    <h2 class="section-title">Featured Products</h2>
+    <let products dynamic select name, price, description, category from products where in_stock eq 1 limit 4>
+        <div class="product-grid">
+            <for product in products>
+                <ProductCard
+                    name=product.name
+                    price=product.price
+                    description=product.description
+                    category=product.category />
+            </for>
+        </div>
+    </let>
+
+    <section class="posts-section">
+        <h2 class="section-title">Latest Updates</h2>
+        <let posts dynamic select title, author, content from posts order by id desc limit 3>
+            <for post in posts>
+                <PostCard
+                    title=post.title
+                    author=post.author
+                    content=post.content />
+            </for>
+        </let>
+    </section>
+</Layout>

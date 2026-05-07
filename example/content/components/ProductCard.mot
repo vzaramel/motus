@@ -1,0 +1,34 @@
+<defcomp ProductCard | name, price, description, category |>
+    <style>
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        .product-name { font-size: 1.2em; font-weight: 600; margin-bottom: 8px; }
+        .product-price { color: #667eea; font-size: 1.4em; font-weight: bold; margin-bottom: 10px; }
+        .product-desc { color: #666; font-size: 0.95em; line-height: 1.5; }
+        .product-category {
+            display: inline-block;
+            background: rgb(59, 209, 33);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 12px;
+        }
+    </style>
+    <div class="product-card">
+        <input/>
+        <div class="product-name"><output name></div>
+        <div class="product-price">$<output price></div>
+        <div class="product-desc"><output description></div>
+        <span class="product-category"><output category></span>
+    </div>
+</defcomp>

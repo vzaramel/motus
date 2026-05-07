@@ -1,0 +1,84 @@
+{
+  "fileTypes": ["mot"],
+  "scopeName": "source.mot",
+  "patterns": [
+    {
+      "comment": "Motus XML tag",
+      "begin": "<",
+      "end": ">",
+      "patterns": [
+        {
+          "name": "entity.name.tag.mot",
+          "match": "(\\w+)(?=[\\s/>])"
+        },
+        {
+          "name": "storage.type.mot",
+          "match": "/>"
+        },
+        {
+          "comment": "Motus keywords",
+          "match": "\\b(let|var|set|if|elsif|else|for|in|match|case|default|defcomp|macro|import|export|output|children|dynamic|single|interface|slots|style|script|fill|external|from|as|then|require-auth)\\b",
+          "name": "keyword.control.mot"
+        },
+        {
+          "comment": "SQL keywords",
+          "match": "\\b(select|where|from|join|order|by|limit|offset|group|having|and|or|not|null|true|false|asc|desc|distinct|count|sum|avg|min|max|as|on|left|right|inner|outer|cross)\\b",
+          "name": "keyword.other.mot"
+        },
+        {
+          "comment": "Built-in functions",
+          "match": "\\b(uppercase|lowercase|trim|length|formatCurrency|formatDate|default|json|split|join|replace|indexOf|substring|toNumber|toString|toBool)\\b",
+          "name": "support.function.mot"
+        },
+        {
+          "comment": "Comparison operators",
+          "match": "\\b(lt|gt|lte|gte|eq|neq)\\b",
+          "name": "keyword.operator.mot"
+        },
+        {
+          "comment": "Attribute name",
+          "match": "([\\w-]+)(?=\\s*=)",
+          "name": "variable.other.mot"
+        },
+        {
+          "comment": "String value",
+          "match": "\"([^\"\\\\]|\\\\.)*\"",
+          "name": "string.quoted.double.mot"
+        },
+        {
+          "comment": "Single-quoted string",
+          "match": "'([^'\\\\]|\\\\.)*'",
+          "name": "string.quoted.single.mot"
+        },
+        {
+          "comment": "Number",
+          "match": "-?\\d+(\\.\\d+)?",
+          "name": "constant.numeric.mot"
+        },
+        {
+          "comment": "Pipe operator",
+          "match": "\\|",
+          "name": "keyword.operator.pipe.mot"
+        },
+        {
+          "comment": "Expression braces",
+          "match": "\\{|\\}",
+          "name": "meta.brace.mot"
+        }
+      ]
+    },
+    {
+      "comment": "HTML entities",
+      "match": "&[\\w-]+;",
+      "name": "constant.character.entity.mot"
+    },
+    {
+      "comment": "XML comments",
+      "begin": "<!--",
+      "end": "-->",
+      "name": "comment.block.mot"
+    }
+  ],
+  "repository": {},
+  "uuid": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
+}

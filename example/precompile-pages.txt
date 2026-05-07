@@ -1,0 +1,9 @@
+# Pages to precompile and keep in memory on origin startup.
+# One page route key per line (without `.mot` extension).
+
+index
+products
+layout
+wasm
+playground
+docs

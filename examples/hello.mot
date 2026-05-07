@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hello Yggdrasil</title>
+</head>
+<body>
+  <let greeting "Hello, World!">
+    <h1><output greeting></h1>
+  </let>
+
+  <let items ["apple" "banana" "cherry"]>
+    <ul>
+      <for item in items>
+        <li><output item></li>
+      </for>
+    </ul>
+  </let>
+
+  <let count 42>
+    <if count gt 0>
+      <p>Count is positive: <output count></p>
+    <else>
+      <p>Count is zero or negative</p>
+    </if>
+  </let>
+</body>
+</html>

@@ -1,0 +1,19 @@
+name = "motus-edge"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+[[rules]]
+type = "CompiledWasm"
+globs = ["src/**/*.wasm"]
+fallthrough = true
+
+[vars]
+ORIGIN_URL = "http://localhost:8080"
+ORIGIN_PORT = "8080"
+MOT_VM = "wasm"
+MOT_BROWSER_WASM = "0"
+
+# For local development
+[dev]
+port = 8791
+local_protocol = "http"

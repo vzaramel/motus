@@ -1,0 +1,24 @@
+<import Layout from "components/Layout">
+
+<Layout title="Test Page" subtitle="Minimal dynamic query smoke test">
+    <style>
+        .product {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .product-name { font-weight: bold; }
+        .product-price { color: #667eea; }
+    </style>
+
+    <let products dynamic select name, price from products where in_stock eq 1 limit 3>
+        <for product in products>
+            <div class="product">
+                <div class="product-name"><output product.name></div>
+                <div class="product-price">$<output product.price></div>
+            </div>
+        </for>
+    </let>
+</Layout>

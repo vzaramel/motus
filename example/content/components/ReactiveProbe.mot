@@ -1,0 +1,58 @@
+<defcomp ReactiveProbe ||>
+    <style>
+        .reactive-probe {
+            margin-top: 20px;
+            padding: 16px;
+            border: 1px dashed #94a3b8;
+            border-radius: 10px;
+            background: #f8fafc;
+            text-align: left;
+        }
+        .reactive-probe h3 {
+            margin: 0 0 10px 0;
+            color: #1e293b;
+            font-size: 1.1em;
+        }
+        .reactive-probe p {
+            margin: 6px 0;
+            color: #334155;
+        }
+        .reactive-probe button {
+            margin-top: 10px;
+            border: none;
+            background: #0f766e;
+            color: white;
+            border-radius: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .reactive-probe button:hover {
+            background: #0d655f;
+        }
+    </style>
+
+    <section class="reactive-probe">
+        <h3>Reactive Probe Component</h3>
+
+        <var probeCounter 0 />
+        <var probeProfile {name: "Probe"} />
+
+        <p>Counter: <strong id="probe-count"><output probeCounter></strong></p>
+        <p>Next Counter: <strong id="probe-next"><output probeCounter + 1></strong></p>
+        <p>Double Counter: <strong id="probe-double"><output probeCounter * 2></strong></p>
+        <p>
+            Profile:
+            <strong id="probe-name" title=probeCounter + 1>
+                <output probeProfile.name>
+            </strong>
+        </p>
+
+        <button
+            type="button"
+            id="probe-inc"
+            data-mot-inc="probeCounter"
+            data-mot-set-path="probeProfile.name"
+            data-mot-set-prefix="Probe #">Update Probe</button>
+    </section>
+</defcomp>

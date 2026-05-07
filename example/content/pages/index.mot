@@ -1,0 +1,941 @@
+<import Layout from "components/Layout" dynamic>
+
+<Layout title="Motus" subtitle="">
+<style>
+    /* ===== Animations ===== */
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(36px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+        0%, 100% { transform: perspective(1200px) rotateX(6deg) rotateY(-2deg) translateY(0); }
+        50%      { transform: perspective(1200px) rotateX(6deg) rotateY(-2deg) translateY(-10px); }
+    }
+    @keyframes dotPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.5; transform: scale(0.7); }
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(28px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseRing {
+        0%   { box-shadow: 0 0 0 0 rgba(0,255,179,0.3); }
+        70%  { box-shadow: 0 0 0 20px rgba(0,255,179,0); }
+        100% { box-shadow: 0 0 0 0 rgba(0,255,179,0); }
+    }
+
+    .lp-animate { opacity: 0; }
+    .lp-animate.visible { animation: fadeInUp 0.6s ease forwards; }
+
+    /* ===== Hero ===== */
+    .lp-hero {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 24px 80px;
+        background:
+            radial-gradient(ellipse 80% 50% at 50% 100%, rgba(0,255,179,0.05) 0%, transparent 70%),
+            radial-gradient(ellipse 50% 40% at 20% 40%, rgba(39,168,125,0.06) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 40% at 80% 30%, rgba(76,196,150,0.04) 0%, transparent 60%),
+            #0a1520;
+    }
+    .lp-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+        background-size: 64px 64px;
+        pointer-events: none;
+    }
+    .lp-hero-inner {
+        position: relative;
+        max-width: 900px;
+        margin: 0 auto;
+        text-align: center;
+    }
+    .lp-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(0,255,179,0.06);
+        border: 1px solid rgba(0,255,179,0.15);
+        border-radius: 999px;
+        padding: 8px 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: rgba(232,240,236,0.7);
+        letter-spacing: 0.02em;
+        margin-bottom: 28px;
+        animation: slideUp 0.6s ease both;
+    }
+    .lp-badge-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #00ffb3;
+        box-shadow: 0 0 8px rgba(0,255,179,0.5);
+        animation: dotPulse 2s ease-in-out infinite;
+    }
+    .lp-headline {
+        font-size: clamp(2.5rem, 6vw, 4.2rem);
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0 0 20px 0;
+        background: linear-gradient(135deg, #e8f0ec 30%, #4cc496 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: slideUp 0.6s ease 0.1s both;
+    }
+    .lp-sub {
+        font-size: 1.15rem;
+        line-height: 1.7;
+        color: rgba(232,240,236,0.55);
+        max-width: 580px;
+        margin: 0 auto 36px;
+        animation: slideUp 0.6s ease 0.2s both;
+    }
+    .lp-hero-actions {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: slideUp 0.6s ease 0.3s both;
+        margin-bottom: 56px;
+    }
+    .lp-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 13px 28px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-decoration: none;
+        color: #060c10;
+        background: #00ffb3;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .lp-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(0,255,179,0.3);
+        color: #060c10;
+    }
+    .lp-btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 13px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        color: rgba(232,240,236,0.7);
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.12);
+        transition: border-color 0.2s, color 0.2s, transform 0.2s;
+    }
+    .lp-btn-ghost:hover {
+        border-color: rgba(255,255,255,0.3);
+        color: #e8f0ec;
+        transform: translateY(-2px);
+    }
+
+    /* ===== Code Window ===== */
+    .lp-code-wrap {
+        animation: slideUp 0.8s ease 0.5s both;
+    }
+    .lp-code-window {
+        max-width: 680px;
+        margin: 0 auto;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #0d1117;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow:
+            0 40px 80px rgba(0,0,0,0.5),
+            0 0 80px rgba(0,255,179,0.06);
+        animation: float 6s ease-in-out infinite;
+        text-align: left;
+    }
+    .lp-code-titlebar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: rgba(255,255,255,0.03);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .lp-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    .lp-dot-r { background: #ff5f57; }
+    .lp-dot-y { background: #ffbd2e; }
+    .lp-dot-g { background: #28c840; }
+    .lp-code-filename {
+        margin-left: auto;
+        font-size: 0.78rem;
+        color: rgba(232,240,236,0.35);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .lp-code-body {
+        padding: 20px 22px;
+        overflow-x: auto;
+    }
+    .lp-code-body pre {
+        margin: 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        color: #9ca3af;
+        white-space: pre;
+        tab-size: 2;
+    }
+
+    /* Syntax colors */
+    .s-tag { color: #7edbb5; }
+    .s-comp { color: #e2c77e; font-weight: 700; }
+    .s-kw { color: #4cc496; font-weight: 600; }
+    .s-str { color: #e2c77e; }
+    .s-var { color: #e8ceaf; }
+    .s-prop { color: #d4b05a; }
+    .s-pipe { color: #4cc496; }
+    .s-comm { color: #6e7e72; font-style: italic; }
+    .s-num { color: #b2ecd4; }
+    .s-punct { color: #6e7e72; }
+    .s-sql { color: #7edbb5; }
+    .s-html { color: #9ca3af; }
+    .s-attr { color: #d4ab84; }
+
+    /* ===== Section shared ===== */
+    .lp-section {
+        padding: 100px 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .lp-section-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-weight: 700;
+        color: #27a87d;
+        margin-bottom: 12px;
+    }
+    .lp-section-title {
+        font-size: clamp(1.8rem, 4vw, 2.4rem);
+        font-weight: 800;
+        margin: 0 0 16px 0;
+        color: #e8f0ec;
+    }
+    .lp-section-sub {
+        color: rgba(232,240,236,0.5);
+        font-size: 1.05rem;
+        line-height: 1.7;
+        max-width: 600px;
+        margin: 0 0 48px 0;
+    }
+
+    /* ===== Features Grid ===== */
+    .lp-features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    .lp-fcard {
+        background: #0f1e2c;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        padding: 32px 26px;
+        transition: border-color 0.3s, box-shadow 0.3s, transform 0.4s ease;
+        transform-style: preserve-3d;
+        will-change: transform;
+        cursor: default;
+    }
+    .lp-fcard:hover {
+        border-color: rgba(0,255,179,0.2);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 40px rgba(0,255,179,0.06);
+    }
+    .lp-fcard-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(0,255,179,0.06);
+        border: 1px solid rgba(0,255,179,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        transition: box-shadow 0.3s;
+    }
+    .lp-fcard:hover .lp-fcard-icon {
+        box-shadow: 0 0 24px rgba(0,255,179,0.15);
+    }
+    .lp-fcard-icon svg {
+        width: 22px;
+        height: 22px;
+        color: #00ffb3;
+    }
+    .lp-fcard h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+        color: #e8f0ec;
+    }
+    .lp-fcard p {
+        margin: 0;
+        font-size: 0.88rem;
+        line-height: 1.65;
+        color: rgba(232,240,236,0.45);
+    }
+
+    /* ===== Syntax Showcase ===== */
+    .lp-syntax-row {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 24px;
+        margin-bottom: 40px;
+        perspective: 2000px;
+    }
+    .lp-syntax-panel {
+        background: #0d1117;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 14px;
+        overflow: hidden;
+        transition: transform 0.5s ease;
+    }
+    .lp-syntax-left {
+        transform: rotateY(2deg);
+    }
+    .lp-syntax-right {
+        transform: rotateY(-2deg);
+    }
+    .lp-syntax-row:hover .lp-syntax-left,
+    .lp-syntax-row:hover .lp-syntax-right {
+        transform: rotateY(0deg);
+    }
+    .lp-syntax-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: rgba(255,255,255,0.03);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        font-size: 0.78rem;
+        color: rgba(232,240,236,0.4);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .lp-syntax-header .lp-dot { width: 10px; height: 10px; }
+    .lp-syntax-body {
+        padding: 20px 22px;
+    }
+    .lp-syntax-body pre {
+        margin: 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.82rem;
+        line-height: 1.7;
+        color: #9ca3af;
+        white-space: pre;
+        tab-size: 2;
+    }
+    .lp-result-card {
+        background: #0f1e2c;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    .lp-result-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: rgba(232,240,236,0.35);
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+
+    /* ===== Pipeline ===== */
+    .lp-pipeline-track {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        margin-bottom: 56px;
+        overflow-x: auto;
+        padding: 20px 0;
+    }
+    .lp-pipe-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .lp-pipe-circle {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #1a6b4f, #0a1520);
+        border: 1px solid rgba(0,255,179,0.25);
+        box-shadow:
+            inset -3px -3px 10px rgba(0,0,0,0.5),
+            inset 2px 2px 6px rgba(0,255,179,0.08),
+            0 0 20px rgba(0,255,179,0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: box-shadow 0.3s, transform 0.3s;
+    }
+    .lp-pipe-circle:hover {
+        box-shadow:
+            inset -3px -3px 10px rgba(0,0,0,0.5),
+            inset 2px 2px 6px rgba(0,255,179,0.15),
+            0 0 40px rgba(0,255,179,0.15);
+        transform: scale(1.08);
+    }
+    .lp-pipe-circle svg {
+        width: 22px;
+        height: 22px;
+        color: #4cc496;
+    }
+    .lp-pipe-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgba(232,240,236,0.6);
+        text-align: center;
+        white-space: nowrap;
+    }
+    .lp-pipe-arrow {
+        width: 48px;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(0,255,179,0.3), rgba(0,255,179,0.08));
+        flex-shrink: 0;
+        margin: 0 4px;
+        margin-bottom: 28px;
+        border-radius: 1px;
+    }
+
+    .lp-arch-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    .lp-arch-card {
+        background: #0f1e2c;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 14px;
+        padding: 28px 24px;
+        transition: border-color 0.3s, transform 0.3s;
+    }
+    .lp-arch-card:hover {
+        border-color: rgba(0,255,179,0.15);
+        transform: translateY(-4px);
+    }
+    .lp-arch-card h4 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+        color: #e8f0ec;
+    }
+    .lp-arch-card p {
+        margin: 0;
+        font-size: 0.85rem;
+        line-height: 1.65;
+        color: rgba(232,240,236,0.4);
+    }
+    .lp-arch-tag {
+        display: inline-block;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: #27a87d;
+        background: rgba(0,255,179,0.06);
+        border: 1px solid rgba(0,255,179,0.12);
+        border-radius: 6px;
+        padding: 3px 8px;
+        margin-bottom: 14px;
+    }
+
+    /* ===== CTA ===== */
+    .lp-cta {
+        text-align: center;
+        padding: 100px 24px 120px;
+        position: relative;
+        overflow: hidden;
+        background: #060c10;
+    }
+    .lp-cta::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 700px;
+        height: 350px;
+        background: radial-gradient(ellipse, rgba(0,255,179,0.05) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .lp-cta h2 {
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
+        font-weight: 800;
+        margin: 0 0 16px 0;
+        color: #e8f0ec;
+        position: relative;
+    }
+    .lp-cta p {
+        color: rgba(232,240,236,0.5);
+        font-size: 1.05rem;
+        line-height: 1.7;
+        max-width: 480px;
+        margin: 0 auto 36px;
+        position: relative;
+    }
+    .lp-cta-actions {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+    }
+    .lp-cta-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 32px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        color: #060c10;
+        background: #00ffb3;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+        animation: pulseRing 2.5s ease-out infinite;
+    }
+    .lp-cta-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(0,255,179,0.35);
+        color: #060c10;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px) {
+        .lp-features-grid { grid-template-columns: repeat(2, 1fr); }
+        .lp-arch-grid { grid-template-columns: repeat(2, 1fr); }
+        .lp-syntax-row { grid-template-columns: 1fr; }
+        .lp-syntax-left, .lp-syntax-right { transform: none; }
+    }
+    @media (max-width: 640px) {
+        .lp-features-grid { grid-template-columns: 1fr; }
+        .lp-arch-grid { grid-template-columns: 1fr; }
+        .lp-hero { padding: 100px 16px 60px; min-height: auto; }
+        .lp-section { padding: 60px 16px; }
+        .lp-pipeline-track { justify-content: flex-start; }
+    }
+</style>
+
+<!-- ===== HERO ===== -->
+<section class="lp-hero">
+    <div class="lp-hero-inner">
+        <div class="lp-badge" id="lp-badge"></div>
+
+        <h1 class="lp-headline" id="lp-headline"></h1>
+
+        <p class="lp-sub" id="lp-sub"></p>
+
+        <div class="lp-hero-actions">
+            <a href="/playground" class="lp-btn-primary">Try the Playground</a>
+            <a href="/docs" class="lp-btn-ghost">Read the Docs</a>
+        </div>
+
+        <div class="lp-code-wrap">
+            <div class="lp-code-window">
+                <div class="lp-code-titlebar">
+                    <span class="lp-dot lp-dot-r"></span>
+                    <span class="lp-dot lp-dot-y"></span>
+                    <span class="lp-dot lp-dot-g"></span>
+                    <span class="lp-code-filename">store.mot</span>
+                </div>
+                <div class="lp-code-body"><pre id="hero-code"></pre></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section class="lp-section lp-animate">
+    <div class="lp-section-label">Key Features</div>
+    <h2 class="lp-section-title">Everything you need. Nothing you don't.</h2>
+    <p class="lp-section-sub">A complete compiled template language designed for edge-first rendering.</p>
+
+    <div class="lp-features-grid">
+        <div class="lp-fcard">
+            <div class="lp-fcard-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+            </div>
+            <h3>Partial Evaluation</h3>
+            <p>Built from the ground up around partial evaluation. Static expressions fold at compile time into constants &mdash; only dynamic holes become bytecode. The edge does minimal work.</p>
+        </div>
+
+        <div class="lp-fcard">
+            <div class="lp-fcard-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                </svg>
+            </div>
+            <h3>SQL as First-Class</h3>
+            <p id="lp-feat-sql"></p>
+        </div>
+
+        <div class="lp-fcard">
+            <div class="lp-fcard-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+            </div>
+            <h3>Streaming Bytecode</h3>
+            <p>Pages begin rendering before the full payload arrives. Chunked transfer from origin to edge to browser.</p>
+        </div>
+
+        <div class="lp-fcard">
+            <div class="lp-fcard-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+            </div>
+            <h3>Component System</h3>
+            <p>Props, slots, scoped CSS. Position-based syntax with no namespace noise. Nest freely.</p>
+        </div>
+
+        <div class="lp-fcard">
+            <div class="lp-fcard-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a4 4 0 0 0-4 4c0 2 2 3 2 6h4c0-3 2-4 2-6a4 4 0 0 0-4-4z"/>
+                    <line x1="10" y1="16" x2="14" y2="16"/>
+                    <line x1="10" y1="19" x2="14" y2="19"/>
+                    <line x1="11" y1="22" x2="13" y2="22"/>
+                </svg>
+            </div>
+            <h3>AI-Friendly by Design</h3>
+            <p>Pure HTML + CSS output. LLMs already know XML. No virtual DOM, no JSX transforms &mdash; just markup that any AI can read, write, and reason about.</p>
+        </div>
+
+        <div class="lp-fcard">
+            <div class="lp-fcard-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                </svg>
+            </div>
+            <h3>Cache at Every Level</h3>
+            <p>Compiled bytecode is cached at origin. Edge workers cache rendered pages. Fine-grained dependency tracking (product.name, not product) enables precision invalidation.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== SYNTAX SHOWCASE ===== -->
+<section class="lp-section lp-animate">
+    <div class="lp-section-label">Syntax</div>
+    <h2 class="lp-section-title">Write Less. Render Faster.</h2>
+    <p class="lp-section-sub">Motus templates read like HTML, compile like a programming language.</p>
+
+    <!-- Example 1: Component Definition -->
+    <div class="lp-syntax-row">
+        <div class="lp-syntax-panel lp-syntax-left">
+            <div class="lp-syntax-header">
+                <span class="lp-dot lp-dot-r"></span>
+                <span class="lp-dot lp-dot-y"></span>
+                <span class="lp-dot lp-dot-g"></span>
+                ProductCard.mot
+            </div>
+            <div class="lp-syntax-body"><pre id="ex-component"></pre></div>
+        </div>
+        <div class="lp-syntax-panel lp-syntax-right">
+            <div class="lp-syntax-header">Output</div>
+            <div class="lp-syntax-body">
+                <div class="lp-result-label">Rendered HTML</div>
+                <div class="lp-result-card">
+                    <h3 style="margin:0 0 6px; color:#e8f0ec; font-size:1rem;">Wireless Headphones</h3>
+                    <p style="margin:0; color:#4cc496; font-size:1.2rem; font-weight:700;">$99.99</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Example 2: SQL + Loop -->
+    <div class="lp-syntax-row">
+        <div class="lp-syntax-panel lp-syntax-left">
+            <div class="lp-syntax-header">
+                <span class="lp-dot lp-dot-r"></span>
+                <span class="lp-dot lp-dot-y"></span>
+                <span class="lp-dot lp-dot-g"></span>
+                products.mot
+            </div>
+            <div class="lp-syntax-body"><pre id="ex-sql"></pre></div>
+        </div>
+        <div class="lp-syntax-panel lp-syntax-right">
+            <div class="lp-syntax-header">Pipeline</div>
+            <div class="lp-syntax-body">
+                <div class="lp-result-label">Compilation Flow</div>
+                <p style="color:rgba(232,240,236,0.5); font-size:0.88rem; line-height:1.7; margin:0;">
+                    <span style="color:#7edbb5;">.mot source</span>
+                    <span style="color:rgba(232,240,236,0.25);"> &rarr; </span>
+                    <span style="color:#e2c77e;">bytecode</span>
+                    <span style="color:rgba(232,240,236,0.25);"> &rarr; </span>
+                    <span style="color:#4cc496;">WASM VM</span>
+                    <span style="color:rgba(232,240,236,0.25);"> &rarr; </span>
+                    <span style="color:#00ffb3;">streamed HTML</span>
+                </p>
+                <p id="lp-sql-note" style="color:rgba(232,240,236,0.35); font-size:0.82rem; line-height:1.65; margin:12px 0 0;"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Example 3: Reactive State -->
+    <div class="lp-syntax-row">
+        <div class="lp-syntax-panel lp-syntax-left">
+            <div class="lp-syntax-header">
+                <span class="lp-dot lp-dot-r"></span>
+                <span class="lp-dot lp-dot-y"></span>
+                <span class="lp-dot lp-dot-g"></span>
+                reactive.mot
+            </div>
+            <div class="lp-syntax-body"><pre id="ex-reactive"></pre></div>
+        </div>
+        <div class="lp-syntax-panel lp-syntax-right">
+            <div class="lp-syntax-header">Output</div>
+            <div class="lp-syntax-body">
+                <div class="lp-result-label">Browser-side Reactivity</div>
+                <div class="lp-result-card">
+                    <p style="margin:0 0 8px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Count: <strong style="color:#e8f0ec;">0</strong></p>
+                    <p style="margin:0 0 12px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Double: <strong style="color:#e8f0ec;">0</strong></p>
+                    <div style="display:inline-block; padding:8px 16px; background:rgba(0,255,179,0.1); border:1px solid rgba(0,255,179,0.25); border-radius:8px; font-size:0.85rem; color:#00ffb3; font-weight:600;">Increment</div>
+                </div>
+                <p style="color:rgba(232,240,236,0.3); font-size:0.78rem; margin:10px 0 0;">Reactive binding markers enable targeted DOM updates without full re-renders.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== PIPELINE ===== -->
+<section class="lp-section lp-animate">
+    <div class="lp-section-label">Architecture</div>
+    <h2 class="lp-section-title">From Source to Stream</h2>
+    <p class="lp-section-sub">The compilation pipeline that powers every page render.</p>
+
+    <div class="lp-pipeline-track">
+        <div class="lp-pipe-node">
+            <div class="lp-pipe-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <span class="lp-pipe-label">.mot Source</span>
+        </div>
+        <div class="lp-pipe-arrow"></div>
+        <div class="lp-pipe-node">
+            <div class="lp-pipe-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <span class="lp-pipe-label">Lexer / Parser</span>
+        </div>
+        <div class="lp-pipe-arrow"></div>
+        <div class="lp-pipe-node">
+            <div class="lp-pipe-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <span class="lp-pipe-label">Compiler</span>
+        </div>
+        <div class="lp-pipe-arrow"></div>
+        <div class="lp-pipe-node">
+            <div class="lp-pipe-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            </div>
+            <span class="lp-pipe-label">Bytecode</span>
+        </div>
+        <div class="lp-pipe-arrow"></div>
+        <div class="lp-pipe-node">
+            <div class="lp-pipe-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </div>
+            <span class="lp-pipe-label">WASM VM</span>
+        </div>
+        <div class="lp-pipe-arrow"></div>
+        <div class="lp-pipe-node">
+            <div class="lp-pipe-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <span class="lp-pipe-label">HTML Stream</span>
+        </div>
+    </div>
+
+    <div class="lp-arch-grid">
+        <div class="lp-arch-card">
+            <div class="lp-arch-tag">Origin</div>
+            <h4>Origin Server</h4>
+            <p>Compiles .mot files to binary bytecode on first request. Caches compiled modules. Handles data RPCs for SQL queries.</p>
+        </div>
+        <div class="lp-arch-card">
+            <div class="lp-arch-tag">Edge</div>
+            <h4>Edge Worker</h4>
+            <p>Cloudflare Worker interprets bytecode via WASM. Streams HTML chunks to the browser as they're rendered.</p>
+        </div>
+        <div class="lp-arch-card">
+            <div class="lp-arch-tag">Browser</div>
+            <h4>Browser Runtime</h4>
+            <p>Receives streamed HTML progressively. Reactive binding markers enable targeted DOM updates without re-renders.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="lp-cta">
+    <h2 id="lp-cta-title"></h2>
+    <p>Write .mot templates, hit compile, see streaming HTML rendered at the edge. No setup required.</p>
+    <div class="lp-cta-actions">
+        <a href="/playground" class="lp-cta-primary">Open Playground</a>
+        <a href="/docs" class="lp-btn-ghost">Read the Docs</a>
+    </div>
+</section>
+
+<script>
+(function() {
+    /* ===== Inject syntax-highlighted code via JS to preserve whitespace ===== */
+    function s(cls, text) {
+        return '<span class="s-' + cls + '">' + text + '</span>';
+    }
+
+    var heroCode = [
+        s('tag','&lt;import') + ' ' + s('comp','Layout') + ' ' + s('kw','from') + ' ' + s('str','"components/Layout"') + s('tag','&gt;'),
+        s('tag','&lt;import') + ' ' + s('comp','ProductCard') + ' ' + s('kw','from') + ' ' + s('str','"components/ProductCard"') + s('tag','&gt;'),
+        '',
+        s('tag','&lt;Layout') + ' ' + s('attr','title') + s('punct','=') + s('str','"My Store"') + s('tag','&gt;'),
+        '  ' + s('tag','&lt;let') + ' ' + s('var','products'),
+        '      ' + s('kw','select') + ' ' + s('sql','name, price') + ' ' + s('kw','from') + ' ' + s('sql','products'),
+        '      ' + s('kw','where') + ' ' + s('sql','in_stock') + ' ' + s('kw','eq') + ' ' + s('num','1') + s('tag','&gt;'),
+        '    ' + s('tag','&lt;for') + ' ' + s('var','product') + ' ' + s('kw','in') + ' ' + s('var','products') + s('tag','&gt;'),
+        '      ' + s('tag','&lt;') + s('comp','ProductCard'),
+        '          ' + s('attr','name') + s('punct','=') + s('var','product.name'),
+        '          ' + s('attr','price') + s('punct','=') + s('var','product.price') + ' ' + s('pipe','|') + ' ' + s('kw','currency') + ' ' + s('tag','/&gt;'),
+        '    ' + s('tag','&lt;/for&gt;'),
+        '  ' + s('tag','&lt;/let&gt;'),
+        s('tag','&lt;/Layout&gt;')
+    ].join('\n');
+
+    var exComponent = [
+        s('tag','&lt;defcomp') + ' ' + s('comp','ProductCard') + ' ' + s('punct','|') + ' ' + s('prop','name') + s('punct',',') + ' ' + s('prop','price') + ' ' + s('punct','|&gt;'),
+        '  ' + s('html','&lt;style&gt;'),
+        '    ' + s('html','.card { border-radius: 12px; padding: 20px; }'),
+        '  ' + s('html','&lt;/style&gt;'),
+        '  ' + s('html','&lt;div') + ' ' + s('attr','class') + s('punct','=') + s('str','"card"') + s('html','&gt;'),
+        '    ' + s('html','&lt;h3&gt;') + s('tag','&lt;output') + ' ' + s('var','name') + s('tag','&gt;') + s('html','&lt;/h3&gt;'),
+        '    ' + s('html','&lt;p&gt;') + '$' + s('tag','&lt;output') + ' ' + s('var','price') + ' ' + s('pipe','|') + ' ' + s('kw','currency') + s('tag','&gt;') + s('html','&lt;/p&gt;'),
+        '  ' + s('html','&lt;/div&gt;'),
+        s('tag','&lt;/defcomp&gt;')
+    ].join('\n');
+
+    var exSql = [
+        s('comm','&lt;!-- SQL embedded directly in template --&gt;'),
+        s('tag','&lt;let') + ' ' + s('var','products'),
+        '    ' + s('kw','select') + ' ' + s('sql','name, price'),
+        '    ' + s('kw','from') + ' ' + s('sql','products'),
+        '    ' + s('kw','where') + ' ' + s('sql','category') + ' ' + s('kw','eq') + ' ' + s('str','"electronics"'),
+        '    ' + s('kw','limit') + ' ' + s('num','3') + s('tag','&gt;'),
+        '',
+        '  ' + s('tag','&lt;for') + ' ' + s('var','product') + ' ' + s('kw','in') + ' ' + s('var','products') + s('tag','&gt;'),
+        '    ' + s('tag','&lt;') + s('comp','ProductCard'),
+        '        ' + s('attr','name') + s('punct','=') + s('var','product.name'),
+        '        ' + s('attr','price') + s('punct','=') + s('var','product.price') + ' ' + s('tag','/&gt;'),
+        '  ' + s('tag','&lt;/for&gt;'),
+        s('tag','&lt;/let&gt;')
+    ].join('\n');
+
+    var exReactive = [
+        s('comm','&lt;!-- Reactive state with var/set --&gt;'),
+        s('tag','&lt;var') + ' ' + s('var','counter') + ' ' + s('num','0') + ' ' + s('tag','/&gt;'),
+        '',
+        s('html','&lt;p&gt;') + 'Count: ' + s('html','&lt;strong&gt;'),
+        '  ' + s('tag','&lt;output') + ' ' + s('var','counter') + s('tag','&gt;'),
+        s('html','&lt;/strong&gt;&lt;/p&gt;'),
+        '',
+        s('html','&lt;p&gt;') + 'Double: ' + s('html','&lt;strong&gt;'),
+        '  ' + s('tag','&lt;output') + ' ' + s('var','counter') + ' ' + s('punct','*') + ' ' + s('num','2') + s('tag','&gt;'),
+        s('html','&lt;/strong&gt;&lt;/p&gt;'),
+        '',
+        s('tag','&lt;set') + ' ' + s('var','counter') + ' ' + s('var','counter') + ' ' + s('punct','+') + ' ' + s('num','1') + ' ' + s('tag','/&gt;')
+    ].join('\n');
+
+    /* ===== Inject text that contains reserved keywords ===== */
+    document.getElementById('lp-badge').innerHTML = '<span class="lp-badge-dot"></span> Partial Evaluation &middot; Multi-layer Caching &middot; Edge Streaming';
+    document.getElementById('lp-headline').innerHTML = 'Build for the Edge.<br/>Write in XML.';
+    document.getElementById('lp-sub').innerHTML = 'Motus compiles XML templates into streamable bytecode via partial evaluation &mdash; static parts fold at compile time, only dynamic holes reach the edge. AI-native by design, cacheable at every layer.';
+    document.getElementById('lp-feat-sql').innerHTML = 'Embed queries directly in templates. No ORM layer, no boilerplate. Data flows from SQL into your view.';
+    document.getElementById('lp-sql-note').innerHTML = 'SQL queries become queryRef + signature in bytecode. No raw SQL ships to the edge. Data is fetched via RPC at render time.';
+    document.getElementById('lp-cta-title').innerHTML = 'See Motus in Action';
+
+    document.getElementById('hero-code').innerHTML = heroCode;
+    document.getElementById('ex-component').innerHTML = exComponent;
+    document.getElementById('ex-sql').innerHTML = exSql;
+    document.getElementById('ex-reactive').innerHTML = exReactive;
+
+    /* ===== 3D card tilt - only on hover-capable devices ===== */
+    if (window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+        var cards = document.querySelectorAll('.lp-fcard');
+        for (var i = 0; i < cards.length; i++) {
+            (function(card) {
+                card.addEventListener('mousemove', function(e) {
+                    var rect = card.getBoundingClientRect();
+                    var cx = rect.left + rect.width / 2;
+                    var cy = rect.top + rect.height / 2;
+                    var dx = (e.clientX - cx) / (rect.width / 2);
+                    var dy = (e.clientY - cy) / (rect.height / 2);
+                    card.style.transform =
+                        'perspective(800px) rotateY(' + (dx * 8) + 'deg) rotateX(' + (-dy * 8) + 'deg) translateZ(8px)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    card.style.transform =
+                        'perspective(800px) rotateY(0deg) rotateX(0deg) translateZ(0)';
+                });
+            })(cards[i]);
+        }
+    }
+
+    /* ===== Scroll-triggered entrance animations ===== */
+    var els = document.querySelectorAll('.lp-animate');
+    if (window.IntersectionObserver) {
+        var obs = new IntersectionObserver(function(entries) {
+            for (var j = 0; j < entries.length; j++) {
+                if (entries[j].isIntersecting) {
+                    entries[j].target.classList.add('visible');
+                    obs.unobserve(entries[j].target);
+                }
+            }
+        }, { threshold: 0.08 });
+        for (var k = 0; k < els.length; k++) {
+            obs.observe(els[k]);
+        }
+    } else {
+        for (var m = 0; m < els.length; m++) {
+            els[m].classList.add('visible');
+        }
+    }
+
+    /* ===== Stagger feature card delays ===== */
+    var fcards = document.querySelectorAll('.lp-features-grid .lp-fcard');
+    for (var n = 0; n < fcards.length; n++) {
+        fcards[n].style.animationDelay = (n * 0.08) + 's';
+    }
+})();
+</script>
+</Layout>

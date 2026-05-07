@@ -1,0 +1,10 @@
+# One component import path per line.
+# These are precompiled and bundled with the edge worker.
+
+components/Header
+components/Footer
+components/ProductCard
+components/PostCard
+components/ProductList
+components/Layout
+components/ReactiveProbe
