@@ -16,6 +16,7 @@
 #include "runtime/vm.h"
 #include "compiler/bytecode.h"
 #include "util/arena.h"
+#include "mot.h"
 
 #define WASM_EXPORT __attribute__((visibility("default")))
 #define WASM_IMPORT extern
@@ -153,6 +154,266 @@ int strncmp(const char *a, const char *b, size_t n) {
         if (ca == '\0') return 0;
     }
     return 0;
+}
+
+/* Forward declarations */
+static uint32_t align8(uint32_t n);
+static void *heap_alloc(size_t size);
+static int i64_to_buf(int64_t value, char *buf, int cap);
+static int f64_to_buf(double value, char *buf, int cap);
+
+/* --- Additional libc stubs needed by the compiler pipeline --- */
+
+char *strchr(const char *s, int c) {
+    while (*s) {
+        if (*s == (char)c) return (char *)s;
+        s++;
+    }
+    return (c == '\0') ? (char *)s : NULL;
+}
+
+char *strstr(const char *haystack, const char *needle) {
+    size_t nlen;
+    if (!*needle) return (char *)haystack;
+    nlen = strlen(needle);
+    while (*haystack) {
+        if (*haystack == *needle && strncmp(haystack, needle, nlen) == 0)
+            return (char *)haystack;
+        haystack++;
+    }
+    return NULL;
+}
+
+char *strcpy(char *dst, const char *src) {
+    char *ret = dst;
+    while ((*dst++ = *src++));
+    return ret;
+}
+
+char *strncpy(char *dst, const char *src, size_t n) {
+    size_t i;
+    for (i = 0; i < n && src[i]; i++) dst[i] = src[i];
+    for (; i < n; i++) dst[i] = '\0';
+    return dst;
+}
+
+int isdigit(int c) { return c >= '0' && c <= '9'; }
+int isalpha(int c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+int isalnum(int c) { return isdigit(c) || isalpha(c); }
+int isspace(int c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v'; }
+int tolower(int c) { return (c >= 'A' && c <= 'Z') ? c + 32 : c; }
+int toupper(int c) { return (c >= 'a' && c <= 'z') ? c - 32 : c; }
+int ispunct(int c) { return (c >= 33 && c <= 47) || (c >= 58 && c <= 64) || (c >= 91 && c <= 96) || (c >= 123 && c <= 126); }
+int isupper(int c) { return c >= 'A' && c <= 'Z'; }
+int islower(int c) { return c >= 'a' && c <= 'z'; }
+
+int abs(int x) { return x < 0 ? -x : x; }
+
+double strtod(const char *nptr, char **endptr) {
+    double result = 0.0;
+    int sign = 1;
+    const char *p = nptr;
+
+    while (isspace(*p)) p++;
+    if (*p == '-') { sign = -1; p++; }
+    else if (*p == '+') p++;
+
+    while (isdigit(*p)) { result = result * 10.0 + (*p - '0'); p++; }
+
+    if (*p == '.') {
+        double frac = 0.1;
+        p++;
+        while (isdigit(*p)) { result += (*p - '0') * frac; frac *= 0.1; p++; }
+    }
+
+    if (*p == 'e' || *p == 'E') {
+        int esign = 1;
+        int exp = 0;
+        double mult;
+        int i;
+        p++;
+        if (*p == '-') { esign = -1; p++; }
+        else if (*p == '+') p++;
+        while (isdigit(*p)) { exp = exp * 10 + (*p - '0'); p++; }
+        mult = 1.0;
+        for (i = 0; i < exp; i++) mult *= 10.0;
+        if (esign < 0) result /= mult;
+        else result *= mult;
+    }
+
+    if (endptr) *endptr = (char *)p;
+    return result * sign;
+}
+
+long long strtoll(const char *nptr, char **endptr, int base) {
+    long long result = 0;
+    int sign = 1;
+    const char *p = nptr;
+    (void)base; /* only base-10 needed */
+
+    while (isspace(*p)) p++;
+    if (*p == '-') { sign = -1; p++; }
+    else if (*p == '+') p++;
+
+    while (isdigit(*p)) { result = result * 10 + (*p - '0'); p++; }
+    if (endptr) *endptr = (char *)p;
+    return result * sign;
+}
+
+unsigned long strtoul(const char *nptr, char **endptr, int base) {
+    unsigned long result = 0;
+    const char *p = nptr;
+    (void)base;
+
+    while (isspace(*p)) p++;
+    if (*p == '+') p++;
+
+    while (isdigit(*p)) { result = result * 10 + (*p - '0'); p++; }
+    if (endptr) *endptr = (char *)p;
+    return result;
+}
+
+/* Minimal snprintf — handles %s, %d, %u, %zu, %ld, %lu, %c, %p, %%, %x, %02x, %f */
+int vsnprintf(char *buf, size_t size, const char *fmt, __builtin_va_list ap) {
+    size_t pos = 0;
+    char tmp[64];
+
+    if (!buf || size == 0) return 0;
+
+#define PUT(c) do { if (pos + 1 < size) buf[pos] = (c); pos++; } while(0)
+
+    while (*fmt) {
+        if (*fmt != '%') { PUT(*fmt); fmt++; continue; }
+        fmt++;
+
+        /* Flags/width — skip for simplicity */
+        int zero_pad = 0, width = 0;
+        if (*fmt == '0') { zero_pad = 1; fmt++; }
+        while (*fmt >= '0' && *fmt <= '9') { width = width * 10 + (*fmt - '0'); fmt++; }
+
+        /* Length modifiers */
+        int is_long = 0;
+        if (*fmt == 'l') { is_long = 1; fmt++; if (*fmt == 'l') { is_long = 2; fmt++; } }
+        else if (*fmt == 'z') { is_long = 1; fmt++; }
+
+        switch (*fmt) {
+        case 's': {
+            const char *s = __builtin_va_arg(ap, const char *);
+            if (!s) s = "(null)";
+            while (*s) { PUT(*s); s++; }
+            break;
+        }
+        case 'd': case 'i': {
+            long long v = is_long >= 2 ? __builtin_va_arg(ap, long long)
+                        : is_long ? (long long)__builtin_va_arg(ap, long)
+                        : (long long)__builtin_va_arg(ap, int);
+            int n = i64_to_buf(v, tmp, sizeof(tmp));
+            int pad = width > n ? width - n : 0;
+            while (pad-- > 0) PUT(zero_pad ? '0' : ' ');
+            for (int j = 0; j < n; j++) PUT(tmp[j]);
+            break;
+        }
+        case 'u': {
+            unsigned long long v = is_long >= 2 ? __builtin_va_arg(ap, unsigned long long)
+                                 : is_long ? (unsigned long long)__builtin_va_arg(ap, unsigned long)
+                                 : (unsigned long long)__builtin_va_arg(ap, unsigned int);
+            int n = i64_to_buf((int64_t)v, tmp, sizeof(tmp));
+            int pad = width > n ? width - n : 0;
+            while (pad-- > 0) PUT(zero_pad ? '0' : ' ');
+            for (int j = 0; j < n; j++) PUT(tmp[j]);
+            break;
+        }
+        case 'x': case 'X': {
+            unsigned long v = is_long ? __builtin_va_arg(ap, unsigned long)
+                                      : (unsigned long)__builtin_va_arg(ap, unsigned int);
+            const char *hex = (*fmt == 'X') ? "0123456789ABCDEF" : "0123456789abcdef";
+            int n = 0;
+            if (v == 0) { tmp[n++] = '0'; }
+            else { char r[16]; int ri = 0; while (v) { r[ri++] = hex[v & 0xf]; v >>= 4; } while (ri > 0) tmp[n++] = r[--ri]; }
+            int pad = width > n ? width - n : 0;
+            while (pad-- > 0) PUT(zero_pad ? '0' : ' ');
+            for (int j = 0; j < n; j++) PUT(tmp[j]);
+            break;
+        }
+        case 'f': {
+            double v = __builtin_va_arg(ap, double);
+            int n = f64_to_buf(v, tmp, sizeof(tmp));
+            for (int j = 0; j < n; j++) PUT(tmp[j]);
+            break;
+        }
+        case 'c': { char c = (char)__builtin_va_arg(ap, int); PUT(c); break; }
+        case 'p': { __builtin_va_arg(ap, void*); PUT('0'); PUT('x'); PUT('?'); break; }
+        case '%': { PUT('%'); break; }
+        default: PUT('%'); PUT(*fmt); break;
+        }
+        fmt++;
+    }
+#undef PUT
+    if (pos < size) buf[pos] = '\0';
+    else if (size > 0) buf[size - 1] = '\0';
+    return (int)pos;
+}
+
+int snprintf(char *buf, size_t size, const char *fmt, ...) {
+    __builtin_va_list ap;
+    __builtin_va_start(ap, fmt);
+    int r = vsnprintf(buf, size, fmt, ap);
+    __builtin_va_end(ap);
+    return r;
+}
+
+int sprintf(char *buf, const char *fmt, ...) {
+    __builtin_va_list ap;
+    __builtin_va_start(ap, fmt);
+    int r = vsnprintf(buf, 0x7fffffff, fmt, ap);
+    __builtin_va_end(ap);
+    return r;
+}
+
+int printf(const char *fmt, ...) {
+    char buf[2048];
+    __builtin_va_list ap;
+    __builtin_va_start(ap, fmt);
+    int n = vsnprintf(buf, sizeof(buf), fmt, ap);
+    __builtin_va_end(ap);
+    if (n > 0) host_log(buf, (uint32_t)n);
+    return n;
+}
+
+int fprintf(void *stream, const char *fmt, ...) {
+    (void)stream;
+    char buf[2048];
+    __builtin_va_list ap;
+    __builtin_va_start(ap, fmt);
+    int n = vsnprintf(buf, sizeof(buf), fmt, ap);
+    __builtin_va_end(ap);
+    if (n > 0) host_log(buf, (uint32_t)n);
+    return n;
+}
+
+size_t fwrite(const void *ptr, size_t size, size_t count, void *stream) {
+    (void)stream;
+    size_t total = size * count;
+    if (total > 0 && ptr) host_output((const char *)ptr, (uint32_t)total);
+    return count;
+}
+
+/* malloc/free/realloc/calloc backed by the bump allocator.
+   free is a no-op — memory is reclaimed on mot_reset_alloc. */
+
+void *malloc(size_t size) { return heap_alloc(size); }
+void free(void *ptr) { (void)ptr; }
+void *calloc(size_t count, size_t size) {
+    void *p = heap_alloc(count * size);
+    if (p) memset(p, 0, count * size);
+    return p;
+}
+void *realloc(void *ptr, size_t new_size) {
+    /* Bump allocator: allocate new, copy old data.
+       We don't know old size, so copy new_size bytes (may over-read but safe within heap). */
+    void *new_ptr = heap_alloc(new_size);
+    if (new_ptr && ptr) memcpy(new_ptr, ptr, new_size);
+    return new_ptr;
 }
 
 static uint32_t align8(uint32_t n) {
@@ -1400,4 +1661,79 @@ WASM_EXPORT void mot_free(void) {
     g_vm = NULL;
     g_state = STATE_IDLE;
     pending_clear();
+}
+
+/* ================================================================
+ * Compiler exports — compile .mot source to bytecode in-browser
+ * ================================================================ */
+
+static uint8_t *g_compiled_bc = NULL;
+static uint32_t g_compiled_bc_len = 0;
+static char    *g_compiled_css = NULL;
+static uint32_t g_compiled_css_len = 0;
+static char     g_compile_error[4096] = {0};
+static uint32_t g_compile_error_len = 0;
+
+WASM_EXPORT uint32_t mot_wasm_compile(uint32_t src_ptr, uint32_t src_len) {
+    const char *source = (const char *)(uintptr_t)src_ptr;
+    MotCompileResult result;
+
+    g_compiled_bc = NULL;
+    g_compiled_bc_len = 0;
+    g_compiled_css = NULL;
+    g_compiled_css_len = 0;
+    g_compile_error[0] = '\0';
+    g_compile_error_len = 0;
+
+    result = mot_compile(source, (size_t)src_len);
+
+    if (result.errors.count > 0) {
+        /* Copy first error message */
+        const char *msg = result.errors.errors[0].message;
+        if (msg) {
+            uint32_t len = (uint32_t)strlen(msg);
+            if (len >= sizeof(g_compile_error)) len = sizeof(g_compile_error) - 1;
+            memcpy(g_compile_error, msg, len);
+            g_compile_error[len] = '\0';
+            g_compile_error_len = len;
+        }
+        mot_result_free(&result);
+        return 1; /* error */
+    }
+
+    g_compiled_bc = result.bytecode;
+    g_compiled_bc_len = (uint32_t)result.bytecode_len;
+
+    if (result.css) {
+        g_compiled_css = result.css;
+        g_compiled_css_len = (uint32_t)strlen(result.css);
+    }
+
+    /* Don't free result — we need the pointers alive.
+       Memory is reclaimed on next mot_reset_alloc(). */
+    return 0; /* ok */
+}
+
+WASM_EXPORT uint32_t mot_wasm_get_bytecode_ptr(void) {
+    return (uint32_t)(uintptr_t)g_compiled_bc;
+}
+
+WASM_EXPORT uint32_t mot_wasm_get_bytecode_len(void) {
+    return g_compiled_bc_len;
+}
+
+WASM_EXPORT uint32_t mot_wasm_get_error_ptr(void) {
+    return (uint32_t)(uintptr_t)g_compile_error;
+}
+
+WASM_EXPORT uint32_t mot_wasm_get_error_len(void) {
+    return g_compile_error_len;
+}
+
+WASM_EXPORT uint32_t mot_wasm_get_css_ptr(void) {
+    return (uint32_t)(uintptr_t)g_compiled_css;
+}
+
+WASM_EXPORT uint32_t mot_wasm_get_css_len(void) {
+    return g_compiled_css_len;
 }

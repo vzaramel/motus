@@ -80,7 +80,25 @@ case "$TARGET" in
             -o "$BUILD_DIR/mot-runtime.wasm" \
             "$SRC_DIR/wasm_vm.c" \
             "$CORE_DIR/runtime/vm.c" \
-            "$CORE_DIR/compiler/bytecode.c"
+            "$CORE_DIR/compiler/bytecode.c" \
+            "$CORE_DIR/compiler/compiler.c" \
+            "$CORE_DIR/compiler/partial_eval.c" \
+            "$CORE_DIR/lexer/lexer.c" \
+            "$CORE_DIR/parser/parser.c" \
+            "$CORE_DIR/parser/ast.c" \
+            "$CORE_DIR/analyzer/analyzer.c" \
+            "$CORE_DIR/analyzer/scope.c" \
+            "$CORE_DIR/analyzer/types.c" \
+            "$CORE_DIR/analyzer/deps.c" \
+            "$CORE_DIR/codegen/codegen.c" \
+            "$CORE_DIR/codegen/css.c" \
+            "$CORE_DIR/debug/sourcemap.c" \
+            "$CORE_DIR/linker/bytecode_linker.c" \
+            "$CORE_DIR/util/arena.c" \
+            "$CORE_DIR/util/hash.c" \
+            "$CORE_DIR/util/vec.c" \
+            "$CORE_DIR/util/str.c" \
+            "$CORE_DIR/mot.c"
 
         echo "Built: $BUILD_DIR/mot-runtime.wasm"
         ls -lh "$BUILD_DIR/mot-runtime.wasm"
@@ -112,7 +130,25 @@ case "$TARGET" in
             -o "$BUILD_DIR/mot-runtime.wasm" \
             "$SRC_DIR/wasm_vm.c" \
             "$CORE_DIR/runtime/vm.c" \
-            "$CORE_DIR/compiler/bytecode.c"
+            "$CORE_DIR/compiler/bytecode.c" \
+            "$CORE_DIR/compiler/compiler.c" \
+            "$CORE_DIR/compiler/partial_eval.c" \
+            "$CORE_DIR/lexer/lexer.c" \
+            "$CORE_DIR/parser/parser.c" \
+            "$CORE_DIR/parser/ast.c" \
+            "$CORE_DIR/analyzer/analyzer.c" \
+            "$CORE_DIR/analyzer/scope.c" \
+            "$CORE_DIR/analyzer/types.c" \
+            "$CORE_DIR/analyzer/deps.c" \
+            "$CORE_DIR/codegen/codegen.c" \
+            "$CORE_DIR/codegen/css.c" \
+            "$CORE_DIR/debug/sourcemap.c" \
+            "$CORE_DIR/linker/bytecode_linker.c" \
+            "$CORE_DIR/util/arena.c" \
+            "$CORE_DIR/util/hash.c" \
+            "$CORE_DIR/util/vec.c" \
+            "$CORE_DIR/util/str.c" \
+            "$CORE_DIR/mot.c"
 
         echo "Built: $BUILD_DIR/mot-runtime.wasm (debug)"
         ls -lh "$BUILD_DIR/mot-runtime.wasm"

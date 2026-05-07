@@ -2,6 +2,10 @@
  * Arena allocator implementation
  */
 
+#ifdef MOT_WASM_FREESTANDING
+/* In freestanding WASM builds, arena is implemented in wasm_vm.c */
+#else
+
 #include "arena.h"
 #include <stdlib.h>
 #include <string.h>
@@ -127,3 +131,5 @@ void arena_reset(Arena *arena) {
 size_t arena_total_allocated(Arena *arena) {
     return arena ? arena->total_allocated : 0;
 }
+
+#endif /* MOT_WASM_FREESTANDING */

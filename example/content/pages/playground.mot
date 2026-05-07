@@ -143,6 +143,7 @@
             var outputEl = document.getElementById('playground-output');
             var runButton = document.getElementById('playground-run');
             var editor = null;
+            var motWasm = null;
             var ACE_CDN_URL = 'https://cdn.jsdelivr.net/npm/ace-builds@1.36.2/src-min-noconflict/ace.js';
 
             if (!form || !editorEl || !sourceEl || !statusEl || !outputEl || !runButton) return;
@@ -151,18 +152,18 @@
                 '<defcomp DemoCard | title, body |>',
                 '    <style>',
                 '        .demo-card {',
-                '            border: 1px solid #cbd5e1;',
+                '            border: 1px solid rgba(0,255,179,0.15);',
                 '            border-radius: 10px;',
                 '            padding: 14px;',
-                '            background: #ffffff;',
+                '            background: #152436;',
                 '        }',
                 '        .demo-card h3 {',
                 '            margin: 0 0 8px 0;',
-                '            color: #0f172a;',
+                '            color: #e8f0ec;',
                 '        }',
                 '        .demo-card p {',
                 '            margin: 0;',
-                '            color: #334155;',
+                '            color: rgba(232,240,236,0.6);',
                 '            line-height: 1.5;',
                 '        }',
                 '    </style>',
@@ -173,28 +174,130 @@
                 '</defcomp>',
                 '',
                 '<DemoCard',
-                '    title="Playground Works"',
-                '    body="Compiled at origin and rendered at edge through wasm VM." />'
+                '    title="Hello from Motus"',
+                '    body="Compiled and rendered entirely by WASM." />'
             ].join('\n');
 
             sourceEl.value = defaultSource;
 
+            /* ===== WASM compiler + VM ===== */
+            function findWasmUrl() {
+                var path = window.location.pathname;
+                if (path.indexOf('/motus/') === 0) return '/motus/mot-runtime.wasm';
+                return '/mot-runtime.wasm';
+            }
+
+            async function loadMotusWasm() {
+                var htmlBuf = '';
+
+                var imports = {
+                    env: {
+                        host_output: function(ptr, len) {
+                            var bytes = new Uint8Array(motWasm.memory.buffer, ptr, len);
+                            htmlBuf += new TextDecoder().decode(bytes);
+                        },
+                        host_output_text: function(ptr, len) {
+                            var bytes = new Uint8Array(motWasm.memory.buffer, ptr, len);
+                            var text = new TextDecoder().decode(bytes);
+                            htmlBuf += text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                        },
+                        host_error: function(ptr, len) {
+                            var bytes = new Uint8Array(motWasm.memory.buffer, ptr, len);
+                            console.error('[mot]', new TextDecoder().decode(bytes));
+                        },
+                        host_log: function(ptr, len) {
+                            var bytes = new Uint8Array(motWasm.memory.buffer, ptr, len);
+                            console.log('[mot]', new TextDecoder().decode(bytes));
+                        },
+                        host_render_complete: function() {},
+                        host_dep_start: function() {},
+                        host_dep_end: function() {},
+                        host_component_start: function() {},
+                        host_component_end: function() {},
+                        host_slot_default_start: function() {},
+                        host_slot_default_end: function() {},
+                        host_debug_step: function() {},
+                        host_fetch_data: function() {
+                            console.warn('[mot] Data queries not supported');
+                        },
+                        host_load_component: function() {
+                            console.warn('[mot] Dynamic components not supported');
+                        },
+                        host_load_component_linked: function() {
+                            console.warn('[mot] Linked components not supported');
+                        }
+                    }
+                };
+
+                var wasmUrl = findWasmUrl();
+                var result = await WebAssembly.instantiateStreaming(fetch(wasmUrl), imports);
+                var ex = result.instance.exports;
+
+                motWasm = {
+                    memory: ex.memory,
+                    exports: ex,
+                    compile: function(source) {
+                        ex.mot_reset_alloc();
+                        var enc = new TextEncoder().encode(source);
+                        var ptr = ex.mot_alloc(enc.length + 1);
+                        if (!ptr) return { error: 'Failed to allocate memory' };
+                        new Uint8Array(ex.memory.buffer, ptr, enc.length).set(enc);
+                        new Uint8Array(ex.memory.buffer)[ptr + enc.length] = 0;
+
+                        var rc = ex.mot_wasm_compile(ptr, enc.length);
+                        if (rc !== 0) {
+                            var ePtr = ex.mot_wasm_get_error_ptr();
+                            var eLen = ex.mot_wasm_get_error_len();
+                            var errMsg = eLen > 0
+                                ? new TextDecoder().decode(new Uint8Array(ex.memory.buffer, ePtr, eLen))
+                                : 'Unknown compilation error';
+                            return { error: errMsg };
+                        }
+
+                        var bcPtr = ex.mot_wasm_get_bytecode_ptr();
+                        var bcLen = ex.mot_wasm_get_bytecode_len();
+                        var bytecode = new Uint8Array(ex.memory.buffer, bcPtr, bcLen).slice();
+
+                        var cssPtr = ex.mot_wasm_get_css_ptr();
+                        var cssLen = ex.mot_wasm_get_css_len();
+                        var css = cssLen > 0
+                            ? new TextDecoder().decode(new Uint8Array(ex.memory.buffer, cssPtr, cssLen))
+                            : '';
+
+                        return { bytecode: bytecode, css: css };
+                    },
+                    render: function(bytecode) {
+                        htmlBuf = '';
+                        ex.mot_reset_alloc();
+
+                        var ptr = ex.mot_alloc(bytecode.length);
+                        if (!ptr) return { error: 'Failed to allocate memory for bytecode' };
+                        new Uint8Array(ex.memory.buffer, ptr, bytecode.length).set(bytecode);
+
+                        var rc = ex.mot_init(ptr, bytecode.length);
+                        if (rc !== 0) return { error: 'Failed to initialize VM' };
+
+                        rc = ex.mot_render();
+                        if (rc !== 0 && rc !== -2) return { error: 'Render failed (code ' + rc + ')' };
+
+                        return { html: htmlBuf };
+                    }
+                };
+
+                return motWasm;
+            }
+
+            /* ===== Ace editor ===== */
             function setupAceEditor() {
                 editor = window.ace.edit('playground-editor');
                 editor.session.setMode('ace/mode/html');
                 editor.setTheme('ace/theme/tomorrow_night');
-                editor.setOptions({
-                    fontSize: '13px',
-                    showPrintMargin: false,
-                    useWorker: false,
-                });
+                editor.setOptions({ fontSize: '13px', showPrintMargin: false, useWorker: false });
                 editor.setValue(defaultSource, -1);
                 editor.commands.addCommand({
                     name: 'run-playground',
                     bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
-                    exec: function () {
-                        runPlayground();
-                    },
+                    exec: function () { runPlayground(); }
                 });
                 editorEl.style.display = 'block';
                 sourceEl.style.display = 'none';
@@ -231,11 +334,16 @@
                 });
             }
 
-            async function runPlayground() {
+            /* ===== Compile + render ===== */
+            function runPlayground() {
                 var source = readSource();
                 if (!source.trim()) {
                     statusEl.textContent = 'Source is empty.';
                     outputEl.innerHTML = '';
+                    return;
+                }
+                if (!motWasm) {
+                    statusEl.textContent = 'WASM not loaded yet...';
                     return;
                 }
 
@@ -243,43 +351,49 @@
                 statusEl.textContent = 'Compiling...';
 
                 try {
-                    var response = await fetch('/_mot/playground/render', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ source: source }),
-                    });
-                    var payload = await response.json().catch(function () { return {}; });
-                    if (!response.ok) {
-                        throw new Error(payload.error || ('Request failed with status ' + response.status));
+                    var compiled = motWasm.compile(source);
+                    if (compiled.error) {
+                        statusEl.textContent = 'Error: ' + compiled.error;
+                        outputEl.innerHTML = '';
+                        runButton.disabled = false;
+                        return;
                     }
-                    outputEl.innerHTML = payload.html || '';
-                    statusEl.textContent = 'Done';
+
+                    var rendered = motWasm.render(compiled.bytecode);
+                    if (rendered.error) {
+                        statusEl.textContent = 'Render error: ' + rendered.error;
+                        outputEl.innerHTML = '';
+                        runButton.disabled = false;
+                        return;
+                    }
+
+                    var html = '';
+                    if (compiled.css) html += '<style>' + compiled.css + '</style>';
+                    html += rendered.html;
+                    outputEl.innerHTML = html;
+                    statusEl.textContent = 'Done (' + compiled.bytecode.length + ' bytes bytecode)';
                 } catch (err) {
-                    statusEl.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+                    statusEl.textContent = 'Error: ' + (err.message || String(err));
                     outputEl.innerHTML = '';
                 } finally {
                     runButton.disabled = false;
                 }
             }
 
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                runPlayground();
+            form.addEventListener('submit', function (e) { e.preventDefault(); runPlayground(); });
+            runButton.addEventListener('click', function () { runPlayground(); });
+            sourceEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runPlayground(); }
             });
 
-            runButton.addEventListener('click', function () {
+            /* Boot: load WASM + Ace, then auto-run */
+            statusEl.textContent = 'Loading compiler...';
+            Promise.all([loadMotusWasm(), loadAceEditorIfNeeded()]).then(function () {
+                statusEl.textContent = 'Ready';
                 runPlayground();
+            }).catch(function (err) {
+                statusEl.textContent = 'Failed to load WASM: ' + (err.message || String(err));
             });
-
-            sourceEl.addEventListener('keydown', function (event) {
-                var isEnter = event.key === 'Enter';
-                if (!isEnter) return;
-                if (!event.ctrlKey && !event.metaKey) return;
-                event.preventDefault();
-                runPlayground();
-            });
-
-            loadAceEditorIfNeeded().then(runPlayground);
         })();
     </script>
 </Layout>

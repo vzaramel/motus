@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Documentation — Motus</title>
-    <meta name="description" content="Motus is a compiled XML-based template language for streaming HTML from the edge.">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230a1520'/><circle cx='16' cy='16' r='4' fill='%2300ffb3'/></svg>">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - Motus</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 </head>
 <body>
 <style>
@@ -501,27 +500,5 @@
 </style><footer class="footer"><div class="footer-inner"><div><div class="footer-brand"><span class="footer-brand-dot"></span>
                 Motus
             </div><p class="footer-desc">A compiled XML language for streaming HTML from the edge. Bytecode today, WASM everywhere tomorrow.</p></div><div class="footer-col"><h5>Pages</h5><a href="/motus/">Home</a><a href="/motus/docs">Docs</a></div><div class="footer-col"><h5>Tools</h5><a href="/motus/playground">Playground</a></div></div><div class="footer-bottom"><p>Powered by Motus &mdash; Streaming HTML from the Edge</p></div></footer>
-<!-- Motus Edge Runtime | vm: wasm | 53206 bytes | deps: none -->
-<script data-mot-dev="live-reload">
-(function() {
-  var es, timer;
-  function connect() {
-    es = new EventSource('/_mot/dev/events');
-    es.addEventListener('change', function() {
-      console.log('[mot-dev] Content changed, reloading...');
-      window.location.reload();
-    });
-    es.addEventListener('connected', function() {
-      console.log('[mot-dev] Live-reload connected');
-    });
-    es.onerror = function() {
-      es.close();
-      clearTimeout(timer);
-      timer = setTimeout(connect, 2000);
-    };
-  }
-  connect();
-})();
-</script>
 </body>
 </html>
