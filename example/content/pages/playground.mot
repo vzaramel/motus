@@ -306,10 +306,39 @@
         .waterfall-bar.transfer-oe { background: #00ffb3; }
         .waterfall-bar.render { background: #ff9944; }
         .waterfall-bar.stream-eb { background: #aa66ff; }
+        .waterfall-bar.data { background: #44ddaa; }
+        .waterfall-bar.component { background: #ff8844; }
         .waterfall-time {
             font-size: 0.68em;
             color: rgba(232,240,236,0.4);
             min-width: 45px;
+        }
+        .waterfall-cache {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .waterfall-cache.hit { background: #00ffb3; box-shadow: 0 0 4px rgba(0,255,179,0.4); }
+        .waterfall-cache.miss { background: #ff4444; box-shadow: 0 0 4px rgba(255,68,68,0.4); }
+
+        .pipeline-reset-btn {
+            background: rgba(255,100,100,0.08);
+            border: 1px solid rgba(255,100,100,0.2);
+            color: rgba(255,100,100,0.7);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 0.78em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .pipeline-reset-btn:hover {
+            background: rgba(255,100,100,0.15);
+        }
+        .pipeline-cache-stats {
+            font-size: 0.75em;
+            color: rgba(232,240,236,0.4);
+            margin-left: auto;
         }
 
         @media (max-width: 980px) {
@@ -351,6 +380,8 @@
             <div class="pipeline-controls">
                 <span id="sim-latency-wrap"></span>
                 <span id="sim-chunk-wrap"></span>
+                <button type="button" id="pipeline-reset" class="pipeline-reset-btn">Reset Cache</button>
+                <span id="pipeline-cache-stats" class="pipeline-cache-stats"></span>
             </div>
 
             <div class="pipeline-diagram">
@@ -383,28 +414,7 @@
                 </div>
             </div>
 
-            <div class="pipeline-waterfall" id="pipeline-waterfall">
-                <div class="waterfall-row">
-                    <span class="waterfall-label">Compile</span>
-                    <div class="waterfall-track"><div class="waterfall-bar compile" id="wf-compile"></div></div>
-                    <span class="waterfall-time" id="wf-compile-t"></span>
-                </div>
-                <div class="waterfall-row">
-                    <span class="waterfall-label" id="wf-transfer-label"></span>
-                    <div class="waterfall-track"><div class="waterfall-bar transfer-oe" id="wf-transfer"></div></div>
-                    <span class="waterfall-time" id="wf-transfer-t"></span>
-                </div>
-                <div class="waterfall-row">
-                    <span class="waterfall-label">Render</span>
-                    <div class="waterfall-track"><div class="waterfall-bar render" id="wf-render"></div></div>
-                    <span class="waterfall-time" id="wf-render-t"></span>
-                </div>
-                <div class="waterfall-row">
-                    <span class="waterfall-label">Stream</span>
-                    <div class="waterfall-track"><div class="waterfall-bar stream-eb" id="wf-stream"></div></div>
-                    <span class="waterfall-time" id="wf-stream-t"></span>
-                </div>
-            </div>
+            <div class="pipeline-waterfall" id="pipeline-waterfall"></div>
         </div>
 
         <section class="playground-grid">
@@ -463,6 +473,37 @@
                 '    body="Compiled and rendered entirely by WASM." />'
             ].join('\n');
 
+            /* CRM demo source for pipeline mode */
+            var crmSource = [
+                '<let contacts select * from contacts order by name>',
+                '',
+                '<style>',
+                '    .crm-grid { display: grid; gap: 12px; }',
+                '    .contact-card {',
+                '        border: 1px solid rgba(0,255,179,0.15);',
+                '        border-radius: 10px;',
+                '        padding: 16px;',
+                '        background: #152436;',
+                '    }',
+                '    .contact-card h3 { margin: 0 0 4px; color: #e8f0ec; }',
+                '    .contact-info { color: rgba(232,240,236,0.5); font-size: 0.9em; margin: 0; }',
+                '    .crm-title { color: #e8f0ec; margin: 0 0 16px; }',
+                '    .crm-subtitle { color: rgba(232,240,236,0.5); margin: 0 0 20px; font-size: 0.9em; }',
+                '</style>',
+                '',
+                '<h2 class="crm-title">CRM Dashboard</h2>',
+                '<p class="crm-subtitle">Contact data fetched from SQLite (sql.js) via the simulated origin server.</p>',
+                '<div class="crm-grid">',
+                '    <for contact in contacts>',
+                '        <div class="contact-card">',
+                '            <h3><output contact.name></h3>',
+                '            <p class="contact-info"><output contact.email></p>',
+                '            <p class="contact-info"><output contact.company></p>',
+                '        </div>',
+                '    </for>',
+                '</div>'
+            ].join('\n');
+
             sourceEl.value = defaultSource;
 
             /* ===== Inject text with "in" keyword (parser workaround) ===== */
@@ -478,9 +519,11 @@
 
             /* Inject <select> elements via JS (parser reserves "select" as SQL keyword) */
             document.getElementById('playground-mode-wrap').innerHTML = '<select id="playground-mode" class="playground-select"><option value="direct">Direct (WASM)</option><option value="pipeline">Pipeline Simulation</option></select>';
-            document.getElementById('sim-latency-wrap').innerHTML = '<label>Latency: <select id="sim-latency" class="playground-select"><option value="0">None</option><option value="200">200ms</option><option value="500" selected>500ms</option><option value="1000">1s</option><option value="2000">2s</option></select></label>';
+            document.getElementById('sim-latency-wrap').innerHTML = '<label>Latency: <select id="sim-latency" class="playground-select"><option value="0">None</option><option value="200" selected>200ms</option><option value="500">500ms</option><option value="1000">1s</option><option value="2000">2s</option></select></label>';
             document.getElementById('sim-chunk-wrap').innerHTML = '<label>Chunks: <select id="sim-chunk" class="playground-select"><option value="64">64 B</option><option value="128">128 B</option><option value="256" selected>256 B</option><option value="512">512 B</option></select></label>';
             var modeSelect = document.getElementById('playground-mode');
+            var resetBtn = document.getElementById('pipeline-reset');
+            var cacheStatsEl = document.getElementById('pipeline-cache-stats');
 
             /* ===== WASM compiler + VM ===== */
             function findWasmUrl() {
@@ -707,12 +750,7 @@
                     var p = document.getElementById('packet-' + id);
                     if (p) p.classList.remove('animating');
                 });
-                ['wf-compile', 'wf-transfer', 'wf-render', 'wf-stream'].forEach(function(id) {
-                    var bar = document.getElementById(id);
-                    if (bar) bar.style.width = '0';
-                    var t = document.getElementById(id + '-t');
-                    if (t) t.textContent = '';
-                });
+                document.getElementById('pipeline-waterfall').innerHTML = '';
             }
 
             function animatePacket(linkId) {
@@ -728,7 +766,6 @@
                         resolve();
                     }
                     pkt.addEventListener('animationend', done);
-                    /* fallback if animation doesn't fire */
                     setTimeout(function() { pkt.classList.remove('animating'); resolve(); }, 600);
                 });
             }
@@ -741,11 +778,42 @@
                 }
             }
 
-            function setWaterfall(id, ms, maxMs) {
-                var bar = document.getElementById(id);
-                var t = document.getElementById(id + '-t');
-                if (bar) bar.style.width = Math.max(4, (ms / maxMs) * 100) + '%';
-                if (t) t.textContent = Math.round(ms) + 'ms';
+            function buildWaterfallRow(label, barClass, ms, maxMs, cacheStatus) {
+                var row = document.createElement('div');
+                row.className = 'waterfall-row';
+                var lbl = document.createElement('span');
+                lbl.className = 'waterfall-label';
+                lbl.textContent = label;
+                row.appendChild(lbl);
+                if (cacheStatus !== undefined) {
+                    var dot = document.createElement('span');
+                    dot.className = 'waterfall-cache ' + (cacheStatus ? 'hit' : 'miss');
+                    dot.title = cacheStatus ? 'Cache HIT' : 'Cache MISS';
+                    row.appendChild(dot);
+                }
+                var track = document.createElement('div');
+                track.className = 'waterfall-track';
+                var bar = document.createElement('div');
+                bar.className = 'waterfall-bar ' + barClass;
+                track.appendChild(bar);
+                row.appendChild(track);
+                var time = document.createElement('span');
+                time.className = 'waterfall-time';
+                time.textContent = Math.round(ms) + 'ms';
+                row.appendChild(time);
+                /* animate bar width */
+                requestAnimationFrame(function() {
+                    bar.style.width = Math.max(4, (ms / maxMs) * 100) + '%';
+                });
+                return row;
+            }
+
+            function updateCacheStats(stats) {
+                if (!cacheStatsEl || !stats) return;
+                var parts = [];
+                if (stats.bcHit || stats.bcMiss) parts.push('BC ' + stats.bcHit + '/' + (stats.bcHit + stats.bcMiss));
+                if (stats.dataHit || stats.dataMiss) parts.push('Data ' + stats.dataHit + '/' + (stats.dataHit + stats.dataMiss));
+                cacheStatsEl.textContent = parts.length ? 'Cache hits: ' + parts.join(' | ') : '';
             }
 
             function simBaseUrl() {
@@ -791,14 +859,16 @@
 
                     var compileResp = await fetch(base + '/compile', {
                         method: 'POST',
-                        body: source,
                         headers: {
+                            'Content-Type': 'application/json',
                             'X-Sim-Latency-Ms': latency,
                             'X-Sim-Chunk-Size': chunkSize
-                        }
+                        },
+                        body: JSON.stringify({ source: source, components: {} })
                     });
 
                     times.compile = performance.now() - t0;
+                    var compileCache = compileResp.headers.get('X-Cache');
 
                     if (!compileResp.ok) {
                         var errBody = await compileResp.json().catch(function() { return { error: 'Compile failed' }; });
@@ -817,7 +887,8 @@
                         ? new TextDecoder().decode(new Uint8Array(compileBuf, 4 + bcLen))
                         : '';
 
-                    setNodeStatus('origin', 'Done \u2022 ' + bcLen + 'B');
+                    var cacheTag = compileCache === 'HIT' ? ' [cached]' : '';
+                    setNodeStatus('origin', bcLen + 'B' + cacheTag);
                     setNodeState('origin', 'done');
 
                     /* Phase 3: Origin sends bytecode to Edge */
@@ -826,7 +897,7 @@
                     times.transfer = performance.now() - t1;
                     showTiming('oe', times.compile + times.transfer);
 
-                    /* Phase 4: Edge renders bytecode */
+                    /* Phase 4: Edge renders bytecode (with data fetching + component loading) */
                     setNodeState('edge', 'active');
                     setNodeStatus('edge', 'Rendering...');
                     var t2 = performance.now();
@@ -839,6 +910,16 @@
                             'X-Sim-Chunk-Size': chunkSize
                         }
                     });
+
+                    /* Read pipeline events from header */
+                    var eventsJson = renderResp.headers.get('X-Pipeline-Events');
+                    var pipelineEvents = [];
+                    try { pipelineEvents = eventsJson ? JSON.parse(eventsJson) : []; } catch(e) {}
+
+                    var cacheStatsJson = renderResp.headers.get('X-Cache-Stats');
+                    var cacheStatsObj = null;
+                    try { cacheStatsObj = cacheStatsJson ? JSON.parse(cacheStatsJson) : null; } catch(e) {}
+                    updateCacheStats(cacheStatsObj);
 
                     /* Phase 5: Edge streams HTML to Browser */
                     if (css) outputEl.innerHTML = '<style>' + css + '</style>';
@@ -862,7 +943,6 @@
                         htmlAccum += chunk;
                         outputEl.innerHTML = htmlAccum;
                         setNodeStatus('browser', 'Chunk ' + chunkCount);
-                        /* fire packet animation for each chunk (non-blocking) */
                         animatePacket('eb');
                     }
 
@@ -874,15 +954,38 @@
                     setNodeStatus('edge', 'Streamed');
                     setNodeStatus('browser', 'Done');
 
+                    /* Summary */
                     var totalMs = times.compile + times.transfer + times.render + times.stream;
-                    statusEl.textContent = 'Pipeline complete \u2022 ' + Math.round(totalMs) + 'ms total \u2022 ' + bcLen + 'B bytecode \u2022 ' + chunkCount + ' chunks';
+                    var dataFetches = pipelineEvents.filter(function(e) { return e.type === 'data'; }).length;
+                    var compLoads = pipelineEvents.filter(function(e) { return e.type === 'component'; }).length;
+                    var summary = Math.round(totalMs) + 'ms total';
+                    summary += ' | ' + bcLen + 'B bytecode | ' + chunkCount + ' chunks';
+                    if (dataFetches) summary += ' | ' + dataFetches + ' data queries';
+                    if (compLoads) summary += ' | ' + compLoads + ' components';
+                    statusEl.textContent = summary;
 
-                    /* Waterfall */
-                    var maxMs = Math.max(times.compile, times.transfer, times.render, times.stream, 1);
-                    setWaterfall('wf-compile', times.compile, maxMs);
-                    setWaterfall('wf-transfer', times.transfer, maxMs);
-                    setWaterfall('wf-render', times.render, maxMs);
-                    setWaterfall('wf-stream', times.stream, maxMs);
+                    /* Build dynamic waterfall */
+                    var wfEl = document.getElementById('pipeline-waterfall');
+                    var allTimes = [times.compile, times.transfer, times.render, times.stream];
+                    pipelineEvents.forEach(function(e) { allTimes.push(e.time || 0); });
+                    var maxMs = Math.max.apply(null, allTimes.concat([1]));
+
+                    wfEl.appendChild(buildWaterfallRow('Compile', 'compile', times.compile, maxMs, compileCache === 'HIT'));
+                    wfEl.appendChild(buildWaterfallRow('Transfer O\u2192E', 'transfer-oe', times.transfer, maxMs));
+
+                    /* Insert data fetch + component load events */
+                    pipelineEvents.forEach(function(ev) {
+                        if (ev.type === 'data') {
+                            var label = 'Query: ' + (ev.name || '?');
+                            if (ev.params && ev.params !== '{}' && ev.params !== '') label += ' (' + ev.params + ')';
+                            wfEl.appendChild(buildWaterfallRow(label, 'data', ev.time || 0, maxMs, ev.cache));
+                        } else if (ev.type === 'component') {
+                            wfEl.appendChild(buildWaterfallRow('Load: ' + (ev.name || '?'), 'component', ev.time || 0, maxMs));
+                        }
+                    });
+
+                    wfEl.appendChild(buildWaterfallRow('Render', 'render', times.render, maxMs));
+                    wfEl.appendChild(buildWaterfallRow('Stream E\u2192B', 'stream-eb', times.stream, maxMs));
 
                 } catch (err) {
                     statusEl.textContent = 'Pipeline error: ' + (err.message || String(err));
@@ -905,10 +1008,25 @@
             modeSelect.addEventListener('change', function () {
                 var isPipeline = modeSelect.value === 'pipeline';
                 pipelineViz.classList.toggle('visible', isPipeline);
-                if (isPipeline && !swReady) {
-                    registerSW();
+                if (isPipeline) {
+                    /* Switch to CRM demo source when entering pipeline mode */
+                    if (editor) editor.setValue(crmSource, -1);
+                    else sourceEl.value = crmSource;
+                    if (!swReady) registerSW();
+                } else {
+                    if (editor) editor.setValue(defaultSource, -1);
+                    else sourceEl.value = defaultSource;
                 }
             });
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function () {
+                    fetch(simBaseUrl() + '/reset', { method: 'POST' }).then(function() {
+                        if (cacheStatsEl) cacheStatsEl.textContent = 'Cache cleared';
+                        resetAllNodes();
+                    });
+                });
+            }
 
             form.addEventListener('submit', function (e) { e.preventDefault(); handleRun(); });
             runButton.addEventListener('click', function () { handleRun(); });
