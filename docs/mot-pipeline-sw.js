@@ -4,12 +4,13 @@
  * Simulates the Origin → Edge pipeline by intercepting synthetic fetch
  * requests and processing them with the WASM compiler + VM.
  *
- *   POST /motus/__mot-sim/compile  →  "Origin" compiles source to bytecode
- *   POST /motus/__mot-sim/render   →  "Edge" renders bytecode to streamed HTML
+ *   POST /__mot-sim/compile  →  "Origin" compiles source to bytecode
+ *   POST /__mot-sim/render   →  "Edge" renders bytecode to streamed HTML
  */
 
 var wasmInstance = null;
 var htmlBuf = '';
+var wasmReady = null; /* Promise resolved when WASM is loaded */
 
 function findWasmUrl() {
     return self.location.pathname.replace('mot-pipeline-sw.js', 'mot-runtime.wasm');
@@ -19,37 +20,52 @@ function sleep(ms) {
     return new Promise(function (r) { setTimeout(r, ms); });
 }
 
-async function loadWasm() {
-    var imports = {
-        env: {
-            host_output: function (ptr, len) {
-                var bytes = new Uint8Array(wasmInstance.memory.buffer, ptr, len);
-                htmlBuf += new TextDecoder().decode(bytes);
-            },
-            host_output_text: function (ptr, len) {
-                var bytes = new Uint8Array(wasmInstance.memory.buffer, ptr, len);
-                var t = new TextDecoder().decode(bytes);
-                htmlBuf += t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            },
-            host_error: function () {},
-            host_log: function () {},
-            host_render_complete: function () {},
-            host_dep_start: function () {},
-            host_dep_end: function () {},
-            host_component_start: function () {},
-            host_component_end: function () {},
-            host_slot_default_start: function () {},
-            host_slot_default_end: function () {},
-            host_debug_step: function () {},
-            host_fetch_data: function () {},
-            host_load_component: function () {},
-            host_load_component_linked: function () {}
-        }
-    };
+function loadWasm() {
+    wasmReady = (async function () {
+        var memory = null;
+        var imports = {
+            env: {
+                host_output: function (ptr, len) {
+                    var bytes = new Uint8Array(memory.buffer, ptr, len);
+                    htmlBuf += new TextDecoder().decode(bytes);
+                },
+                host_output_text: function (ptr, len) {
+                    var bytes = new Uint8Array(memory.buffer, ptr, len);
+                    var t = new TextDecoder().decode(bytes);
+                    htmlBuf += t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                },
+                host_error: function () {},
+                host_log: function () {},
+                host_render_complete: function () {},
+                host_dep_start: function () {},
+                host_dep_end: function () {},
+                host_component_start: function () {},
+                host_component_end: function () {},
+                host_slot_default_start: function () {},
+                host_slot_default_end: function () {},
+                host_debug_step: function () {},
+                host_fetch_data: function () {},
+                host_load_component: function () {},
+                host_load_component_linked: function () {}
+            }
+        };
 
-    var result = await WebAssembly.instantiateStreaming(fetch(findWasmUrl()), imports);
-    var ex = result.instance.exports;
-    wasmInstance = { memory: ex.memory, exports: ex };
+        var url = findWasmUrl();
+        var result;
+        try {
+            result = await WebAssembly.instantiateStreaming(fetch(url), imports);
+        } catch (e) {
+            /* Fallback: GitHub Pages may not serve .wasm with correct MIME type */
+            var resp = await fetch(url);
+            var buf = await resp.arrayBuffer();
+            result = await WebAssembly.instantiate(buf, imports);
+        }
+
+        var ex = result.instance.exports;
+        memory = ex.memory;
+        wasmInstance = { memory: ex.memory, exports: ex };
+    })();
+    return wasmReady;
 }
 
 self.addEventListener('install', function (event) {
@@ -71,6 +87,9 @@ self.addEventListener('fetch', function (event) {
 });
 
 async function handleCompile(request) {
+    await wasmReady;
+    if (!wasmInstance) return new Response('WASM not loaded', { status: 503 });
+
     var latency = parseInt(request.headers.get('X-Sim-Latency-Ms') || '0');
     var source = await request.text();
 
@@ -122,6 +141,9 @@ async function handleCompile(request) {
 }
 
 async function handleRender(request) {
+    await wasmReady;
+    if (!wasmInstance) return new Response('WASM not loaded', { status: 503 });
+
     var latency = parseInt(request.headers.get('X-Sim-Latency-Ms') || '0');
     var chunkSize = parseInt(request.headers.get('X-Sim-Chunk-Size') || '256');
     var bytecode = new Uint8Array(await request.arrayBuffer());
