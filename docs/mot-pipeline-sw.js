@@ -10,7 +10,7 @@
 
 var wasmInstance = null;
 var htmlBuf = '';
-var wasmReady = null; /* Promise resolved when WASM is loaded */
+var wasmReady = null;
 
 function findWasmUrl() {
     return self.location.pathname.replace('mot-pipeline-sw.js', 'mot-runtime.wasm');
@@ -20,7 +20,8 @@ function sleep(ms) {
     return new Promise(function (r) { setTimeout(r, ms); });
 }
 
-function loadWasm() {
+function ensureWasm() {
+    if (wasmReady) return wasmReady;
     wasmReady = (async function () {
         var memory = null;
         var imports = {
@@ -55,7 +56,6 @@ function loadWasm() {
         try {
             result = await WebAssembly.instantiateStreaming(fetch(url), imports);
         } catch (e) {
-            /* Fallback: GitHub Pages may not serve .wasm with correct MIME type */
             var resp = await fetch(url);
             var buf = await resp.arrayBuffer();
             result = await WebAssembly.instantiate(buf, imports);
@@ -70,7 +70,7 @@ function loadWasm() {
 
 self.addEventListener('install', function (event) {
     self.skipWaiting();
-    event.waitUntil(loadWasm());
+    event.waitUntil(ensureWasm());
 });
 
 self.addEventListener('activate', function (event) {
@@ -87,8 +87,9 @@ self.addEventListener('fetch', function (event) {
 });
 
 async function handleCompile(request) {
-    await wasmReady;
-    if (!wasmInstance) return new Response('WASM not loaded', { status: 503 });
+    try { await ensureWasm(); } catch (e) {
+        return new Response(JSON.stringify({ error: 'WASM load failed: ' + e.message }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+    }
 
     var latency = parseInt(request.headers.get('X-Sim-Latency-Ms') || '0');
     var source = await request.text();
@@ -141,8 +142,9 @@ async function handleCompile(request) {
 }
 
 async function handleRender(request) {
-    await wasmReady;
-    if (!wasmInstance) return new Response('WASM not loaded', { status: 503 });
+    try { await ensureWasm(); } catch (e) {
+        return new Response('WASM load failed: ' + e.message, { status: 503 });
+    }
 
     var latency = parseInt(request.headers.get('X-Sim-Latency-Ms') || '0');
     var chunkSize = parseInt(request.headers.get('X-Sim-Chunk-Size') || '256');
