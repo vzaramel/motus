@@ -102,6 +102,20 @@
             overflow: auto;
         }
 
+        .playground-banner {
+            margin: 0;
+            font-size: 0.85em;
+            color: rgba(0,255,179,0.7);
+            background: rgba(0,255,179,0.05);
+            border: 1px solid rgba(0,255,179,0.12);
+            border-radius: 6px;
+            padding: 6px 12px;
+            line-height: 1.5;
+        }
+        .playground-banner strong {
+            color: #00ffb3;
+        }
+
         @media (max-width: 980px) {
             .playground-shell {
                 min-height: auto;
@@ -120,6 +134,7 @@
     </style>
 
     <section class="playground-shell">
+        <p class="playground-banner" id="playground-banner"></p>
         <div class="playground-toolbar">
             <button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button>
             <div id="playground-status" class="playground-status"></div>
@@ -385,6 +400,10 @@
             sourceEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runPlayground(); }
             });
+
+            /* Banner text (injected to avoid parser keyword issue) */
+            var bannerEl = document.getElementById('playground-banner');
+            if (bannerEl) bannerEl.innerHTML = '<strong>100% browser-side.</strong> The Motus compiler and VM are running entirely in your browser via WebAssembly (282 KB). No server, no backend — everything is compiled and rendered right here in real time.';
 
             /* Boot: load WASM + Ace, then auto-run */
             statusEl.textContent = 'Loading compiler...';

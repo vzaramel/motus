@@ -86,7 +86,7 @@
         background: rgba(0,255,179,0.1) !important;
         border-color: rgba(0,255,179,0.5) !important;
     }
-</style><header class="header"><div class="header-content"><a href="/motus/" class="header-brand"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="2" x2="16" y2="30"/><path d="M16 6 C12 6 8 10 8 14 C8 18 12 18 16 14"/><path d="M16 6 C20 6 24 10 24 14 C24 18 20 18 16 14"/><path d="M16 14 C11 14 6 18 6 22 C6 26 11 26 16 22"/><path d="M16 14 C21 14 26 18 26 22 C26 26 21 26 16 22"/><path d="M12 30 C12 26 14 24 16 24 C18 24 20 26 20 30"/></svg>
+</style><header class="header"><div class="header-content"><a href="/" class="header-brand"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="2" x2="16" y2="30"/><path d="M16 6 C12 6 8 10 8 14 C8 18 12 18 16 14"/><path d="M16 6 C20 6 24 10 24 14 C24 18 20 18 16 14"/><path d="M16 14 C11 14 6 18 6 22 C6 26 11 26 16 22"/><path d="M16 14 C21 14 26 18 26 22 C26 26 21 26 16 22"/><path d="M12 30 C12 26 14 24 16 24 C18 24 20 26 20 30"/></svg>
             Motus
         </a><nav><a href="/motus/">Home</a><a href="/motus/docs">Docs</a><a href="/motus/playground" class="header-cta">Playground</a></nav></div></header><div class="layout-container"><main><style>
         .layout-container {
@@ -189,6 +189,20 @@
             overflow: auto;
         }
 
+        .playground-banner {
+            margin: 0;
+            font-size: 0.85em;
+            color: rgba(0,255,179,0.7);
+            background: rgba(0,255,179,0.05);
+            border: 1px solid rgba(0,255,179,0.12);
+            border-radius: 6px;
+            padding: 6px 12px;
+            line-height: 1.5;
+        }
+        .playground-banner strong {
+            color: #00ffb3;
+        }
+
         @media (max-width: 980px) {
             .playground-shell {
                 min-height: auto;
@@ -204,7 +218,7 @@
                 height: 46vh;
             }
         }
-    </style><section class="playground-shell"><div class="playground-toolbar"><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><div id="playground-status" class="playground-status"></div></div><section class="playground-grid"><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><div id="playground-output" class="playground-output"></div></section></section><script>
+    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><div id="playground-status" class="playground-status"></div></div><section class="playground-grid"><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><div id="playground-output" class="playground-output"></div></section></section><script>
         (function () {
             var form = document.getElementById('playground-form');
             var editorEl = document.getElementById('playground-editor');
@@ -455,6 +469,10 @@
             sourceEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runPlayground(); }
             });
+
+            /* Banner text (injected to avoid parser keyword issue) */
+            var bannerEl = document.getElementById('playground-banner');
+            if (bannerEl) bannerEl.innerHTML = '<strong>100% browser-side.</strong> The Motus compiler and VM are running entirely in your browser via WebAssembly (282 KB). No server, no backend — everything is compiled and rendered right here in real time.';
 
             /* Boot: load WASM + Ace, then auto-run */
             statusEl.textContent = 'Loading compiler...';
