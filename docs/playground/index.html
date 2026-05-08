@@ -106,6 +106,7 @@
             align-items: center;
             gap: 10px;
             min-height: 32px;
+            flex-wrap: wrap;
         }
 
         .playground-run {
@@ -137,6 +138,20 @@
             font-size: 0.88em;
             color: rgba(232,240,236,0.5);
             min-height: 1em;
+        }
+
+        .playground-select {
+            background: rgba(0,255,179,0.06);
+            border: 1px solid rgba(0,255,179,0.2);
+            color: #e8f0ec;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.82em;
+            cursor: pointer;
+        }
+        .playground-select option {
+            background: #0f1e2c;
+            color: #e8f0ec;
         }
 
         .playground-grid {
@@ -203,6 +218,187 @@
             color: #00ffb3;
         }
 
+        /* ===== Pipeline Visualization ===== */
+        .pipeline-viz {
+            padding: 16px;
+            border: 1px solid rgba(0,255,179,0.12);
+            border-radius: 8px;
+            background: rgba(15,30,44,0.6);
+            display: none;
+        }
+        .pipeline-viz.visible { display: block; }
+
+        .pipeline-controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+            font-size: 0.82em;
+            color: rgba(232,240,236,0.6);
+        }
+        .pipeline-controls label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pipeline-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 12px 0;
+        }
+
+        .pipeline-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 72px;
+            z-index: 1;
+        }
+        .pipeline-node-icon {
+            width: 48px;
+            height: 48px;
+            border: 2px solid rgba(0,255,179,0.15);
+            border-radius: 12px;
+            background: rgba(0,255,179,0.03);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .pipeline-node.active .pipeline-node-icon {
+            border-color: #00ffb3;
+            box-shadow: 0 0 20px rgba(0,255,179,0.25);
+        }
+        .pipeline-node.done .pipeline-node-icon {
+            border-color: rgba(0,255,179,0.4);
+        }
+        .pipeline-node-label {
+            font-size: 0.78em;
+            font-weight: 600;
+            color: rgba(232,240,236,0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .pipeline-node-status {
+            font-size: 0.72em;
+            color: rgba(232,240,236,0.4);
+            min-height: 1em;
+            text-align: center;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pipeline-link {
+            flex: 1;
+            position: relative;
+            height: 20px;
+            max-width: 180px;
+            min-width: 60px;
+        }
+        .pipeline-link-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(0,255,179,0.1);
+            transform: translateY(-50%);
+        }
+        .pipeline-link-arrow {
+            position: absolute;
+            right: -1px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid rgba(0,255,179,0.15);
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+        .pipeline-packet {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ffb3;
+            top: 50%;
+            left: 0;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            box-shadow: 0 0 8px rgba(0,255,179,0.6);
+        }
+        .pipeline-packet.animating {
+            opacity: 1;
+            animation: packet-fly 0.5s ease-in-out forwards;
+        }
+        @keyframes packet-fly {
+            from { left: 0%; }
+            to   { left: 100%; }
+        }
+        .pipeline-link-timing {
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.68em;
+            color: rgba(0,255,179,0.5);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .pipeline-link-timing.visible { opacity: 1; }
+
+        /* Waterfall timeline */
+        .pipeline-waterfall {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,255,179,0.06);
+        }
+        .waterfall-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 18px;
+        }
+        .waterfall-label {
+            font-size: 0.7em;
+            color: rgba(232,240,236,0.5);
+            min-width: 80px;
+            text-align: right;
+        }
+        .waterfall-track {
+            flex: 1;
+            height: 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        .waterfall-bar {
+            height: 100%;
+            border-radius: 3px;
+            width: 0;
+            transition: width 0.4s ease;
+        }
+        .waterfall-bar.compile { background: #4488ff; }
+        .waterfall-bar.transfer-oe { background: #00ffb3; }
+        .waterfall-bar.render { background: #ff9944; }
+        .waterfall-bar.stream-eb { background: #aa66ff; }
+        .waterfall-time {
+            font-size: 0.68em;
+            color: rgba(232,240,236,0.4);
+            min-width: 45px;
+        }
+
         @media (max-width: 980px) {
             .playground-shell {
                 min-height: auto;
@@ -217,8 +413,18 @@
                 min-height: 46vh;
                 height: 46vh;
             }
+            .pipeline-diagram {
+                flex-direction: column;
+                gap: 4px;
+            }
+            .pipeline-link {
+                width: 2px;
+                height: 30px;
+                min-width: unset;
+                max-width: unset;
+            }
         }
-    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><div id="playground-status" class="playground-status"></div></div><section class="playground-grid"><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><div id="playground-output" class="playground-output"></div></section></section><script>
+    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><span id="playground-mode-wrap"></span><div id="playground-status" class="playground-status"></div></div><div id="pipeline-viz" class="pipeline-viz"><div class="pipeline-controls"><span id="sim-latency-wrap"></span><span id="sim-chunk-wrap"></span></div><div class="pipeline-diagram"><div class="pipeline-node" id="node-origin"><div class="pipeline-node-icon" id="icon-origin"></div><div class="pipeline-node-label">Origin</div><div class="pipeline-node-status" id="status-origin">Idle</div></div><div class="pipeline-link" id="link-oe"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-oe"></div><div class="pipeline-link-timing" id="timing-oe"></div></div><div class="pipeline-node" id="node-edge"><div class="pipeline-node-icon" id="icon-edge"></div><div class="pipeline-node-label">Edge</div><div class="pipeline-node-status" id="status-edge">Idle</div></div><div class="pipeline-link" id="link-eb"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-eb"></div><div class="pipeline-link-timing" id="timing-eb"></div></div><div class="pipeline-node" id="node-browser"><div class="pipeline-node-icon" id="icon-browser"></div><div class="pipeline-node-label">Browser</div><div class="pipeline-node-status" id="status-browser">Idle</div></div></div><div class="pipeline-waterfall" id="pipeline-waterfall"><div class="waterfall-row"><span class="waterfall-label">Compile</span><div class="waterfall-track"><div class="waterfall-bar compile" id="wf-compile"></div></div><span class="waterfall-time" id="wf-compile-t"></span></div><div class="waterfall-row"><span class="waterfall-label" id="wf-transfer-label"></span><div class="waterfall-track"><div class="waterfall-bar transfer-oe" id="wf-transfer"></div></div><span class="waterfall-time" id="wf-transfer-t"></span></div><div class="waterfall-row"><span class="waterfall-label">Render</span><div class="waterfall-track"><div class="waterfall-bar render" id="wf-render"></div></div><span class="waterfall-time" id="wf-render-t"></span></div><div class="waterfall-row"><span class="waterfall-label">Stream</span><div class="waterfall-track"><div class="waterfall-bar stream-eb" id="wf-stream"></div></div><span class="waterfall-time" id="wf-stream-t"></span></div></div></div><section class="playground-grid"><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><div id="playground-output" class="playground-output"></div></section></section><script>
         (function () {
             var form = document.getElementById('playground-form');
             var editorEl = document.getElementById('playground-editor');
@@ -226,8 +432,11 @@
             var statusEl = document.getElementById('playground-status');
             var outputEl = document.getElementById('playground-output');
             var runButton = document.getElementById('playground-run');
+            var pipelineViz = document.getElementById('pipeline-viz');
             var editor = null;
             var motWasm = null;
+            var swReady = false;
+            var pipelineRunning = false;
             var ACE_CDN_URL = 'https://cdn.jsdelivr.net/npm/ace-builds@1.36.2/src-min-noconflict/ace.js';
 
             if (!form || !editorEl || !sourceEl || !statusEl || !outputEl || !runButton) return;
@@ -264,11 +473,34 @@
 
             sourceEl.value = defaultSource;
 
+            /* ===== Inject text with "in" keyword (parser workaround) ===== */
+            var bannerEl = document.getElementById('playground-banner');
+            if (bannerEl) bannerEl.innerHTML = '<strong>100% browser-side.</strong> The Motus compiler and VM run entirely in your browser via WebAssembly (282 KB). No server, no backend \u2014 everything is compiled and rendered right here in real time. Switch to <strong>Pipeline Simulation</strong> to see the Origin \u2192 Edge \u2192 Browser flow animated with streaming.';
+
+            document.getElementById('icon-origin').innerHTML = '\uD83D\uDDA5\uFE0F';
+            document.getElementById('icon-edge').innerHTML = '\u26A1';
+            document.getElementById('icon-browser').innerHTML = '\uD83C\uDF10';
+
+            var wfTransferLabel = document.getElementById('wf-transfer-label');
+            if (wfTransferLabel) wfTransferLabel.textContent = 'Transfer O\u2192E';
+
+            /* Inject <select> elements via JS (parser reserves "select" as SQL keyword) */
+            document.getElementById('playground-mode-wrap').innerHTML = '<select id="playground-mode" class="playground-select"><option value="direct">Direct (WASM)</option><option value="pipeline">Pipeline Simulation</option></select>';
+            document.getElementById('sim-latency-wrap').innerHTML = '<label>Latency: <select id="sim-latency" class="playground-select"><option value="0">None</option><option value="200">200ms</option><option value="500" selected>500ms</option><option value="1000">1s</option><option value="2000">2s</option></select></label>';
+            document.getElementById('sim-chunk-wrap').innerHTML = '<label>Chunks: <select id="sim-chunk" class="playground-select"><option value="64">64 B</option><option value="128">128 B</option><option value="256" selected>256 B</option><option value="512">512 B</option></select></label>';
+            var modeSelect = document.getElementById('playground-mode');
+
             /* ===== WASM compiler + VM ===== */
             function findWasmUrl() {
                 var path = window.location.pathname;
                 if (path.indexOf('/motus/') === 0) return '/motus/mot-runtime.wasm';
-                return '/motus/mot-runtime.wasm';
+                return '/mot-runtime.wasm';
+            }
+
+            function findSwUrl() {
+                var path = window.location.pathname;
+                if (path.indexOf('/motus/') === 0) return '/motus/mot-pipeline-sw.js';
+                return '/mot-pipeline-sw.js';
             }
 
             async function loadMotusWasm() {
@@ -301,15 +533,9 @@
                         host_slot_default_start: function() {},
                         host_slot_default_end: function() {},
                         host_debug_step: function() {},
-                        host_fetch_data: function() {
-                            console.warn('[mot] Data queries not supported');
-                        },
-                        host_load_component: function() {
-                            console.warn('[mot] Dynamic components not supported');
-                        },
-                        host_load_component_linked: function() {
-                            console.warn('[mot] Linked components not supported');
-                        }
+                        host_fetch_data: function() {},
+                        host_load_component: function() {},
+                        host_load_component_linked: function() {}
                     }
                 };
 
@@ -381,7 +607,7 @@
                 editor.commands.addCommand({
                     name: 'run-playground',
                     bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
-                    exec: function () { runPlayground(); }
+                    exec: function () { handleRun(); }
                 });
                 editorEl.style.display = 'block';
                 sourceEl.style.display = 'none';
@@ -418,7 +644,7 @@
                 });
             }
 
-            /* ===== Compile + render ===== */
+            /* ===== Direct mode: Compile + render ===== */
             function runPlayground() {
                 var source = readSource();
                 if (!source.trim()) {
@@ -464,17 +690,259 @@
                 }
             }
 
-            form.addEventListener('submit', function (e) { e.preventDefault(); runPlayground(); });
-            runButton.addEventListener('click', function () { runPlayground(); });
-            sourceEl.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runPlayground(); }
+            /* ===== Pipeline Simulation ===== */
+
+            function setNodeState(name, state) {
+                var el = document.getElementById('node-' + name);
+                if (!el) return;
+                el.classList.remove('active', 'done');
+                if (state) el.classList.add(state);
+            }
+
+            function setNodeStatus(name, text) {
+                var el = document.getElementById('status-' + name);
+                if (el) el.textContent = text;
+            }
+
+            function resetAllNodes() {
+                ['origin', 'edge', 'browser'].forEach(function(n) {
+                    setNodeState(n, null);
+                    setNodeStatus(n, 'Idle');
+                });
+                ['oe', 'eb'].forEach(function(id) {
+                    var t = document.getElementById('timing-' + id);
+                    if (t) { t.textContent = ''; t.classList.remove('visible'); }
+                    var p = document.getElementById('packet-' + id);
+                    if (p) p.classList.remove('animating');
+                });
+                ['wf-compile', 'wf-transfer', 'wf-render', 'wf-stream'].forEach(function(id) {
+                    var bar = document.getElementById(id);
+                    if (bar) bar.style.width = '0';
+                    var t = document.getElementById(id + '-t');
+                    if (t) t.textContent = '';
+                });
+            }
+
+            function animatePacket(linkId) {
+                return new Promise(function(resolve) {
+                    var pkt = document.getElementById('packet-' + linkId);
+                    if (!pkt) { resolve(); return; }
+                    pkt.classList.remove('animating');
+                    void pkt.offsetWidth;
+                    pkt.classList.add('animating');
+                    function done() {
+                        pkt.removeEventListener('animationend', done);
+                        pkt.classList.remove('animating');
+                        resolve();
+                    }
+                    pkt.addEventListener('animationend', done);
+                    /* fallback if animation doesn't fire */
+                    setTimeout(function() { pkt.classList.remove('animating'); resolve(); }, 600);
+                });
+            }
+
+            function showTiming(linkId, ms) {
+                var el = document.getElementById('timing-' + linkId);
+                if (el) {
+                    el.textContent = Math.round(ms) + 'ms';
+                    el.classList.add('visible');
+                }
+            }
+
+            function setWaterfall(id, ms, maxMs) {
+                var bar = document.getElementById(id);
+                var t = document.getElementById(id + '-t');
+                if (bar) bar.style.width = Math.max(4, (ms / maxMs) * 100) + '%';
+                if (t) t.textContent = Math.round(ms) + 'ms';
+            }
+
+            function simBaseUrl() {
+                var path = window.location.pathname;
+                if (path.indexOf('/motus/') === 0) return '/motus/__mot-sim';
+                return '/__mot-sim';
+            }
+
+            async function runPipeline() {
+                var source = readSource();
+                if (!source.trim()) {
+                    statusEl.textContent = 'Source is empty.';
+                    outputEl.innerHTML = '';
+                    return;
+                }
+                if (!swReady) {
+                    statusEl.textContent = 'Service Worker not ready...';
+                    return;
+                }
+
+                pipelineRunning = true;
+                runButton.disabled = true;
+                outputEl.innerHTML = '';
+                resetAllNodes();
+                statusEl.textContent = 'Running pipeline...';
+
+                var latency = document.getElementById('sim-latency').value;
+                var chunkSize = document.getElementById('sim-chunk').value;
+                var base = simBaseUrl();
+                var times = {};
+
+                try {
+                    /* Phase 1: Browser sends source to Origin */
+                    setNodeState('browser', 'active');
+                    setNodeStatus('browser', 'Sending source...');
+                    await animatePacket('oe');
+
+                    /* Phase 2: Origin compiles */
+                    setNodeState('browser', 'done');
+                    setNodeState('origin', 'active');
+                    setNodeStatus('origin', 'Compiling...');
+                    var t0 = performance.now();
+
+                    var compileResp = await fetch(base + '/compile', {
+                        method: 'POST',
+                        body: source,
+                        headers: {
+                            'X-Sim-Latency-Ms': latency,
+                            'X-Sim-Chunk-Size': chunkSize
+                        }
+                    });
+
+                    times.compile = performance.now() - t0;
+
+                    if (!compileResp.ok) {
+                        var errBody = await compileResp.json().catch(function() { return { error: 'Compile failed' }; });
+                        statusEl.textContent = 'Error: ' + (errBody.error || 'Unknown');
+                        setNodeStatus('origin', 'Error');
+                        runButton.disabled = false;
+                        pipelineRunning = false;
+                        return;
+                    }
+
+                    var compileBuf = await compileResp.arrayBuffer();
+                    var view = new DataView(compileBuf);
+                    var bcLen = view.getUint32(0, true);
+                    var bytecode = new Uint8Array(compileBuf, 4, bcLen);
+                    var css = compileBuf.byteLength > 4 + bcLen
+                        ? new TextDecoder().decode(new Uint8Array(compileBuf, 4 + bcLen))
+                        : '';
+
+                    setNodeStatus('origin', 'Done \u2022 ' + bcLen + 'B');
+                    setNodeState('origin', 'done');
+
+                    /* Phase 3: Origin sends bytecode to Edge */
+                    var t1 = performance.now();
+                    await animatePacket('oe');
+                    times.transfer = performance.now() - t1;
+                    showTiming('oe', times.compile + times.transfer);
+
+                    /* Phase 4: Edge renders bytecode */
+                    setNodeState('edge', 'active');
+                    setNodeStatus('edge', 'Rendering...');
+                    var t2 = performance.now();
+
+                    var renderResp = await fetch(base + '/render', {
+                        method: 'POST',
+                        body: bytecode,
+                        headers: {
+                            'X-Sim-Latency-Ms': latency,
+                            'X-Sim-Chunk-Size': chunkSize
+                        }
+                    });
+
+                    /* Phase 5: Edge streams HTML to Browser */
+                    if (css) outputEl.innerHTML = '<style>' + css + '</style>';
+                    var reader = renderResp.body.getReader();
+                    var decoder = new TextDecoder();
+                    var htmlAccum = css ? '<style>' + css + '</style>' : '';
+                    var chunkCount = 0;
+                    var firstChunkTime = null;
+
+                    while (true) {
+                        var result = await reader.read();
+                        if (result.done) break;
+                        if (!firstChunkTime) {
+                            firstChunkTime = performance.now();
+                            times.render = firstChunkTime - t2;
+                            setNodeState('edge', 'done');
+                            setNodeState('browser', 'active');
+                        }
+                        chunkCount++;
+                        var chunk = decoder.decode(result.value, { stream: true });
+                        htmlAccum += chunk;
+                        outputEl.innerHTML = htmlAccum;
+                        setNodeStatus('browser', 'Chunk ' + chunkCount);
+                        /* fire packet animation for each chunk (non-blocking) */
+                        animatePacket('eb');
+                    }
+
+                    times.stream = performance.now() - (firstChunkTime || t2);
+                    if (!firstChunkTime) times.render = performance.now() - t2;
+                    showTiming('eb', times.render + times.stream);
+
+                    setNodeState('browser', 'done');
+                    setNodeStatus('edge', 'Streamed');
+                    setNodeStatus('browser', 'Done');
+
+                    var totalMs = times.compile + times.transfer + times.render + times.stream;
+                    statusEl.textContent = 'Pipeline complete \u2022 ' + Math.round(totalMs) + 'ms total \u2022 ' + bcLen + 'B bytecode \u2022 ' + chunkCount + ' chunks';
+
+                    /* Waterfall */
+                    var maxMs = Math.max(times.compile, times.transfer, times.render, times.stream, 1);
+                    setWaterfall('wf-compile', times.compile, maxMs);
+                    setWaterfall('wf-transfer', times.transfer, maxMs);
+                    setWaterfall('wf-render', times.render, maxMs);
+                    setWaterfall('wf-stream', times.stream, maxMs);
+
+                } catch (err) {
+                    statusEl.textContent = 'Pipeline error: ' + (err.message || String(err));
+                    outputEl.innerHTML = '';
+                } finally {
+                    runButton.disabled = false;
+                    pipelineRunning = false;
+                }
+            }
+
+            /* ===== Mode switching ===== */
+            function handleRun() {
+                if (modeSelect.value === 'pipeline') {
+                    runPipeline();
+                } else {
+                    runPlayground();
+                }
+            }
+
+            modeSelect.addEventListener('change', function () {
+                var isPipeline = modeSelect.value === 'pipeline';
+                pipelineViz.classList.toggle('visible', isPipeline);
+                if (isPipeline && !swReady) {
+                    registerSW();
+                }
             });
 
-            /* Banner text (injected to avoid parser keyword issue) */
-            var bannerEl = document.getElementById('playground-banner');
-            if (bannerEl) bannerEl.innerHTML = '<strong>100% browser-side.</strong> The Motus compiler and VM are running entirely in your browser via WebAssembly (282 KB). No server, no backend — everything is compiled and rendered right here in real time.';
+            form.addEventListener('submit', function (e) { e.preventDefault(); handleRun(); });
+            runButton.addEventListener('click', function () { handleRun(); });
+            sourceEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleRun(); }
+            });
 
-            /* Boot: load WASM + Ace, then auto-run */
+            /* ===== Service Worker registration ===== */
+            async function registerSW() {
+                if (!('serviceWorker' in navigator)) {
+                    statusEl.textContent = 'Service Workers not supported';
+                    return;
+                }
+                try {
+                    statusEl.textContent = 'Loading pipeline worker...';
+                    var swUrl = findSwUrl();
+                    await navigator.serviceWorker.register(swUrl, { scope: swUrl.replace('mot-pipeline-sw.js', '') });
+                    await navigator.serviceWorker.ready;
+                    swReady = true;
+                    statusEl.textContent = 'Pipeline ready';
+                } catch (err) {
+                    statusEl.textContent = 'SW failed: ' + (err.message || String(err));
+                }
+            }
+
+            /* ===== Boot ===== */
             statusEl.textContent = 'Loading compiler...';
             Promise.all([loadMotusWasm(), loadAceEditorIfNeeded()]).then(function () {
                 statusEl.textContent = 'Ready';
