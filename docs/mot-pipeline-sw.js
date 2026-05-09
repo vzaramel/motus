@@ -83,11 +83,6 @@ function readCString(memory, ptr, maxLen) {
 function ensureDb() {
     if (dbReady) return dbReady;
     dbReady = (async function () {
-        try {
-            importScripts('https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/sql-wasm.js');
-        } catch (e) {
-            importScripts('https://cdn.jsdelivr.net/npm/sql.js@1.11.0/dist/sql-wasm.js');
-        }
         var SQL = await initSqlJs({
             locateFile: function (f) {
                 return 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/' + f;
@@ -249,6 +244,16 @@ function compileMot(instance, source) {
 /* ===== SW Events ===== */
 
 self.addEventListener('install', function (event) {
+    /* importScripts() is only allowed during install — load sql.js here */
+    try {
+        importScripts('https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/sql-wasm.js');
+    } catch (e) {
+        try {
+            importScripts('https://cdn.jsdelivr.net/npm/sql.js@1.11.0/dist/sql-wasm.js');
+        } catch (e2) {
+            console.error('[mot-sw] Failed to load sql.js:', e2);
+        }
+    }
     self.skipWaiting();
 });
 
