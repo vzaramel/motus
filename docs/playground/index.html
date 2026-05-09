@@ -195,6 +195,143 @@
             overflow: auto;
         }
 
+        /* ===== Output Tabs ===== */
+        .output-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            height: 100%;
+        }
+        .output-tabs {
+            display: none;
+            gap: 0;
+            border-bottom: 1px solid rgba(0,255,179,0.12);
+            background: rgba(15,30,44,0.8);
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .output-tabs.visible { display: flex; }
+        .output-tab {
+            padding: 6px 16px;
+            border: none;
+            background: transparent;
+            color: rgba(232,240,236,0.4);
+            font-size: 0.82em;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            transition: color 0.2s, background 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .output-tab:hover {
+            color: rgba(232,240,236,0.7);
+            background: rgba(0,255,179,0.04);
+        }
+        .output-tab.active {
+            color: #00ffb3;
+            border-bottom-color: #00ffb3;
+            background: rgba(0,255,179,0.06);
+        }
+        .output-pane {
+            display: none;
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+        }
+        .output-pane.active { display: block; }
+        .output-tabs.visible + .output-pane,
+        .output-tabs.visible ~ .output-pane {
+            border-radius: 0 0 8px 8px;
+        }
+
+        /* Origin panel styles */
+        .bc-summary {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            padding: 4px;
+        }
+        .bc-summary table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+        .bc-summary th {
+            text-align: left;
+            color: #00ffb3;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-bottom: 1px solid rgba(0,255,179,0.1);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .bc-summary td {
+            padding: 3px 8px;
+            color: rgba(232,240,236,0.7);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .bc-summary td:first-child {
+            color: rgba(232,240,236,0.5);
+            white-space: nowrap;
+        }
+        .bc-section-label {
+            color: #00ffb3;
+            font-weight: 600;
+            margin: 12px 0 6px;
+            font-size: 0.9em;
+        }
+        .bc-tag {
+            display: inline-block;
+            padding: 1px 7px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            margin: 2px;
+        }
+        .bc-tag.data-req { background: rgba(68,221,170,0.12); color: #44ddaa; border: 1px solid rgba(68,221,170,0.2); }
+        .bc-tag.comp-ref { background: rgba(255,136,68,0.12); color: #ff8844; border: 1px solid rgba(255,136,68,0.2); }
+        .bc-tag.builtin  { background: rgba(68,136,255,0.12); color: #4488ff; border: 1px solid rgba(68,136,255,0.2); }
+        .bc-tag.dep      { background: rgba(170,102,255,0.1); color: #aa66ff; border: 1px solid rgba(170,102,255,0.2); }
+
+        /* Edge panel styles */
+        .edge-html-source {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.82em;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: rgba(232,240,236,0.75);
+            margin: 0;
+            padding: 4px;
+        }
+        .edge-events-list {
+            margin: 0 0 12px;
+            padding: 0;
+            list-style: none;
+        }
+        .edge-events-list li {
+            padding: 3px 8px;
+            font-size: 0.82em;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            color: rgba(232,240,236,0.6);
+        }
+        .edge-event-label {
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        .edge-event-label.data { color: #44ddaa; }
+        .edge-event-label.component { color: #ff8844; }
+        .edge-event-cache {
+            font-size: 0.85em;
+            margin-left: 6px;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+        .edge-event-cache.hit  { background: rgba(0,255,179,0.1); color: #00ffb3; }
+        .edge-event-cache.miss { background: rgba(255,68,68,0.1); color: #ff4444; }
+
         .playground-banner {
             margin: 0;
             font-size: 0.85em;
@@ -444,7 +581,7 @@
                 max-width: unset;
             }
         }
-    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><span id="playground-mode-wrap"></span><div id="playground-status" class="playground-status"></div></div><div id="pipeline-viz" class="pipeline-viz"><div class="pipeline-controls"><span id="sim-latency-wrap"></span><span id="sim-chunk-wrap"></span><button type="button" id="pipeline-reset" class="pipeline-reset-btn">Reset Cache</button><span id="pipeline-cache-stats" class="pipeline-cache-stats"></span></div><div class="pipeline-diagram"><div class="pipeline-node" id="node-origin"><div class="pipeline-node-icon" id="icon-origin"></div><div class="pipeline-node-label">Origin</div><div class="pipeline-node-status" id="status-origin">Idle</div></div><div class="pipeline-link" id="link-oe"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-oe"></div><div class="pipeline-link-timing" id="timing-oe"></div></div><div class="pipeline-node" id="node-edge"><div class="pipeline-node-icon" id="icon-edge"></div><div class="pipeline-node-label">Edge</div><div class="pipeline-node-status" id="status-edge">Idle</div></div><div class="pipeline-link" id="link-eb"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-eb"></div><div class="pipeline-link-timing" id="timing-eb"></div></div><div class="pipeline-node" id="node-browser"><div class="pipeline-node-icon" id="icon-browser"></div><div class="pipeline-node-label">Browser</div><div class="pipeline-node-status" id="status-browser">Idle</div></div></div><div class="pipeline-waterfall" id="pipeline-waterfall"></div></div><section class="playground-grid"><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><div id="playground-output" class="playground-output"></div></section></section><script>
+    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><span id="playground-mode-wrap"></span><div id="playground-status" class="playground-status"></div></div><div id="pipeline-viz" class="pipeline-viz"><div class="pipeline-controls"><span id="sim-latency-wrap"></span><span id="sim-chunk-wrap"></span><button type="button" id="pipeline-reset" class="pipeline-reset-btn">Reset Cache</button><span id="pipeline-cache-stats" class="pipeline-cache-stats"></span></div><div class="pipeline-diagram"><div class="pipeline-node" id="node-origin"><div class="pipeline-node-icon" id="icon-origin"></div><div class="pipeline-node-label">Origin</div><div class="pipeline-node-status" id="status-origin">Idle</div></div><div class="pipeline-link" id="link-oe"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-oe"></div><div class="pipeline-link-timing" id="timing-oe"></div></div><div class="pipeline-node" id="node-edge"><div class="pipeline-node-icon" id="icon-edge"></div><div class="pipeline-node-label">Edge</div><div class="pipeline-node-status" id="status-edge">Idle</div></div><div class="pipeline-link" id="link-eb"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-eb"></div><div class="pipeline-link-timing" id="timing-eb"></div></div><div class="pipeline-node" id="node-browser"><div class="pipeline-node-icon" id="icon-browser"></div><div class="pipeline-node-label">Browser</div><div class="pipeline-node-status" id="status-browser">Idle</div></div></div><div class="pipeline-waterfall" id="pipeline-waterfall"></div></div><section class="playground-grid"><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><div class="output-panel"><div class="output-tabs" id="output-tabs"><button type="button" class="output-tab" data-tab="origin">Origin</button><button type="button" class="output-tab" data-tab="edge">Edge</button><button type="button" class="output-tab active" data-tab="browser">Browser</button></div><div id="output-origin" class="playground-output output-pane" data-pane="origin"></div><div id="output-edge" class="playground-output output-pane" data-pane="edge"></div><div id="playground-output" class="playground-output output-pane active" data-pane="browser"></div></div></section></section><script>
         (function () {
             var form = document.getElementById('playground-form');
             var editorEl = document.getElementById('playground-editor');
@@ -460,6 +597,203 @@
             var ACE_CDN_URL = 'https://cdn.jsdelivr.net/npm/ace-builds@1.36.2/src-min-noconflict/ace.js';
 
             if (!form || !editorEl || !sourceEl || !statusEl || !outputEl || !runButton) return;
+
+            var outputTabsEl = document.getElementById('output-tabs');
+            var originPane = document.getElementById('output-origin');
+            var edgePane = document.getElementById('output-edge');
+
+            /* ===== Output Tab Switching ===== */
+            function switchOutputTab(tabName) {
+                var tabs = outputTabsEl.querySelectorAll('.output-tab');
+                for (var i = 0; i < tabs.length; i++) {
+                    tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === tabName);
+                }
+                outputEl.classList.toggle('active', tabName === 'browser');
+                originPane.classList.toggle('active', tabName === 'origin');
+                edgePane.classList.toggle('active', tabName === 'edge');
+            }
+            outputTabsEl.addEventListener('click', function(e) {
+                var tab = e.target.closest('.output-tab');
+                if (tab) switchOutputTab(tab.getAttribute('data-tab'));
+            });
+
+            /* ===== Bytecode Decoder ===== */
+            function decodeBytecodeInfo(bytecode) {
+                var bytes = bytecode instanceof Uint8Array ? bytecode : new Uint8Array(bytecode);
+                var view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+                var ip = 0;
+                var dec = new TextDecoder();
+                var info = {
+                    totalSize: bytes.length,
+                    magic: 0, versionMajor: 0, versionMinor: 0, flags: 0,
+                    constCount: 0, stringCount: 0, dataReqCount: 0,
+                    depCount: 0, builtinCount: 0, compRefCount: 0, funcCount: 0,
+                    dataReqs: [], compRefs: [], builtins: [], deps: [],
+                    strings: [],
+                    mainChunkSize: 0, funcChunkSizes: []
+                };
+                try {
+                    if (bytes.length < 38) return info;
+                    info.magic = view.getUint32(ip, true); ip += 4;
+                    info.versionMajor = view.getUint16(ip, true); ip += 2;
+                    info.versionMinor = view.getUint16(ip, true); ip += 2;
+                    info.flags = view.getUint16(ip, true); ip += 2;
+                    info.constCount = view.getUint32(ip, true); ip += 4;
+                    info.stringCount = view.getUint32(ip, true); ip += 4;
+                    info.dataReqCount = view.getUint32(ip, true); ip += 4;
+                    info.depCount = view.getUint32(ip, true); ip += 4;
+                    info.builtinCount = view.getUint32(ip, true); ip += 4;
+                    info.compRefCount = view.getUint32(ip, true); ip += 4;
+                    info.funcCount = view.getUint32(ip, true); ip += 4;
+                    /* constants */
+                    for (var i = 0; i < info.constCount && ip < bytes.length; i++) {
+                        var ct = bytes[ip++];
+                        if (ct === 0 || ct === 1) ip += 1;
+                        else if (ct === 2 || ct === 3) ip += 8;
+                        else if (ct === 4) { var sl = view.getUint32(ip, true); ip += 4 + sl; }
+                    }
+                    /* strings */
+                    for (var i = 0; i < info.stringCount && ip < bytes.length; i++) {
+                        var sl = view.getUint32(ip, true); ip += 4;
+                        info.strings.push(dec.decode(bytes.subarray(ip, ip + sl)));
+                        ip += sl;
+                    }
+                    /* data requirements */
+                    for (var i = 0; i < info.dataReqCount && ip < bytes.length; i++) {
+                        var nl = view.getUint32(ip, true); ip += 4;
+                        var name = dec.decode(bytes.subarray(ip, ip + nl)); ip += nl;
+                        var fl = view.getUint16(ip, true); ip += 2;
+                        var qr = view.getUint32(ip, true); ip += 4;
+                        var sig = view.getUint32(ip, true); ip += 4;
+                        var pc = view.getUint16(ip, true); ip += 2;
+                        var params = [];
+                        for (var p = 0; p < pc && ip < bytes.length; p++) {
+                            var pnl = view.getUint32(ip, true); ip += 4;
+                            params.push(dec.decode(bytes.subarray(ip, ip + pnl)));
+                            ip += pnl + 2;
+                        }
+                        info.dataReqs.push({ name: name, flags: fl, queryRef: qr, signature: sig, params: params });
+                    }
+                    /* dependencies */
+                    for (var i = 0; i < info.depCount && ip < bytes.length; i++) {
+                        var dl = view.getUint32(ip, true); ip += 4;
+                        info.deps.push(dec.decode(bytes.subarray(ip, ip + dl)));
+                        ip += dl;
+                    }
+                    /* builtins */
+                    for (var i = 0; i < info.builtinCount && ip < bytes.length; i++) {
+                        var bl = view.getUint32(ip, true); ip += 4;
+                        var bn = dec.decode(bytes.subarray(ip, ip + bl)); ip += bl;
+                        var minA = bytes[ip++]; var maxA = bytes[ip++];
+                        info.builtins.push({ name: bn, minArgs: minA, maxArgs: maxA });
+                    }
+                    /* component refs */
+                    for (var i = 0; i < info.compRefCount && ip < bytes.length; i++) {
+                        var cnl = view.getUint32(ip, true); ip += 4;
+                        var cn = dec.decode(bytes.subarray(ip, ip + cnl)); ip += cnl;
+                        var cpl = view.getUint32(ip, true); ip += 4;
+                        var cp = dec.decode(bytes.subarray(ip, ip + cpl)); ip += cpl;
+                        info.compRefs.push({ name: cn, path: cp });
+                    }
+                    /* main chunk */
+                    info.mainChunkSize = view.getUint32(ip, true); ip += 4 + info.mainChunkSize;
+                    /* function chunks */
+                    for (var i = 0; i < info.funcCount && ip < bytes.length; i++) {
+                        var fl2 = view.getUint32(ip, true); ip += 4;
+                        info.funcChunkSizes.push(fl2);
+                        ip += fl2;
+                    }
+                } catch (e) { /* truncated bytecode — return what we have */ }
+                return info;
+            }
+
+            /* ===== Panel Renderers ===== */
+            function escapeHtml(s) {
+                return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
+            function renderOriginPanel(info, css) {
+                var h = '<div class="bc-summary">';
+                h += '<div class="bc-section-label">Bytecode Module</div>';
+                h += '<table>';
+                h += '<tr><td>Total size</td><td>' + info.totalSize + ' bytes</td></tr>';
+                h += '<tr><td>Version</td><td>' + info.versionMajor + '.' + info.versionMinor + '</td></tr>';
+                h += '<tr><td>Constants</td><td>' + info.constCount + '</td></tr>';
+                h += '<tr><td>Strings</td><td>' + info.stringCount + '</td></tr>';
+                h += '<tr><td>Main code</td><td>' + info.mainChunkSize + ' bytes</td></tr>';
+                h += '<tr><td>Functions</td><td>' + info.funcCount;
+                if (info.funcChunkSizes.length) {
+                    h += ' (' + info.funcChunkSizes.map(function(s) { return s + 'B'; }).join(', ') + ')';
+                }
+                h += '</td></tr>';
+                h += '</table>';
+                if (info.dataReqs.length) {
+                    h += '<div class="bc-section-label">Data Requirements (' + info.dataReqs.length + ')</div>';
+                    h += '<p style="color:rgba(232,240,236,0.4);font-size:0.85em;margin:0 0 6px">These SQL queries must be resolved at the edge before rendering can complete.</p>';
+                    info.dataReqs.forEach(function(dr) {
+                        h += '<span class="bc-tag data-req">' + escapeHtml(dr.name);
+                        if (dr.params.length) h += '(' + dr.params.map(escapeHtml).join(', ') + ')';
+                        h += '</span>';
+                    });
+                }
+                if (info.compRefs.length) {
+                    h += '<div class="bc-section-label">Component References (' + info.compRefs.length + ')</div>';
+                    h += '<p style="color:rgba(232,240,236,0.4);font-size:0.85em;margin:0 0 6px">External components to be loaded and rendered at the edge.</p>';
+                    info.compRefs.forEach(function(cr) {
+                        h += '<span class="bc-tag comp-ref">' + escapeHtml(cr.name);
+                        if (cr.path) h += ' \u2192 ' + escapeHtml(cr.path);
+                        h += '</span>';
+                    });
+                }
+                if (info.builtins.length) {
+                    h += '<div class="bc-section-label">Builtins (' + info.builtins.length + ')</div>';
+                    info.builtins.forEach(function(b) {
+                        h += '<span class="bc-tag builtin">' + escapeHtml(b.name) + '</span>';
+                    });
+                }
+                if (info.deps.length) {
+                    h += '<div class="bc-section-label">Dependencies (' + info.deps.length + ')</div>';
+                    h += '<p style="color:rgba(232,240,236,0.4);font-size:0.85em;margin:0 0 6px">Fine-grained data paths tracked for cache invalidation.</p>';
+                    info.deps.forEach(function(d) {
+                        h += '<span class="bc-tag dep">' + escapeHtml(d) + '</span>';
+                    });
+                }
+                if (css) {
+                    h += '<div class="bc-section-label">Extracted CSS (' + css.length + ' chars)</div>';
+                    h += '<pre class="edge-html-source" style="max-height:200px;overflow:auto">' + escapeHtml(css) + '</pre>';
+                }
+                h += '</div>';
+                return h;
+            }
+
+            function renderEdgePanel(rawHtml, events) {
+                var h = '';
+                if (events && events.length) {
+                    h += '<div class="bc-summary"><div class="bc-section-label">Pipeline Events (' + events.length + ')</div>';
+                    h += '<ul class="edge-events-list">';
+                    events.forEach(function(ev) {
+                        h += '<li>';
+                        if (ev.type === 'data') {
+                            h += '<span class="edge-event-label data">DATA</span>';
+                            h += escapeHtml(ev.name || '?');
+                            if (ev.params && ev.params !== '{}' && ev.params !== '') h += ' <span style="color:rgba(232,240,236,0.35)">params: ' + escapeHtml(ev.params) + '</span>';
+                            h += ' <span style="color:rgba(232,240,236,0.35)">' + Math.round(ev.time || 0) + 'ms</span>';
+                            if (ev.cache !== undefined) {
+                                h += '<span class="edge-event-cache ' + (ev.cache ? 'hit' : 'miss') + '">' + (ev.cache ? 'HIT' : 'MISS') + '</span>';
+                            }
+                        } else if (ev.type === 'component') {
+                            h += '<span class="edge-event-label component">COMPONENT</span>';
+                            h += escapeHtml(ev.name || '?');
+                            h += ' <span style="color:rgba(232,240,236,0.35)">' + Math.round(ev.time || 0) + 'ms</span>';
+                        }
+                        h += '</li>';
+                    });
+                    h += '</ul></div>';
+                }
+                h += '<div class="bc-summary"><div class="bc-section-label">Raw HTML Output (' + rawHtml.length + ' chars)</div></div>';
+                h += '<pre class="edge-html-source">' + escapeHtml(rawHtml) + '</pre>';
+                return h;
+            }
 
             var defaultSource = [
                 '<defcomp DemoCard | title, body |>',
@@ -855,6 +1189,8 @@
                 pipelineRunning = true;
                 runButton.disabled = true;
                 outputEl.innerHTML = '';
+                originPane.innerHTML = '<div style="color:rgba(232,240,236,0.3);padding:16px;font-size:0.85em">Waiting for compile...</div>';
+                edgePane.innerHTML = '<div style="color:rgba(232,240,236,0.3);padding:16px;font-size:0.85em">Waiting for render...</div>';
                 resetAllNodes();
                 statusEl.textContent = 'Running pipeline...';
 
@@ -909,6 +1245,10 @@
                     setNodeStatus('origin', bcLen + 'B' + cacheTag);
                     setNodeState('origin', 'done');
 
+                    /* Populate Origin tab with bytecode analysis */
+                    var bcInfo = decodeBytecodeInfo(bytecode);
+                    originPane.innerHTML = renderOriginPanel(bcInfo, css);
+
                     /* Phase 3: Origin sends bytecode to Edge */
                     var t1 = performance.now();
                     await animatePacket('oe');
@@ -944,6 +1284,7 @@
                     var reader = renderResp.body.getReader();
                     var decoder = new TextDecoder();
                     var htmlAccum = css ? '<style>' + css + '</style>' : '';
+                    var rawEdgeHtml = '';
                     var chunkCount = 0;
                     var firstChunkTime = null;
 
@@ -958,6 +1299,7 @@
                         }
                         chunkCount++;
                         var chunk = decoder.decode(result.value, { stream: true });
+                        rawEdgeHtml += chunk;
                         htmlAccum += chunk;
                         outputEl.innerHTML = htmlAccum;
                         setNodeStatus('browser', 'Chunk ' + chunkCount);
@@ -971,6 +1313,9 @@
                     setNodeState('browser', 'done');
                     setNodeStatus('edge', 'Streamed');
                     setNodeStatus('browser', 'Done');
+
+                    /* Populate Edge tab */
+                    edgePane.innerHTML = renderEdgePanel(rawEdgeHtml, pipelineEvents);
 
                     /* Summary */
                     var totalMs = times.compile + times.transfer + times.render + times.stream;
@@ -1026,6 +1371,7 @@
             modeSelect.addEventListener('change', function () {
                 var isPipeline = modeSelect.value === 'pipeline';
                 pipelineViz.classList.toggle('visible', isPipeline);
+                outputTabsEl.classList.toggle('visible', isPipeline);
                 if (isPipeline) {
                     /* Switch to CRM demo source when entering pipeline mode */
                     if (editor) editor.setValue(crmSource, -1);
@@ -1034,6 +1380,7 @@
                 } else {
                     if (editor) editor.setValue(defaultSource, -1);
                     else sourceEl.value = defaultSource;
+                    switchOutputTab('browser');
                 }
             });
 
@@ -1150,4 +1497,4 @@
 </style><footer class="footer"><div class="footer-inner"><div><div class="footer-brand"><span class="footer-brand-dot"></span>
                 Motus
             </div><p class="footer-desc">A compiled XML language for streaming HTML from the edge. Bytecode today, WASM everywhere tomorrow.</p></div><div class="footer-col"><h5>Pages</h5><a href="/motus/">Home</a><a href="/motus/docs">Docs</a></div><div class="footer-col"><h5>Tools</h5><a href="/motus/playground">Playground</a></div></div><div class="footer-bottom"><p>Powered by Motus &mdash; Streaming HTML from the Edge</p></div></footer>
-<!-- Motus Edge Runtime | vm: wasm | 97710 bytes | deps: none -->
+<!-- Motus Edge Runtime | vm: wasm | 133218 bytes | deps: none -->
