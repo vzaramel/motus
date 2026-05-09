@@ -77,9 +77,9 @@
         background: rgba(0,255,179,0.1) !important;
         border-color: rgba(0,255,179,0.5) !important;
     }
-</style><header class="header"><div class="header-content"><a href="/motus/" class="header-brand"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="2" x2="16" y2="30"/><path d="M16 6 C12 6 8 10 8 14 C8 18 12 18 16 14"/><path d="M16 6 C20 6 24 10 24 14 C24 18 20 18 16 14"/><path d="M16 14 C11 14 6 18 6 22 C6 26 11 26 16 22"/><path d="M16 14 C21 14 26 18 26 22 C26 26 21 26 16 22"/><path d="M12 30 C12 26 14 24 16 24 C18 24 20 26 20 30"/></svg>
+</style><header class="header"><div class="header-content"><a href="/" class="header-brand"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="2" x2="16" y2="30"/><path d="M16 6 C12 6 8 10 8 14 C8 18 12 18 16 14"/><path d="M16 6 C20 6 24 10 24 14 C24 18 20 18 16 14"/><path d="M16 14 C11 14 6 18 6 22 C6 26 11 26 16 22"/><path d="M16 14 C21 14 26 18 26 22 C26 26 21 26 16 22"/><path d="M12 30 C12 26 14 24 16 24 C18 24 20 26 20 30"/></svg>
             Motus
-        </a><nav><a href="/motus/">Home</a><a href="/motus/docs">Docs</a><a href="/motus/playground" class="header-cta">Playground</a></nav></div></header><div class="layout-container"><main><style>
+        </a><nav><a href="/">Home</a><a href="/docs">Docs</a><a href="/playground" class="header-cta">Playground</a></nav></div></header><div class="layout-container"><main><style>
         .layout-container {
             max-width: min(99vw, 2200px);
             padding: 80px 10px 10px 10px;
@@ -841,11 +841,33 @@
                 '    .contact-info { color: rgba(232,240,236,0.5); font-size: 0.9em; margin: 0; }',
                 '    .crm-title { color: #e8f0ec; margin: 0 0 16px; }',
                 '    .crm-subtitle { color: rgba(232,240,236,0.5); margin: 0 0 20px; font-size: 0.9em; }',
+                '    .crm-form { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }',
+                '    .crm-field { display: flex; flex-direction: column; gap: 2px; }',
+                '    .crm-field label { font-size: 0.75em; color: rgba(232,240,236,0.4); text-transform: uppercase; letter-spacing: 0.04em; }',
+                '    .crm-field input { background: #0f1e2c; border: 1px solid rgba(0,255,179,0.15); color: #e8f0ec; padding: 6px 10px; border-radius: 6px; font-size: 0.88em; outline: none; }',
+                '    .crm-field input:focus { border-color: rgba(0,255,179,0.4); }',
+                '    .crm-submit { background: rgba(0,255,179,0.1); border: 1px solid rgba(0,255,179,0.3); color: #00ffb3; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 0.88em; font-weight: 600; }',
+                '    .crm-submit:hover { background: rgba(0,255,179,0.18); }',
                 '</style>',
                 '',
                 '<h2 class="crm-title">CRM Dashboard</h2>',
                 '<p class="crm-subtitle">Contact data fetched from SQLite (sql.js) via the simulated origin server.</p>',
-                '<div class="crm-grid">',
+                '<form class="crm-form" data-mot-mutate="contacts">',
+                '    <div class="crm-field">',
+                '        <label>Name</label>',
+                '        <input type="text" name="name" placeholder="Jane Doe" required />',
+                '    </div>',
+                '    <div class="crm-field">',
+                '        <label>Email</label>',
+                '        <input type="text" name="email" placeholder="jane@example.com" required />',
+                '    </div>',
+                '    <div class="crm-field">',
+                '        <label>Company</label>',
+                '        <input type="text" name="company" placeholder="Acme Corp" required />',
+                '    </div>',
+                '    <button type="submit" class="crm-submit">Add Contact</button>',
+                '</form>',
+                '<div class="crm-grid" id="crm-contacts">',
                 '    <for contact in contacts>',
                 '        <div class="contact-card">',
                 '            <h3><output contact.name></h3>',
@@ -1168,6 +1190,134 @@
                 cacheStatsEl.textContent = parts.length ? 'Cache hits: ' + parts.join(' | ') : '';
             }
 
+            /* ===== Morphdom (lazy-loaded for DOM diffing) ===== */
+            var morphdomLoaded = false;
+            function ensureMorphdom() {
+                if (morphdomLoaded) return Promise.resolve();
+                return new Promise(function(resolve) {
+                    var s = document.createElement('script');
+                    s.src = 'https://cdn.jsdelivr.net/npm/morphdom@2.7.4/dist/morphdom-umd.min.js';
+                    s.onload = function() { morphdomLoaded = true; resolve(); };
+                    s.onerror = function() { resolve(); }; /* fallback to innerHTML */
+                    document.head.appendChild(s);
+                });
+            }
+
+            /* ===== Reactive Form Submission ===== */
+            function attachFormHandlers() {
+                var forms = outputEl.querySelectorAll('form[data-mot-mutate]');
+                forms.forEach(function(f) {
+                    f.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        handleFormSubmit(f);
+                    });
+                });
+            }
+
+            async function handleFormSubmit(formEl) {
+                var table = formEl.getAttribute('data-mot-mutate');
+                var formData = new FormData(formEl);
+                var row = {};
+                formData.forEach(function(v, k) { row[k] = v; });
+
+                /* Animate: Browser → Origin */
+                resetAllNodes();
+                setNodeState('browser', 'active');
+                setNodeStatus('browser', 'Submitting...');
+                await animatePacket('eb'); /* reverse direction visually */
+
+                setNodeState('origin', 'active');
+                setNodeStatus('origin', 'Inserting...');
+
+                var latency = document.getElementById('sim-latency').value;
+                var base = simBaseUrl();
+
+                try {
+                    await ensureMorphdom();
+
+                    var resp = await fetch(base + '/mutate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Sim-Latency-Ms': latency },
+                        body: JSON.stringify({ table: table, row: row })
+                    });
+
+                    var result = await resp.json();
+                    if (result.error) {
+                        statusEl.textContent = 'Error: ' + result.error;
+                        return;
+                    }
+
+                    setNodeStatus('origin', 'Inserted');
+                    setNodeState('origin', 'done');
+
+                    /* Animate: Edge re-renders */
+                    setNodeState('edge', 'active');
+                    setNodeStatus('edge', 'Re-rendering...');
+                    await animatePacket('oe');
+
+                    setNodeState('edge', 'done');
+                    setNodeStatus('edge', 'Patched');
+
+                    /* Apply new HTML with morphdom */
+                    await animatePacket('eb');
+                    setNodeState('browser', 'active');
+
+                    var newHtml = '';
+                    if (result.css) newHtml += '<style>' + result.css + '</style>';
+                    newHtml += result.html;
+
+                    if (typeof morphdom === 'function') {
+                        morphdom(outputEl, '<div>' + newHtml + '</div>', { childrenOnly: true });
+                    } else {
+                        outputEl.innerHTML = newHtml;
+                    }
+
+                    setNodeState('browser', 'done');
+                    setNodeStatus('browser', 'Updated');
+                    statusEl.textContent = 'Added ' + (row.name || 'row') + ' \u2014 invalidated: ' + result.invalidated.join(', ');
+
+                    /* Update Edge tab */
+                    var pipelineEvents = result.events || [];
+                    edgePane.innerHTML = renderEdgePanel(result.html, pipelineEvents);
+
+                    /* Update cache stats */
+                    var cacheStatsJson = resp.headers.get('X-Cache-Stats');
+                    try { updateCacheStats(cacheStatsJson ? JSON.parse(cacheStatsJson) : null); } catch(e) {}
+
+                    /* Clear form and re-attach handlers */
+                    formEl.reset();
+                    attachFormHandlers();
+
+                    /* Build mutation waterfall */
+                    buildMutationWaterfall(result);
+
+                } catch (err) {
+                    statusEl.textContent = 'Mutation error: ' + (err.message || String(err));
+                } finally {
+                    /* Ensure buttons stay enabled */
+                }
+            }
+
+            function buildMutationWaterfall(result) {
+                var wfEl = document.getElementById('pipeline-waterfall');
+                wfEl.innerHTML = '';
+                var events = result.events || [];
+                var allTimes = events.map(function(e) { return e.time || 0; });
+                var maxMs = Math.max.apply(null, allTimes.concat([50]));
+
+                wfEl.appendChild(buildWaterfallRow('DB Insert', 'compile', maxMs * 0.15, maxMs));
+                wfEl.appendChild(buildWaterfallRow('Invalidate: ' + result.invalidated.join(', '), 'data', maxMs * 0.1, maxMs));
+
+                events.forEach(function(ev) {
+                    if (ev.type === 'data') {
+                        wfEl.appendChild(buildWaterfallRow('Re-fetch: ' + ev.name, 'data', ev.time || 0, maxMs, ev.cache));
+                    }
+                });
+
+                wfEl.appendChild(buildWaterfallRow('Re-render', 'render', maxMs * 0.6, maxMs));
+                wfEl.appendChild(buildWaterfallRow('DOM Patch', 'stream-eb', maxMs * 0.3, maxMs));
+            }
+
             function simBaseUrl() {
                 var path = window.location.pathname;
                 if (path.indexOf('/motus/') === 0) return '/motus/__mot-sim';
@@ -1317,6 +1467,9 @@
                     /* Populate Edge tab */
                     edgePane.innerHTML = renderEdgePanel(rawEdgeHtml, pipelineEvents);
 
+                    /* Attach form handlers for reactive mutations */
+                    attachFormHandlers();
+
                     /* Summary */
                     var totalMs = times.compile + times.transfer + times.render + times.stream;
                     var dataFetches = pipelineEvents.filter(function(e) { return e.type === 'data'; }).length;
@@ -1377,6 +1530,7 @@
                     if (editor) editor.setValue(crmSource, -1);
                     else sourceEl.value = crmSource;
                     if (!swReady) registerSW();
+                    ensureMorphdom();
                 } else {
                     if (editor) editor.setValue(defaultSource, -1);
                     else sourceEl.value = defaultSource;
@@ -1496,5 +1650,5 @@
     }
 </style><footer class="footer"><div class="footer-inner"><div><div class="footer-brand"><span class="footer-brand-dot"></span>
                 Motus
-            </div><p class="footer-desc">A compiled XML language for streaming HTML from the edge. Bytecode today, WASM everywhere tomorrow.</p></div><div class="footer-col"><h5>Pages</h5><a href="/motus/">Home</a><a href="/motus/docs">Docs</a></div><div class="footer-col"><h5>Tools</h5><a href="/motus/playground">Playground</a></div></div><div class="footer-bottom"><p>Powered by Motus &mdash; Streaming HTML from the Edge</p></div></footer>
-<!-- Motus Edge Runtime | vm: wasm | 133218 bytes | deps: none -->
+            </div><p class="footer-desc">A compiled XML language for streaming HTML from the edge. Bytecode today, WASM everywhere tomorrow.</p></div><div class="footer-col"><h5>Pages</h5><a href="/">Home</a><a href="/docs">Docs</a></div><div class="footer-col"><h5>Tools</h5><a href="/playground">Playground</a></div></div><div class="footer-bottom"><p>Powered by Motus &mdash; Streaming HTML from the Edge</p></div></footer>
+<!-- Motus Edge Runtime | vm: wasm | 148532 bytes | deps: none -->

@@ -11,6 +11,7 @@
  * Endpoints:
  *   POST /__mot-sim/compile   →  Origin: source → bytecode + CSS
  *   POST /__mot-sim/render    →  Edge: bytecode → streamed HTML (with data fetching)
+ *   POST /__mot-sim/mutate    →  Origin: insert row → invalidate → re-render
  *   POST /__mot-sim/reset     →  Clear all caches
  */
 
@@ -268,6 +269,8 @@ self.addEventListener('fetch', function (event) {
         event.respondWith(handleCompile(event.request));
     } else if (url.pathname.endsWith('/__mot-sim/render')) {
         event.respondWith(handleRender(event.request));
+    } else if (url.pathname.endsWith('/__mot-sim/mutate')) {
+        event.respondWith(handleMutate(event.request));
     } else if (url.pathname.endsWith('/__mot-sim/reset')) {
         event.respondWith(handleReset());
     }
@@ -335,32 +338,19 @@ function packCompileResponse(bytecode, css) {
     return buf;
 }
 
-async function handleRender(request) {
-    try {
-        await Promise.all([ensureRenderInstance(), ensureCompileInstance(), ensureDb()]);
-    } catch (e) {
-        return new Response(JSON.stringify({ error: 'Init failed: ' + e.message }), { status: 503, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    var latency = parseInt(request.headers.get('X-Sim-Latency-Ms') || '0');
-    var chunkSize = parseInt(request.headers.get('X-Sim-Chunk-Size') || '256');
-    var bytecode = new Uint8Array(await request.arrayBuffer());
-
-    if (latency > 0) await sleep(latency);
-
+/* Reusable render loop: loads bytecode, runs suspend/resume, returns HTML + events */
+async function renderWithBytecode(bytecode, events, latency) {
     var ex = renderInstance.exports;
     renderInstance.resetHtml();
     ex.mot_reset_alloc();
 
-    /* Load bytecode into WASM memory */
     var ptr = ex.mot_alloc(bytecode.length);
-    if (!ptr) return new Response(JSON.stringify({ error: 'Alloc failed' }), { status: 500 });
+    if (!ptr) throw new Error('Alloc failed');
     new Uint8Array(ex.memory.buffer, ptr, bytecode.length).set(bytecode);
 
     var rc = ex.mot_init(ptr, bytecode.length);
-    if (rc !== 0) return new Response(JSON.stringify({ error: 'VM init failed' }), { status: 500 });
+    if (rc !== 0) throw new Error('VM init failed');
 
-    /* Set up data fetch callback */
     var pendingData = null;
     renderInstance.setFetchCallback(function (reqId, queryRef, signature, namePtr, paramsPtr, isSingle) {
         var name = readCString(ex.memory, namePtr, 256);
@@ -368,7 +358,6 @@ async function handleRender(request) {
         pendingData = { reqId: reqId, queryRef: queryRef, signature: signature, name: name, paramsJson: paramsJson, isSingle: isSingle };
     });
 
-    /* Set up component load callback */
     var pendingComp = null;
     renderInstance.setComponentCallback(function (reqId, namePtr, pathPtr, propsPtr, childrenPtr) {
         var name = readCString(ex.memory, namePtr, 256);
@@ -378,18 +367,14 @@ async function handleRender(request) {
         pendingComp = { reqId: reqId, name: name, path: path, propsJson: propsJson, childrenJson: childrenJson };
     });
 
-    /* Event log for the visualization */
-    var events = [];
     var t0 = performance.now();
 
-    /* Render loop with suspend/resume */
     rc = ex.mot_render();
     while (rc === -2) {
         if (pendingData) {
             var pd = pendingData;
             pendingData = null;
 
-            /* Resolve SQL query */
             var dataCacheKey = pd.name + ':' + pd.paramsJson;
             var cachedData = dataCache.get(dataCacheKey);
             var dataResult;
@@ -400,8 +385,6 @@ async function handleRender(request) {
                 cacheHit = true;
                 cacheStats.dataHit++;
             } else {
-                /* Map query name to SQL. The bytecode doesn't carry the SQL text,
-                   so we use the binding name to determine the query. */
                 dataResult = resolveDataQuery(pd.name, pd.paramsJson);
                 dataCache.set(dataCacheKey, dataResult);
                 cacheStats.dataMiss++;
@@ -419,7 +402,6 @@ async function handleRender(request) {
             var pc = pendingComp;
             pendingComp = null;
 
-            /* Compile and render the component */
             var compHtml = await resolveComponent(pc);
 
             if (latency > 0) await sleep(Math.floor(latency / 2));
@@ -430,7 +412,6 @@ async function handleRender(request) {
             rc = ex.mot_resume(pc.reqId, ws2.ptr, ws2.len);
 
         } else {
-            /* Unknown await — break to avoid infinite loop */
             break;
         }
     }
@@ -438,11 +419,31 @@ async function handleRender(request) {
     renderInstance.setFetchCallback(null);
     renderInstance.setComponentCallback(null);
 
-    if (rc !== 0 && rc !== -2) {
-        return new Response(JSON.stringify({ error: 'Render failed (code ' + rc + ')' }), { status: 500 });
+    if (rc !== 0 && rc !== -2) throw new Error('Render failed (code ' + rc + ')');
+
+    return renderInstance.getHtml();
+}
+
+async function handleRender(request) {
+    try {
+        await Promise.all([ensureRenderInstance(), ensureCompileInstance(), ensureDb()]);
+    } catch (e) {
+        return new Response(JSON.stringify({ error: 'Init failed: ' + e.message }), { status: 503, headers: { 'Content-Type': 'application/json' } });
     }
 
-    var fullHtml = renderInstance.getHtml();
+    var latency = parseInt(request.headers.get('X-Sim-Latency-Ms') || '0');
+    var chunkSize = parseInt(request.headers.get('X-Sim-Chunk-Size') || '256');
+    var bytecode = new Uint8Array(await request.arrayBuffer());
+
+    if (latency > 0) await sleep(latency);
+
+    var events = [];
+    var fullHtml;
+    try {
+        fullHtml = await renderWithBytecode(bytecode, events, latency);
+    } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
 
     /* Stream response with timing events in header */
     var chunks = [];
@@ -472,6 +473,82 @@ async function handleRender(request) {
             'X-Pipeline-Events': JSON.stringify(events),
             'X-Cache-Stats': JSON.stringify(cacheStats)
         }
+    });
+}
+
+/* ===== Mutation Handler ===== */
+
+async function handleMutate(request) {
+    try {
+        await Promise.all([ensureRenderInstance(), ensureCompileInstance(), ensureDb()]);
+    } catch (e) {
+        return errorResponse('Init failed: ' + e.message, 503);
+    }
+
+    var body = await request.json();
+    var table = body.table;
+    var row = body.row;
+    var latency = parseInt(request.headers.get('X-Sim-Latency-Ms') || '0');
+
+    /* 1. Insert into database */
+    var newId = 0;
+    if (table === 'contacts') {
+        var maxId = runQuery('SELECT MAX(id) as m FROM contacts');
+        newId = ((maxId[0] && maxId[0].m) || 0) + 1;
+        db.run("INSERT INTO contacts VALUES (?, ?, ?, ?)", [newId, row.name || '', row.email || '', row.company || '']);
+    } else if (table === 'orders') {
+        var maxOrd = runQuery('SELECT MAX(id) as m FROM orders');
+        newId = ((maxOrd[0] && maxOrd[0].m) || 0) + 1;
+        db.run("INSERT INTO orders VALUES (?, ?, ?, ?, ?)", [newId, row.contact_id || 0, row.product || '', row.amount || 0, row.status || 'processing']);
+    } else {
+        return errorResponse('Unknown table: ' + table, 400);
+    }
+
+    if (latency > 0) await sleep(Math.floor(latency / 2));
+
+    /* 2. Invalidate data cache for this table */
+    dataCache.forEach(function (v, k) {
+        if (k.indexOf(table) === 0) dataCache.delete(k);
+    });
+
+    /* 3. Find cached bytecode (from the last compile) */
+    var lastBytecode = null;
+    var lastCss = '';
+    bytecodeCache.forEach(function (v) { lastBytecode = v.bytecode; lastCss = v.css; });
+
+    if (!lastBytecode) {
+        return errorResponse('No cached bytecode — run the pipeline first', 400);
+    }
+
+    /* 4. Re-render with cached bytecode + fresh data */
+    var events = [];
+    var html;
+    try {
+        html = await renderWithBytecode(lastBytecode, events, latency);
+    } catch (e) {
+        return errorResponse('Re-render failed: ' + e.message, 500);
+    }
+
+    /* 5. Return full HTML + invalidation info */
+    return new Response(JSON.stringify({
+        html: html,
+        css: lastCss,
+        invalidated: [table],
+        events: events,
+        newRow: Object.assign({ id: newId }, row)
+    }), {
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Mot-Invalidated': table,
+            'X-Cache-Stats': JSON.stringify(cacheStats)
+        }
+    });
+}
+
+function errorResponse(msg, status) {
+    return new Response(JSON.stringify({ error: msg }), {
+        status: status || 500,
+        headers: { 'Content-Type': 'application/json' }
     });
 }
 
