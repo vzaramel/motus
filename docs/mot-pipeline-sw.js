@@ -14,6 +14,17 @@
  *   POST /__mot-sim/reset     →  Clear all caches
  */
 
+/* ===== Load sql.js at top level (runs on every SW evaluation, not just install) ===== */
+try {
+    importScripts('https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/sql-wasm.js');
+} catch (e) {
+    try {
+        importScripts('https://cdn.jsdelivr.net/npm/sql.js@1.11.0/dist/sql-wasm.js');
+    } catch (e2) {
+        console.error('[mot-sw] Failed to load sql.js:', e2);
+    }
+}
+
 /* ===== Global State ===== */
 var compileInstance = null;  /* WASM for compilation */
 var renderInstance = null;   /* WASM for rendering (suspend/resume) */
@@ -244,16 +255,6 @@ function compileMot(instance, source) {
 /* ===== SW Events ===== */
 
 self.addEventListener('install', function (event) {
-    /* importScripts() is only allowed during install — load sql.js here */
-    try {
-        importScripts('https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/sql-wasm.js');
-    } catch (e) {
-        try {
-            importScripts('https://cdn.jsdelivr.net/npm/sql.js@1.11.0/dist/sql-wasm.js');
-        } catch (e2) {
-            console.error('[mot-sw] Failed to load sql.js:', e2);
-        }
-    }
     self.skipWaiting();
 });
 
