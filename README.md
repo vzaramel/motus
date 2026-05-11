@@ -4,9 +4,11 @@
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 ![Language](https://img.shields.io/badge/language-C99-orange)
-![Bytecode](https://img.shields.io/badge/bytecode-v1.2-green)
-![Tests](https://img.shields.io/badge/tests-198-brightgreen)
+![Bytecode](https://img.shields.io/badge/bytecode-v1.3-green)
+![Tests](https://img.shields.io/badge/tests-214-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
+> **Heads up:** This project is heavily experimental and was entirely vibecoded. That said, it's built on ideas I've been thinking about for over 5 years. It's mostly a way to give shape to how a language designed specifically for the web could approach problems -- data fetching, rendering, reactivity, edge streaming -- from first principles, without inheriting the assumptions of general-purpose languages.
 
 Motus compiles XML-based templates into compact bytecode that can be streamed and interpreted at the edge. It features position-based syntax, SQL as a first-class citizen, fine-grained dependency tracking, partial evaluation, and scoped component architecture -- all from a single C99 library.
 
@@ -479,11 +481,11 @@ gcc -std=c99 -Isrc my_program.c -Lbuild -lmot -o my_program
 
 ## Project Status
 
-**Current version: 0.1.0** | **Bytecode version: 1.2**
+**Current version: 0.1.0** | **Bytecode version: 1.3**
 
 ### Test Coverage
 
-~198 tests across 14 suites:
+~214 tests across 14 suites:
 
 | Suite | Area |
 |---|---|

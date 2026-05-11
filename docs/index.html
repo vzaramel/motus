@@ -79,7 +79,7 @@
     }
 </style><header class="header"><div class="header-content"><a href="/motus/" class="header-brand"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="2" x2="16" y2="30"/><path d="M16 6 C12 6 8 10 8 14 C8 18 12 18 16 14"/><path d="M16 6 C20 6 24 10 24 14 C24 18 20 18 16 14"/><path d="M16 14 C11 14 6 18 6 22 C6 26 11 26 16 22"/><path d="M16 14 C21 14 26 18 26 22 C26 26 21 26 16 22"/><path d="M12 30 C12 26 14 24 16 24 C18 24 20 26 20 30"/></svg>
             Motus
-        </a><nav><a href="/motus/">Home</a><a href="/motus/docs">Docs</a><a href="/motus/playground" class="header-cta">Playground</a></nav></div></header><div class="layout-container"><main><style>
+        </a><nav><a href="/motus/">Home</a><a href="/motus/docs">Docs</a><a href="/motus/playground">Playground</a><a href="https://github.com/vzaramel/motus" class="header-cta" target="_blank">GitHub</a></nav></div></header><div class="layout-container"><main><style>
     /* ===== Animations ===== */
     @keyframes slideUp {
         from { opacity: 0; transform: translateY(36px); }
@@ -693,7 +693,7 @@
     /* ===== Inject text that contains reserved keywords ===== */
     document.getElementById('lp-badge').innerHTML = '<span class="lp-badge-dot"></span> Partial Evaluation &middot; Multi-layer Caching &middot; Edge Streaming';
     document.getElementById('lp-headline').innerHTML = 'Build for the Edge.<br/>Write in XML.';
-    document.getElementById('lp-sub').innerHTML = 'Motus compiles XML templates into streamable bytecode via partial evaluation &mdash; static parts fold at compile time, only dynamic holes reach the edge. AI-native by design, cacheable at every layer.';
+    document.getElementById('lp-sub').innerHTML = 'Motus compiles XML templates into streamable bytecode via partial evaluation &mdash; static parts fold at compile time, only dynamic holes reach the edge. AI-native by design, cacheable at every layer.<br/><br/><em style="color:rgba(232,240,236,0.4); font-size:0.88em;">Heavily experimental. Entirely vibecoded. Built on ideas 5+ years in the making &mdash; exploring how a language designed for the web from scratch could approach data, rendering, and reactivity.</em>';
     document.getElementById('lp-feat-sql').innerHTML = 'Embed queries directly in templates. No ORM layer, no boilerplate. Data flows from SQL into your view.';
     document.getElementById('lp-sql-note').innerHTML = 'SQL queries become queryRef + signature in bytecode. No raw SQL ships to the edge. Data is fetched via RPC at render time.';
     document.getElementById('lp-cta-title').innerHTML = 'See Motus in Action';

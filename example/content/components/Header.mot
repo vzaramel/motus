@@ -77,7 +77,8 @@
         <nav>
             <a href="/">Home</a>
             <a href="/docs">Docs</a>
-            <a href="/playground" class="header-cta">Playground</a>
+            <a href="/playground">Playground</a>
+            <a href="https://github.com/vzaramel/motus" class="header-cta" target="_blank">GitHub</a>
         </nav>
     </div>
 </header>
