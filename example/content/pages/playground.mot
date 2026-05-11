@@ -832,33 +832,35 @@
                 '    .contact-info { color: rgba(232,240,236,0.5); font-size: 0.9em; margin: 0; }',
                 '    .crm-title { color: #e8f0ec; margin: 0 0 16px; }',
                 '    .crm-subtitle { color: rgba(232,240,236,0.5); margin: 0 0 20px; font-size: 0.9em; }',
-                '    .crm-form { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }',
+                '    form { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }',
                 '    .crm-field { display: flex; flex-direction: column; gap: 2px; }',
                 '    .crm-field label { font-size: 0.75em; color: rgba(232,240,236,0.4); text-transform: uppercase; letter-spacing: 0.04em; }',
-                '    .crm-field input { background: #0f1e2c; border: 1px solid rgba(0,255,179,0.15); color: #e8f0ec; padding: 6px 10px; border-radius: 6px; font-size: 0.88em; outline: none; }',
-                '    .crm-field input:focus { border-color: rgba(0,255,179,0.4); }',
+                '    input[type="text"] { background: #0f1e2c; border: 1px solid rgba(0,255,179,0.15); color: #e8f0ec; padding: 6px 10px; border-radius: 6px; font-size: 0.88em; outline: none; }',
+                '    input[type="text"]:focus { border-color: rgba(0,255,179,0.4); }',
                 '    .crm-submit { background: rgba(0,255,179,0.1); border: 1px solid rgba(0,255,179,0.3); color: #00ffb3; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 0.88em; font-weight: 600; }',
                 '    .crm-submit:hover { background: rgba(0,255,179,0.18); }',
                 '</style>',
                 '',
                 '<h2 class="crm-title">CRM Dashboard</h2>',
-                '<p class="crm-subtitle">Contact data fetched from SQLite (sql.js) via the simulated origin server.</p>',
-                '<form class="crm-form" data-mot-mutate="contacts">',
+                '<p class="crm-subtitle">Contact data fetched from SQLite via the simulated origin.</p>',
+                '',
+                '<insert into contacts>',
                 '    <div class="crm-field">',
                 '        <label>Name</label>',
-                '        <input type="text" name="name" placeholder="Jane Doe" required />',
+                '        <input contact.name placeholder="Jane Doe" required />',
                 '    </div>',
                 '    <div class="crm-field">',
                 '        <label>Email</label>',
-                '        <input type="text" name="email" placeholder="jane@example.com" required />',
+                '        <input contact.email placeholder="jane@example.com" required />',
                 '    </div>',
                 '    <div class="crm-field">',
                 '        <label>Company</label>',
-                '        <input type="text" name="company" placeholder="Acme Corp" required />',
+                '        <input contact.company placeholder="Acme Corp" required />',
                 '    </div>',
                 '    <button type="submit" class="crm-submit">Add Contact</button>',
-                '</form>',
-                '<div class="crm-grid" id="crm-contacts">',
+                '</insert>',
+                '',
+                '<div class="crm-grid">',
                 '    <for contact in contacts>',
                 '        <div class="contact-card">',
                 '            <h3><output contact.name></h3>',
@@ -1196,7 +1198,7 @@
 
             /* ===== Reactive Form Submission ===== */
             function attachFormHandlers() {
-                var forms = outputEl.querySelectorAll('form[data-mot-mutate]');
+                var forms = outputEl.querySelectorAll('form[data-mot-mutation]');
                 forms.forEach(function(f) {
                     f.addEventListener('submit', function(e) {
                         e.preventDefault();
@@ -1206,7 +1208,7 @@
             }
 
             async function handleFormSubmit(formEl) {
-                var table = formEl.getAttribute('data-mot-mutate');
+                var table = formEl.getAttribute('data-mot-mutation');
                 var formData = new FormData(formEl);
                 var row = {};
                 formData.forEach(function(v, k) { row[k] = v; });

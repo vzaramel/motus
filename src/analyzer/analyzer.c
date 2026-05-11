@@ -959,6 +959,63 @@ static void analyze_macro(Analyzer *a, AstNode *node) {
     scope_define(a->scope, name, SYM_MACRO, node, node->line, node->column);
 }
 
+/* Analyze mutation constructs */
+static void analyze_insert(Analyzer *a, AstNode *node) {
+    /* Verify target binding exists */
+    Symbol *sym = scope_lookup(a->scope, node->data.insert.target);
+    if (!sym) {
+        analyzer_error(a, node->line, node->column,
+                       "Unknown binding '%s' in insert", node->data.insert.target);
+    }
+    /* Analyze body children */
+    for (AstNode *child = node->data.insert.body; child; child = child->next) {
+        analyze_node(a, child);
+    }
+}
+
+static void analyze_update(Analyzer *a, AstNode *node) {
+    Symbol *sym = scope_lookup(a->scope, node->data.update.target);
+    if (!sym) {
+        analyzer_error(a, node->line, node->column,
+                       "Unknown binding '%s' in update", node->data.update.target);
+    }
+    if (node->data.update.where) {
+        ExprResult r = analyze_expr(a, node->data.update.where);
+        (void)r;
+    }
+    for (AstNode *child = node->data.update.body; child; child = child->next) {
+        analyze_node(a, child);
+    }
+}
+
+static void analyze_delete(Analyzer *a, AstNode *node) {
+    Symbol *sym = scope_lookup(a->scope, node->data.delete_stmt.target);
+    if (!sym) {
+        analyzer_error(a, node->line, node->column,
+                       "Unknown binding '%s' in delete", node->data.delete_stmt.target);
+    }
+    if (node->data.delete_stmt.where) {
+        ExprResult r = analyze_expr(a, node->data.delete_stmt.where);
+        (void)r;
+    }
+    for (AstNode *child = node->data.delete_stmt.body; child; child = child->next) {
+        analyze_node(a, child);
+    }
+}
+
+static void analyze_bound_input(Analyzer *a, AstNode *node) {
+    /* Check if object name resolves — it's optional for <insert> where
+     * there's no existing record, only for <update> where we read values. */
+    (void)scope_lookup(a->scope, node->data.bound_input.object_name);
+    /* Analyze extra attrs */
+    for (AstNode *attr = node->data.bound_input.attrs; attr; attr = attr->next) {
+        if (attr->type == NODE_ATTR && attr->data.attr.value) {
+            ExprResult val = analyze_expr(a, attr->data.attr.value);
+            (void)val;
+        }
+    }
+}
+
 /* Analyze HTML element */
 static void analyze_element(Analyzer *a, AstNode *node) {
     Symbol *macro_sym = scope_lookup(a->scope, node->data.element.tag);
@@ -1024,6 +1081,18 @@ static void analyze_node(Analyzer *a, AstNode *node) {
             break;
         case NODE_REQUIRE_AUTH:
             /* Directive - nothing to analyze, just a flag for bytecode */
+            break;
+        case NODE_INSERT:
+            analyze_insert(a, node);
+            break;
+        case NODE_UPDATE:
+            analyze_update(a, node);
+            break;
+        case NODE_DELETE:
+            analyze_delete(a, node);
+            break;
+        case NODE_BOUND_INPUT:
+            analyze_bound_input(a, node);
             break;
         case NODE_ELEMENT:
             analyze_element(a, node);

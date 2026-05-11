@@ -43,6 +43,12 @@ typedef enum {
     NODE_INTERFACE,      /* <interface Name |props|> */
     NODE_REQUIRE_AUTH,   /* <require-auth role="admin"> */
 
+    /* Mutation constructs */
+    NODE_INSERT,         /* <insert into binding> ... </insert> */
+    NODE_UPDATE,         /* <update binding where cond> ... </update> */
+    NODE_DELETE,         /* <delete from binding where cond> ... </delete> */
+    NODE_BOUND_INPUT,    /* <input obj.field /> inside mutation block */
+
     /* Component parts */
     NODE_PROP_DEF,       /* Property definition in defcomp */
     NODE_SLOT_DEF,       /* Slot definition in defcomp */
@@ -261,6 +267,33 @@ struct AstNode {
             char *role;          /* Required role (e.g., "admin"), or NULL for any auth */
         } require_auth;
 
+        /* NODE_INSERT */
+        struct {
+            char *target;        /* Binding name (e.g., "contacts") */
+            AstNode *body;       /* Children (inputs, buttons) */
+        } insert;
+
+        /* NODE_UPDATE */
+        struct {
+            char *target;        /* Binding name */
+            AstNode *where;      /* WHERE condition expression */
+            AstNode *body;
+        } update;
+
+        /* NODE_DELETE */
+        struct {
+            char *target;        /* Binding name */
+            AstNode *where;      /* WHERE condition expression */
+            AstNode *body;
+        } delete_stmt;
+
+        /* NODE_BOUND_INPUT */
+        struct {
+            char *object_name;   /* "contact" */
+            char *field_name;    /* "name" */
+            AstNode *attrs;      /* Additional HTML attributes */
+        } bound_input;
+
         /* NODE_STYLE, NODE_SCRIPT */
         struct {
             char *code;
@@ -433,6 +466,12 @@ AstNode *ast_export(Arena *arena, AstNode *names, bool is_default, int line, int
 
 /* Auth */
 AstNode *ast_require_auth(Arena *arena, const char *role, int line, int col);
+
+/* Mutations */
+AstNode *ast_insert(Arena *arena, const char *target, AstNode *body, int line, int col);
+AstNode *ast_update(Arena *arena, const char *target, AstNode *where, AstNode *body, int line, int col);
+AstNode *ast_delete_stmt(Arena *arena, const char *target, AstNode *where, AstNode *body, int line, int col);
+AstNode *ast_bound_input(Arena *arena, const char *object_name, const char *field_name, AstNode *attrs, int line, int col);
 
 /* Embedded code */
 AstNode *ast_style(Arena *arena, const char *code, size_t length, int line, int col);

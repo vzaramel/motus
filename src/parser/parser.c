@@ -19,6 +19,10 @@ static AstNode *parse_match(Parser *p);
 static AstNode *parse_export(Parser *p);
 static AstNode *parse_interface(Parser *p);
 static AstNode *parse_require_auth(Parser *p);
+static AstNode *parse_insert(Parser *p);
+static AstNode *parse_update(Parser *p);
+static AstNode *parse_delete(Parser *p);
+static AstNode *parse_bound_input(Parser *p);
 
 /* ============ Token Manipulation ============ */
 
@@ -1577,6 +1581,188 @@ static AstNode *parse_style_or_script(Parser *p, bool is_style) {
     }
 }
 
+/* ============ Mutation Constructs ============ */
+
+/* <insert into contacts> ... </insert> */
+static AstNode *parse_insert(Parser *p) {
+    int line = p->previous.line;
+    int col = p->previous.column;
+
+    consume(p, TOK_INTO, "Expected 'into' after 'insert'");
+    if (!match(p, TOK_IDENT)) {
+        error_current(p, "Expected binding name after 'into'");
+        return NULL;
+    }
+    char *target = get_identifier(p);
+    consume(p, TOK_GT, "Expected '>'");
+
+    /* Parse body */
+    AstNode *body = NULL;
+    AstNode **tail = &body;
+    p->mutation_depth++;
+
+    while (!check(p, TOK_LT_SLASH) && !check(p, TOK_EOF)) {
+        AstNode *child = parse_node(p);
+        if (child) {
+            *tail = child;
+            tail = &child->next;
+        }
+    }
+
+    p->mutation_depth--;
+
+    /* Consume </insert> */
+    if (match(p, TOK_LT_SLASH)) {
+        match(p, TOK_INSERT);
+        consume(p, TOK_GT, "Expected '>' after </insert>");
+    }
+
+    return ast_insert(p->arena, target, body, line, col);
+}
+
+/* <update contacts where id eq contact.id> ... </update> */
+static AstNode *parse_update(Parser *p) {
+    int line = p->previous.line;
+    int col = p->previous.column;
+
+    if (!match(p, TOK_IDENT)) {
+        error_current(p, "Expected binding name after 'update'");
+        return NULL;
+    }
+    char *target = get_identifier(p);
+
+    AstNode *where = NULL;
+    if (match(p, TOK_WHERE)) {
+        lexer_set_mode(&p->lexer, LEX_MODE_EXPR);
+        where = parse_expression(p);
+        lexer_set_mode(&p->lexer, LEX_MODE_XML);
+    }
+
+    consume(p, TOK_GT, "Expected '>'");
+
+    /* Parse body */
+    AstNode *body = NULL;
+    AstNode **tail = &body;
+    p->mutation_depth++;
+
+    while (!check(p, TOK_LT_SLASH) && !check(p, TOK_EOF)) {
+        AstNode *child = parse_node(p);
+        if (child) {
+            *tail = child;
+            tail = &child->next;
+        }
+    }
+
+    p->mutation_depth--;
+
+    /* Consume </update> */
+    if (match(p, TOK_LT_SLASH)) {
+        match(p, TOK_UPDATE);
+        consume(p, TOK_GT, "Expected '>' after </update>");
+    }
+
+    return ast_update(p->arena, target, where, body, line, col);
+}
+
+/* <delete from contacts where id eq contact.id> ... </delete> */
+static AstNode *parse_delete(Parser *p) {
+    int line = p->previous.line;
+    int col = p->previous.column;
+
+    consume(p, TOK_FROM, "Expected 'from' after 'delete'");
+    if (!match(p, TOK_IDENT)) {
+        error_current(p, "Expected binding name after 'from'");
+        return NULL;
+    }
+    char *target = get_identifier(p);
+
+    AstNode *where = NULL;
+    if (match(p, TOK_WHERE)) {
+        lexer_set_mode(&p->lexer, LEX_MODE_EXPR);
+        where = parse_expression(p);
+        lexer_set_mode(&p->lexer, LEX_MODE_XML);
+    }
+
+    consume(p, TOK_GT, "Expected '>'");
+
+    /* Parse body */
+    AstNode *body = NULL;
+    AstNode **tail = &body;
+    p->mutation_depth++;
+
+    while (!check(p, TOK_LT_SLASH) && !check(p, TOK_EOF)) {
+        AstNode *child = parse_node(p);
+        if (child) {
+            *tail = child;
+            tail = &child->next;
+        }
+    }
+
+    p->mutation_depth--;
+
+    /* Consume </delete> */
+    if (match(p, TOK_LT_SLASH)) {
+        match(p, TOK_DELETE);
+        consume(p, TOK_GT, "Expected '>' after </delete>");
+    }
+
+    return ast_delete_stmt(p->arena, target, where, body, line, col);
+}
+
+/* <input contact.name /> inside mutation block */
+static AstNode *parse_bound_input(Parser *p) {
+    int line = p->previous.line;
+    int col = p->previous.column;
+
+    /* Object name (e.g., "contact") */
+    match(p, TOK_IDENT);
+    char *object_name = get_identifier(p);
+
+    consume(p, TOK_DOT, "Expected '.'");
+
+    /* Field name (e.g., "name") */
+    if (!match(p, TOK_IDENT)) {
+        error_current(p, "Expected field name after '.'");
+        return NULL;
+    }
+    char *field_name = get_identifier(p);
+
+    /* Parse remaining HTML attrs (placeholder, required, class, etc.) */
+    AstNode *attrs = NULL;
+    AstNode **tail = &attrs;
+
+    while (check(p, TOK_IDENT) || token_is_keyword(p->current.type)) {
+        advance(p);
+        char *attr_name;
+        if (p->previous.type == TOK_IDENT) {
+            attr_name = get_identifier(p);
+        } else {
+            attr_name = arena_strndup(p->arena, p->previous.start, p->previous.length);
+        }
+        int attr_line = p->previous.line;
+        int attr_col = p->previous.column;
+        AstNode *attr_value = NULL;
+
+        if (match(p, TOK_EQ)) {
+            if (match(p, TOK_STRING)) {
+                attr_value = parse_string(p);
+            } else {
+                lexer_set_mode(&p->lexer, LEX_MODE_EXPR);
+                attr_value = parse_expression(p);
+                lexer_set_mode(&p->lexer, LEX_MODE_XML);
+            }
+        }
+
+        AstNode *attr = ast_attr(p->arena, attr_name, attr_value, attr_line, attr_col);
+        *tail = attr;
+        tail = &attr->next;
+    }
+
+    consume(p, TOK_SLASH_GT, "Expected '/>' for bound input");
+
+    return ast_bound_input(p->arena, object_name, field_name, attrs, line, col);
+}
+
 /* Check if current token can be used as a tag name (identifier or keyword) */
 static bool is_tag_name(Parser *p) {
     TokenType t = p->current.type;
@@ -1587,7 +1773,8 @@ static bool is_tag_name(Parser *p) {
            t == TOK_DEFAULT || t == TOK_DEFCOMP || t == TOK_MACRO ||
            t == TOK_OUTPUT || t == TOK_IMPORT || t == TOK_EXPORT ||
            t == TOK_CHILDREN || t == TOK_INTERFACE ||
-           t == TOK_STYLE || t == TOK_SCRIPT || t == TOK_REQUIRE_AUTH;
+           t == TOK_STYLE || t == TOK_SCRIPT || t == TOK_REQUIRE_AUTH ||
+           t == TOK_INSERT || t == TOK_UPDATE || t == TOK_DELETE;
 }
 
 static AstNode *parse_element(Parser *p) {
@@ -1650,6 +1837,23 @@ static AstNode *parse_element(Parser *p) {
     }
     if (tag_type == TOK_REQUIRE_AUTH) {
         return parse_require_auth(p);
+    }
+    if (tag_type == TOK_INSERT) {
+        return parse_insert(p);
+    }
+    if (tag_type == TOK_UPDATE) {
+        return parse_update(p);
+    }
+    if (tag_type == TOK_DELETE) {
+        return parse_delete(p);
+    }
+
+    /* Context-aware bound input: <input contact.name /> inside mutation block */
+    if (p->mutation_depth > 0 && strcmp(tag, "input") == 0 && check(p, TOK_IDENT)) {
+        Token peeked = lexer_peek(&p->lexer);
+        if (peeked.type == TOK_DOT) {
+            return parse_bound_input(p);
+        }
     }
 
     /* Regular HTML element */
@@ -1736,6 +1940,7 @@ void parser_init(Parser *p, const char *source, size_t source_len, Arena *arena,
     p->had_error = false;
     p->panic_mode = false;
     p->errors = errors;
+    p->mutation_depth = 0;
 
     /* Prime the parser */
     advance(p);

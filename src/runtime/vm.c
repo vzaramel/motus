@@ -4,8 +4,8 @@
 
 #include "vm.h"
 #include <string.h>
-#ifndef MOT_WASM_FREESTANDING
 #include <stdio.h>
+#ifndef MOT_WASM_FREESTANDING
 #include <stdarg.h>
 #endif
 
@@ -1576,6 +1576,29 @@ static VMResult vm_execute(VM *vm, bool single_step) {
                 frame = &vm->frames[vm->frame_count - 1];
                 break;
             }
+
+            case BC_MUTATE_START: {
+                uint16_t idx = read_u16(frame);
+                if (idx >= vm->module->mut_req_count) {
+                    vm_error(vm, "Invalid mutation requirement index: %d", idx);
+                    break;
+                }
+                MutationRequirement *req = &vm->module->mut_reqs[idx];
+                const char *type_str = req->type == MUTATE_INSERT ? "insert" :
+                                       req->type == MUTATE_UPDATE ? "update" : "delete";
+                char buf[512];
+                int n = snprintf(buf, sizeof(buf),
+                    "<form method=\"post\" data-mot-mutation=\"%s\" data-mot-type=\"%s\">",
+                    req->target, type_str);
+                if (n > 0 && (size_t)n < sizeof(buf)) {
+                    emit_output(vm, buf, (uint32_t)n);
+                }
+                break;
+            }
+
+            case BC_MUTATE_END:
+                emit_output(vm, "</form>", 7);
+                break;
 
             case BC_HALT:
                 return vm->had_error ? VM_ERROR : VM_OK;

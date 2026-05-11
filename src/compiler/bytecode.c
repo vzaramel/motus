@@ -77,6 +77,10 @@ BytecodeModule *bytecode_module_new(Arena *arena) {
     mod->comp_ref_count = 0;
     mod->comp_ref_cap = 0;
 
+    mod->mut_reqs = NULL;
+    mod->mut_req_count = 0;
+    mod->mut_req_cap = 0;
+
     chunk_init(&mod->main, arena);
 
     mod->functions = NULL;
@@ -276,6 +280,35 @@ int bytecode_find_builtin(BytecodeModule *mod, const char *name) {
     return -1;
 }
 
+uint16_t bytecode_add_mutation_req(BytecodeModule *mod, MutationType type, const char *target) {
+    if (mod->mut_req_count >= mod->mut_req_cap) {
+        uint32_t new_cap = mod->mut_req_cap == 0 ? 8 : mod->mut_req_cap * 2;
+        mod->mut_reqs = grow_array(mod->arena, mod->mut_reqs, mod->mut_req_cap,
+                                   new_cap, sizeof(MutationRequirement));
+        mod->mut_req_cap = new_cap;
+    }
+
+    MutationRequirement *req = &mod->mut_reqs[mod->mut_req_count];
+    req->type = type;
+    req->target = arena_strdup(mod->arena, target);
+    req->field_names = NULL;
+    req->field_count = 0;
+    req->field_cap = 0;
+
+    return (uint16_t)mod->mut_req_count++;
+}
+
+void bytecode_mutation_req_add_field(BytecodeModule *mod, uint16_t idx, const char *field_name) {
+    MutationRequirement *req = &mod->mut_reqs[idx];
+    if (req->field_count >= req->field_cap) {
+        uint16_t new_cap = req->field_cap == 0 ? 8 : req->field_cap * 2;
+        req->field_names = grow_array(mod->arena, req->field_names, req->field_cap,
+                                      new_cap, sizeof(char *));
+        req->field_cap = new_cap;
+    }
+    req->field_names[req->field_count++] = arena_strdup(mod->arena, field_name);
+}
+
 uint16_t bytecode_add_comp_ref(BytecodeModule *mod, const char *name, const char *path) {
     /* Check for existing */
     for (uint32_t i = 0; i < mod->comp_ref_count; i++) {
@@ -415,6 +448,8 @@ const char *opcode_name(OpCode op) {
         case BC_CONCAT: return "CONCAT";
         case BC_HALT: return "HALT";
         case BC_COMPONENT_LINKED: return "COMPONENT_LINKED";
+        case BC_MUTATE_START: return "MUTATE_START";
+        case BC_MUTATE_END: return "MUTATE_END";
     }
     return "UNKNOWN";
 }
@@ -473,6 +508,7 @@ static int disassemble_instruction(Chunk *chunk, int offset, BytecodeModule *mod
         case BC_COMPONENT_START:
         case BC_SLOT_START:
         case BC_DEP_START:
+        case BC_MUTATE_START:
         case BC_ARRAY_NEW:
         case BC_OBJECT_NEW:
         case BC_OBJECT_SET: {
@@ -801,7 +837,7 @@ uint8_t *bytecode_serialize_ex(BytecodeModule *mod, uint32_t *out_len, bool incl
     size += 10;
 
     /* Section sizes */
-    size += 4 * 7;  /* const, string, data_req, dep, builtin, comp_ref, func counts */
+    size += 4 * 8;  /* const, string, data_req, dep, builtin, comp_ref, mut_req, func counts */
 
     /* Constants */
     for (uint32_t i = 0; i < mod->const_count; i++) {
@@ -856,6 +892,16 @@ uint8_t *bytecode_serialize_ex(BytecodeModule *mod, uint32_t *out_len, bool incl
     for (uint32_t i = 0; i < mod->comp_ref_count; i++) {
         size += 4 + mod->comp_refs[i].name_len;
         size += 4 + mod->comp_refs[i].path_len;
+    }
+
+    /* Mutation requirements */
+    for (uint32_t i = 0; i < mod->mut_req_count; i++) {
+        size += 1;  /* type */
+        size += 4 + (uint32_t)strlen(mod->mut_reqs[i].target);  /* target */
+        size += 2;  /* field_count */
+        for (uint16_t f = 0; f < mod->mut_reqs[i].field_count; f++) {
+            size += 4 + (uint32_t)strlen(mod->mut_reqs[i].field_names[f]);
+        }
     }
 
     /* Main chunk */
@@ -917,6 +963,7 @@ uint8_t *bytecode_serialize_ex(BytecodeModule *mod, uint32_t *out_len, bool incl
     write_u32(&ptr, mod->dep_count);
     write_u32(&ptr, mod->builtin_count);
     write_u32(&ptr, mod->comp_ref_count);
+    write_u32(&ptr, mod->mut_req_count);
     write_u32(&ptr, mod->func_count);
 
     /* Write constants */
@@ -992,6 +1039,21 @@ uint8_t *bytecode_serialize_ex(BytecodeModule *mod, uint32_t *out_len, bool incl
         write_bytes(&ptr, ref->name, ref->name_len);
         write_u32(&ptr, ref->path_len);
         write_bytes(&ptr, ref->path, ref->path_len);
+    }
+
+    /* Write mutation requirements */
+    for (uint32_t i = 0; i < mod->mut_req_count; i++) {
+        MutationRequirement *req = &mod->mut_reqs[i];
+        write_u8(&ptr, (uint8_t)req->type);
+        uint32_t target_len = (uint32_t)strlen(req->target);
+        write_u32(&ptr, target_len);
+        write_bytes(&ptr, req->target, target_len);
+        write_u16(&ptr, req->field_count);
+        for (uint16_t f = 0; f < req->field_count; f++) {
+            uint32_t field_len = (uint32_t)strlen(req->field_names[f]);
+            write_u32(&ptr, field_len);
+            write_bytes(&ptr, req->field_names[f], field_len);
+        }
     }
 
     /* Write main chunk */
@@ -1090,13 +1152,15 @@ BytecodeModule *bytecode_deserialize(const uint8_t *data, uint32_t len, Arena *a
     mod->flags = flags;
 
     uint32_t const_count = 0, string_count = 0, data_req_count = 0;
-    uint32_t dep_count = 0, builtin_count = 0, comp_ref_count = 0, func_count = 0;
+    uint32_t dep_count = 0, builtin_count = 0, comp_ref_count = 0;
+    uint32_t mut_req_count = 0, func_count = 0;
     if (!read_u32(&ptr, end, &const_count) ||
         !read_u32(&ptr, end, &string_count) ||
         !read_u32(&ptr, end, &data_req_count) ||
         !read_u32(&ptr, end, &dep_count) ||
         !read_u32(&ptr, end, &builtin_count) ||
         !read_u32(&ptr, end, &comp_ref_count) ||
+        !read_u32(&ptr, end, &mut_req_count) ||
         !read_u32(&ptr, end, &func_count)) {
         return NULL;
     }
@@ -1233,6 +1297,31 @@ BytecodeModule *bytecode_deserialize(const uint8_t *data, uint32_t len, Arena *a
         ComponentRef *ref = &mod->comp_refs[i];
         if (!read_string_copy(&ptr, end, arena, &ref->name, &ref->name_len)) return NULL;
         if (!read_string_copy(&ptr, end, arena, &ref->path, &ref->path_len)) return NULL;
+    }
+
+    /* Read mutation requirements */
+    mod->mut_req_count = mut_req_count;
+    mod->mut_req_cap = mut_req_count;
+    if (mut_req_count > 0) {
+        mod->mut_reqs = arena_alloc(arena, sizeof(MutationRequirement) * mut_req_count);
+    } else {
+        mod->mut_reqs = NULL;
+    }
+    for (uint32_t i = 0; i < mut_req_count; i++) {
+        MutationRequirement *req = &mod->mut_reqs[i];
+        uint8_t type_u8 = 0;
+        if (!read_u8(&ptr, end, &type_u8)) return NULL;
+        req->type = (MutationType)type_u8;
+        if (!read_string_copy(&ptr, end, arena, &req->target, NULL)) return NULL;
+        if (!read_u16(&ptr, end, &req->field_count)) return NULL;
+        req->field_cap = req->field_count;
+        req->field_names = NULL;
+        if (req->field_count > 0) {
+            req->field_names = arena_alloc(arena, sizeof(char *) * req->field_count);
+            for (uint16_t f = 0; f < req->field_count; f++) {
+                if (!read_string_copy(&ptr, end, arena, &req->field_names[f], NULL)) return NULL;
+            }
+        }
     }
 
     if (!read_chunk(&ptr, end, arena, &mod->main)) {

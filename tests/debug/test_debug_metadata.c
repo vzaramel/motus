@@ -75,7 +75,8 @@ static int parse_debug_trailer(const uint8_t *data, size_t len,
                                uint32_t *out_first_query_line) {
     size_t pos = 0;
     uint32_t const_count = 0, string_count = 0, data_req_count = 0;
-    uint32_t dep_count = 0, builtin_count = 0, comp_ref_count = 0, func_count = 0;
+    uint32_t dep_count = 0, builtin_count = 0, comp_ref_count = 0;
+    uint32_t mut_req_count = 0, func_count = 0;
     uint32_t tmp_u32 = 0;
     uint16_t tmp_u16 = 0;
     uint8_t tmp_u8 = 0;
@@ -91,6 +92,7 @@ static int parse_debug_trailer(const uint8_t *data, size_t len,
         !read_u32_at(data, len, &pos, &dep_count) ||
         !read_u32_at(data, len, &pos, &builtin_count) ||
         !read_u32_at(data, len, &pos, &comp_ref_count) ||
+        !read_u32_at(data, len, &pos, &mut_req_count) ||
         !read_u32_at(data, len, &pos, &func_count)) {
         return 0;
     }
@@ -133,6 +135,15 @@ static int parse_debug_trailer(const uint8_t *data, size_t len,
 
     for (uint32_t i = 0; i < comp_ref_count; i++) {
         if (!skip_string(data, len, &pos) || !skip_string(data, len, &pos)) return 0;
+    }
+
+    for (uint32_t i = 0; i < mut_req_count; i++) {
+        if (!skip_bytes(len, &pos, 1)) return 0; /* type */
+        if (!skip_string(data, len, &pos)) return 0; /* target */
+        if (!read_u16_at(data, len, &pos, &tmp_u16)) return 0; /* field_count */
+        for (uint16_t f = 0; f < tmp_u16; f++) {
+            if (!skip_string(data, len, &pos)) return 0;
+        }
     }
 
     if (!read_u32_at(data, len, &pos, &tmp_u32) || !skip_bytes(len, &pos, tmp_u32)) return 0;

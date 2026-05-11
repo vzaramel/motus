@@ -30,6 +30,10 @@ const char *node_type_name(NodeType type) {
         case NODE_EXPORT: return "EXPORT";
         case NODE_INTERFACE: return "INTERFACE";
         case NODE_REQUIRE_AUTH: return "REQUIRE_AUTH";
+        case NODE_INSERT: return "INSERT";
+        case NODE_UPDATE: return "UPDATE";
+        case NODE_DELETE: return "DELETE";
+        case NODE_BOUND_INPUT: return "BOUND_INPUT";
         case NODE_PROP_DEF: return "PROP_DEF";
         case NODE_SLOT_DEF: return "SLOT_DEF";
         case NODE_SLOT_FILL: return "SLOT_FILL";
@@ -215,6 +219,20 @@ void ast_set_source_path_recursive(AstNode *node, const char *source_path) {
             case NODE_SQL_LIMIT:
             case NODE_SQL_OFFSET:
             case NODE_SQL_PARAM:
+            case NODE_INSERT:
+                ast_set_source_path_recursive(cur->data.insert.body, source_path);
+                break;
+            case NODE_UPDATE:
+                ast_set_source_path_recursive(cur->data.update.where, source_path);
+                ast_set_source_path_recursive(cur->data.update.body, source_path);
+                break;
+            case NODE_DELETE:
+                ast_set_source_path_recursive(cur->data.delete_stmt.where, source_path);
+                ast_set_source_path_recursive(cur->data.delete_stmt.body, source_path);
+                break;
+            case NODE_BOUND_INPUT:
+                ast_set_source_path_recursive(cur->data.bound_input.attrs, source_path);
+                break;
             case NODE_REQUIRE_AUTH:
             case NODE_COMMENT:
             case NODE_DOCTYPE:
@@ -550,6 +568,37 @@ AstNode *ast_sql_param(Arena *arena, const char *name, int line, int col) {
 AstNode *ast_require_auth(Arena *arena, const char *role, int line, int col) {
     AstNode *node = ast_node_new(arena, NODE_REQUIRE_AUTH, line, col);
     node->data.require_auth.role = role ? arena_strdup(arena, role) : NULL;
+    return node;
+}
+
+AstNode *ast_insert(Arena *arena, const char *target, AstNode *body, int line, int col) {
+    AstNode *node = ast_node_new(arena, NODE_INSERT, line, col);
+    node->data.insert.target = arena_strdup(arena, target);
+    node->data.insert.body = body;
+    return node;
+}
+
+AstNode *ast_update(Arena *arena, const char *target, AstNode *where, AstNode *body, int line, int col) {
+    AstNode *node = ast_node_new(arena, NODE_UPDATE, line, col);
+    node->data.update.target = arena_strdup(arena, target);
+    node->data.update.where = where;
+    node->data.update.body = body;
+    return node;
+}
+
+AstNode *ast_delete_stmt(Arena *arena, const char *target, AstNode *where, AstNode *body, int line, int col) {
+    AstNode *node = ast_node_new(arena, NODE_DELETE, line, col);
+    node->data.delete_stmt.target = arena_strdup(arena, target);
+    node->data.delete_stmt.where = where;
+    node->data.delete_stmt.body = body;
+    return node;
+}
+
+AstNode *ast_bound_input(Arena *arena, const char *object_name, const char *field_name, AstNode *attrs, int line, int col) {
+    AstNode *node = ast_node_new(arena, NODE_BOUND_INPUT, line, col);
+    node->data.bound_input.object_name = arena_strdup(arena, object_name);
+    node->data.bound_input.field_name = arena_strdup(arena, field_name);
+    node->data.bound_input.attrs = attrs;
     return node;
 }
 

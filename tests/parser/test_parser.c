@@ -408,6 +408,103 @@ TEST(script_element) {
     arena_destroy(arena);
 }
 
+TEST(insert_statement) {
+    const char *src = "<insert into contacts><button type=\"submit\">Add</button></insert>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    AstNode *ins = doc->data.document.children;
+    ASSERT(ins != NULL, "Expected insert node");
+    ASSERT(ins->type == NODE_INSERT, "Expected NODE_INSERT");
+    ASSERT(strcmp(ins->data.insert.target, "contacts") == 0, "Expected target 'contacts'");
+    ASSERT(ins->data.insert.body != NULL, "Expected body");
+
+    arena_destroy(arena);
+}
+
+TEST(update_statement) {
+    const char *src = "<update contacts where id eq 1><button type=\"submit\">Save</button></update>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    AstNode *upd = doc->data.document.children;
+    ASSERT(upd != NULL, "Expected update node");
+    ASSERT(upd->type == NODE_UPDATE, "Expected NODE_UPDATE");
+    ASSERT(strcmp(upd->data.update.target, "contacts") == 0, "Expected target 'contacts'");
+    ASSERT(upd->data.update.where != NULL, "Expected where clause");
+
+    arena_destroy(arena);
+}
+
+TEST(delete_statement) {
+    const char *src = "<delete from contacts where id eq 1><button type=\"submit\">Remove</button></delete>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    AstNode *del = doc->data.document.children;
+    ASSERT(del != NULL, "Expected delete node");
+    ASSERT(del->type == NODE_DELETE, "Expected NODE_DELETE");
+    ASSERT(strcmp(del->data.delete_stmt.target, "contacts") == 0, "Expected target 'contacts'");
+    ASSERT(del->data.delete_stmt.where != NULL, "Expected where clause");
+
+    arena_destroy(arena);
+}
+
+TEST(bound_input) {
+    const char *src = "<insert into contacts><input contact.name /></insert>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    AstNode *ins = doc->data.document.children;
+    ASSERT(ins != NULL, "Expected insert node");
+    ASSERT(ins->type == NODE_INSERT, "Expected NODE_INSERT");
+
+    AstNode *inp = ins->data.insert.body;
+    ASSERT(inp != NULL, "Expected bound input");
+    ASSERT(inp->type == NODE_BOUND_INPUT, "Expected NODE_BOUND_INPUT");
+    ASSERT(strcmp(inp->data.bound_input.object_name, "contact") == 0, "Expected object 'contact'");
+    ASSERT(strcmp(inp->data.bound_input.field_name, "name") == 0, "Expected field 'name'");
+
+    arena_destroy(arena);
+}
+
+TEST(regular_input_in_mutation) {
+    /* Regular <input type="text" /> should remain NODE_ELEMENT even inside mutation block */
+    const char *src = "<insert into contacts><input type=\"text\" /></insert>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    AstNode *ins = doc->data.document.children;
+    ASSERT(ins != NULL, "Expected insert node");
+
+    AstNode *inp = ins->data.insert.body;
+    ASSERT(inp != NULL, "Expected input element");
+    ASSERT(inp->type == NODE_ELEMENT, "Regular input should be NODE_ELEMENT");
+    ASSERT(strcmp(inp->data.element.tag, "input") == 0, "Expected 'input' tag");
+
+    arena_destroy(arena);
+}
+
 int main(void) {
     printf("=== Parser Tests ===\n");
 
@@ -430,6 +527,11 @@ int main(void) {
     RUN_TEST(attributes_with_keyword_name);
     RUN_TEST(style_element);
     RUN_TEST(script_element);
+    RUN_TEST(insert_statement);
+    RUN_TEST(update_statement);
+    RUN_TEST(delete_statement);
+    RUN_TEST(bound_input);
+    RUN_TEST(regular_input_in_mutation);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return tests_passed == tests_run ? 0 : 1;

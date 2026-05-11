@@ -701,6 +701,71 @@ TEST(partial_eval_string_concat) {
 }
 
 /* ======================================================================
+ * MUTATION CONSTRUCTS
+ * ====================================================================== */
+
+TEST(e2e_insert_form) {
+    VMResult r = full_pipeline(
+        "<let contacts 0>"
+        "<insert into contacts>"
+        "<button type=\"submit\">Add</button>"
+        "</insert>"
+        "</let>"
+    );
+    ASSERT(r == VM_OK, "Insert form should render");
+    ASSERT(strstr(output_buffer, "<form") != NULL, "Should contain form tag");
+    ASSERT(strstr(output_buffer, "data-mot-mutation=\"contacts\"") != NULL,
+           "Should have mutation target attr");
+    ASSERT(strstr(output_buffer, "data-mot-type=\"insert\"") != NULL,
+           "Should have insert type attr");
+    ASSERT(strstr(output_buffer, "</form>") != NULL, "Should close form");
+}
+
+TEST(e2e_update_form) {
+    VMResult r = full_pipeline(
+        "<let contacts 0>"
+        "<update contacts>"
+        "<button type=\"submit\">Save</button>"
+        "</update>"
+        "</let>"
+    );
+    ASSERT(r == VM_OK, "Update form should render");
+    ASSERT(strstr(output_buffer, "data-mot-type=\"update\"") != NULL,
+           "Should have update type attr");
+    ASSERT(strstr(output_buffer, "</form>") != NULL, "Should close form");
+}
+
+TEST(e2e_delete_form) {
+    VMResult r = full_pipeline(
+        "<let contacts 0>"
+        "<delete from contacts>"
+        "<button type=\"submit\">Remove</button>"
+        "</delete>"
+        "</let>"
+    );
+    ASSERT(r == VM_OK, "Delete form should render");
+    ASSERT(strstr(output_buffer, "data-mot-type=\"delete\"") != NULL,
+           "Should have delete type attr");
+    ASSERT(strstr(output_buffer, "</form>") != NULL, "Should close form");
+}
+
+TEST(e2e_bound_input) {
+    VMResult r = full_pipeline(
+        "<let contacts [1, 2]>"
+        "<for contact in contacts>"
+        "<insert into contacts>"
+        "<input contact.name />"
+        "</insert>"
+        "</for>"
+        "</let>"
+    );
+    ASSERT(r == VM_OK, "Bound input should render");
+    ASSERT(strstr(output_buffer, "<input") != NULL, "Should contain input tag");
+    ASSERT(strstr(output_buffer, "name=\"name\"") != NULL, "Should have name attr");
+    ASSERT(strstr(output_buffer, "type=\"text\"") != NULL, "Should have type attr");
+}
+
+/* ======================================================================
  * MAIN
  * ====================================================================== */
 
@@ -765,6 +830,12 @@ int main(void) {
     /* Partial Evaluation */
     RUN_TEST(partial_eval_constant_output);
     RUN_TEST(partial_eval_string_concat);
+
+    /* Mutation Constructs */
+    RUN_TEST(e2e_insert_form);
+    RUN_TEST(e2e_update_form);
+    RUN_TEST(e2e_delete_form);
+    RUN_TEST(e2e_bound_input);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return tests_passed == tests_run ? 0 : 1;

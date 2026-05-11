@@ -54,6 +54,12 @@ typedef enum {
     TOK_THEN,            /* for ternary: if x then y else z */
     TOK_REQUIRE_AUTH,    /* require-auth directive */
 
+    /* Mutation keywords */
+    TOK_INSERT,          /* insert */
+    TOK_UPDATE,          /* update */
+    TOK_DELETE,          /* delete */
+    TOK_INTO,            /* into */
+
     /* SQL keywords */
     TOK_SELECT,
     TOK_WHERE,

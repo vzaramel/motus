@@ -19,23 +19,23 @@ static void write_u32_le(uint8_t *p, uint32_t v) {
 }
 
 int main(void) {
-    uint8_t module[46];
+    uint8_t module[50];
     uint8_t *wasm = NULL;
     size_t wasm_len = 0;
     char err[256];
     MotTranspilerStatus status;
 
     /* Minimal valid module:
-     * header + counts + empty main chunk + one empty function chunk.
+     * header(10) + counts(8×4=32) + empty main chunk(4) + one empty function chunk(4).
      */
     memset(module, 0, sizeof(module));
     write_u32_le(module + 0, BYTECODE_MAGIC);
     write_u16_le(module + 4, BYTECODE_VERSION_MAJOR);
     write_u16_le(module + 6, BYTECODE_VERSION_MINOR);
     write_u16_le(module + 8, 0);
-    write_u32_le(module + 34, 1); /* func_count */
-    write_u32_le(module + 38, 0); /* main_len */
-    write_u32_le(module + 42, 0); /* function[0]_len */
+    write_u32_le(module + 38, 1); /* func_count (8th section count) */
+    write_u32_le(module + 42, 0); /* main_len */
+    write_u32_le(module + 46, 0); /* function[0]_len */
 
     status = mot_transpile_component_bytecode_to_wasm(
         module,

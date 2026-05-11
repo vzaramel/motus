@@ -36,6 +36,7 @@ typedef struct Parser {
     bool had_error;
     bool panic_mode;
     MotErrorList *errors;
+    int mutation_depth;
 } Parser;
 
 /* Initialize parser */

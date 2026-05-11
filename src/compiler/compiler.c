@@ -2133,6 +2133,113 @@ static void compile_embedded(Compiler *c, AstNode *node) {
     emit_op_u16(c, BC_EMIT_TAG_CLOSE, tag_idx);
 }
 
+/* Collect bound input field names from mutation body */
+static void collect_bound_fields(AstNode *body, BytecodeModule *mod, uint16_t mut_idx) {
+    for (AstNode *child = body; child; child = child->next) {
+        if (child->type == NODE_BOUND_INPUT) {
+            bytecode_mutation_req_add_field(mod, mut_idx, child->data.bound_input.field_name);
+        }
+    }
+}
+
+/* Compile <insert into binding> ... </insert> */
+static void compile_insert(Compiler *c, AstNode *node) {
+    c->current_line = node->line;
+
+    uint16_t mut_idx = bytecode_add_mutation_req(c->module, MUTATE_INSERT, node->data.insert.target);
+    collect_bound_fields(node->data.insert.body, c->module, mut_idx);
+
+    emit_op_u16(c, BC_MUTATE_START, mut_idx);
+    for (AstNode *child = node->data.insert.body; child; child = child->next) {
+        compile_node(c, child);
+    }
+    emit_byte(c, BC_MUTATE_END);
+}
+
+/* Compile <update binding where cond> ... </update> */
+static void compile_update(Compiler *c, AstNode *node) {
+    c->current_line = node->line;
+
+    uint16_t mut_idx = bytecode_add_mutation_req(c->module, MUTATE_UPDATE, node->data.update.target);
+    collect_bound_fields(node->data.update.body, c->module, mut_idx);
+
+    emit_op_u16(c, BC_MUTATE_START, mut_idx);
+    for (AstNode *child = node->data.update.body; child; child = child->next) {
+        compile_node(c, child);
+    }
+    emit_byte(c, BC_MUTATE_END);
+}
+
+/* Compile <delete from binding where cond> ... </delete> */
+static void compile_delete(Compiler *c, AstNode *node) {
+    c->current_line = node->line;
+
+    uint16_t mut_idx = bytecode_add_mutation_req(c->module, MUTATE_DELETE, node->data.delete_stmt.target);
+    collect_bound_fields(node->data.delete_stmt.body, c->module, mut_idx);
+
+    emit_op_u16(c, BC_MUTATE_START, mut_idx);
+    for (AstNode *child = node->data.delete_stmt.body; child; child = child->next) {
+        compile_node(c, child);
+    }
+    emit_byte(c, BC_MUTATE_END);
+}
+
+/* Compile <input obj.field /> inside mutation block */
+static void compile_bound_input(Compiler *c, AstNode *node) {
+    c->current_line = node->line;
+
+    uint16_t input_tag = bytecode_add_string(c->module, "input", 5);
+    uint16_t type_attr = bytecode_add_string(c->module, "type", 4);
+    uint16_t name_attr = bytecode_add_string(c->module, "name", 4);
+    uint16_t value_attr = bytecode_add_string(c->module, "value", 5);
+    uint16_t type_val = make_string_constant(c, "text", 4);
+    uint16_t name_val = make_string_constant(c, node->data.bound_input.field_name,
+                                              strlen(node->data.bound_input.field_name));
+
+    emit_op_u16(c, BC_EMIT_TAG_OPEN, input_tag);
+
+    /* type="text" */
+    emit_op_u16(c, BC_EMIT_ATTR_START, type_attr);
+    emit_op_u16(c, BC_EMIT_LITERAL, type_val);
+    emit_byte(c, BC_EMIT_ATTR_END);
+
+    /* name="field_name" */
+    emit_op_u16(c, BC_EMIT_ATTR_START, name_attr);
+    emit_op_u16(c, BC_EMIT_LITERAL, name_val);
+    emit_byte(c, BC_EMIT_ATTR_END);
+
+    /* value=obj.field (load from scope) */
+    int obj_slot = resolve_local(c, node->data.bound_input.object_name);
+    if (obj_slot >= 0) {
+        emit_op_u16(c, BC_EMIT_ATTR_START, value_attr);
+        emit_op_u16(c, BC_LOAD, (uint16_t)obj_slot);
+        uint16_t field_idx = bytecode_add_string(c->module, node->data.bound_input.field_name,
+                                                  (uint32_t)strlen(node->data.bound_input.field_name));
+        emit_op_u16(c, BC_LOAD_FIELD, field_idx);
+        emit_byte(c, BC_EMIT_TEXT);
+        emit_byte(c, BC_EMIT_ATTR_END);
+    }
+
+    /* Extra HTML attributes */
+    for (AstNode *attr = node->data.bound_input.attrs; attr; attr = attr->next) {
+        if (attr->type != NODE_ATTR) continue;
+        uint16_t attr_name_idx = bytecode_add_string(c->module, attr->data.attr.name,
+                                                      (uint32_t)strlen(attr->data.attr.name));
+        if (attr->data.attr.value) {
+            emit_op_u16(c, BC_EMIT_ATTR_START, attr_name_idx);
+            compile_expr(c, attr->data.attr.value);
+            emit_byte(c, BC_EMIT_TEXT);
+            emit_byte(c, BC_EMIT_ATTR_END);
+        } else {
+            /* Boolean attribute (e.g., required) */
+            emit_op_u16(c, BC_EMIT_ATTR_START, attr_name_idx);
+            emit_byte(c, BC_EMIT_ATTR_END);
+        }
+    }
+
+    emit_byte(c, BC_EMIT_TAG_SELF);
+}
+
 /* Compile node dispatch */
 static void compile_node(Compiler *c, AstNode *node) {
     if (!node) return;
@@ -2206,6 +2313,18 @@ static void compile_node(Compiler *c, AstNode *node) {
             }
             break;
         }
+        case NODE_INSERT:
+            compile_insert(c, node);
+            break;
+        case NODE_UPDATE:
+            compile_update(c, node);
+            break;
+        case NODE_DELETE:
+            compile_delete(c, node);
+            break;
+        case NODE_BOUND_INPUT:
+            compile_bound_input(c, node);
+            break;
         case NODE_REQUIRE_AUTH:
             /* Set auth flags in bytecode module */
             c->module->flags |= BYTECODE_FLAG_AUTH_REQUIRED;

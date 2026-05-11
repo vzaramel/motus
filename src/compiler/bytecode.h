@@ -18,7 +18,7 @@
 
 /* Version */
 #define BYTECODE_VERSION_MAJOR 1
-#define BYTECODE_VERSION_MINOR 2
+#define BYTECODE_VERSION_MINOR 3
 
 /* Optional debug trailer magic: "MDBG" */
 #define BYTECODE_DEBUG_MAGIC 0x4742444Du
@@ -124,6 +124,10 @@ typedef enum {
 
     BC_HALT,             /* End of program */
     BC_COMPONENT_LINKED, /* Load linked component: ref_idx(u16), argc(u8) */
+
+    /* Mutation forms */
+    BC_MUTATE_START,     /* Begin mutation form: mut_req_idx(u16) */
+    BC_MUTATE_END,       /* End mutation form */
 } OpCode;
 
 /* Constant types */
@@ -177,6 +181,22 @@ typedef struct {
     uint8_t min_args;
     uint8_t max_args;
 } BuiltinRef;
+
+/* Mutation types */
+typedef enum {
+    MUTATE_INSERT,
+    MUTATE_UPDATE,
+    MUTATE_DELETE,
+} MutationType;
+
+/* Mutation requirement */
+typedef struct {
+    MutationType type;
+    char *target;                /* Binding name (e.g., "contacts") */
+    char **field_names;          /* Bound input field names */
+    uint16_t field_count;
+    uint16_t field_cap;
+} MutationRequirement;
 
 /* Dynamic component reference (loaded at edge) */
 typedef struct {
@@ -255,6 +275,11 @@ typedef struct {
     uint32_t comp_ref_count;
     uint32_t comp_ref_cap;
 
+    /* Mutation requirements */
+    MutationRequirement *mut_reqs;
+    uint32_t mut_req_count;
+    uint32_t mut_req_cap;
+
     /* Main code chunk */
     Chunk main;
 
@@ -304,6 +329,10 @@ uint16_t bytecode_add_dependency(BytecodeModule *mod, const char *path);
 uint16_t bytecode_add_builtin(BytecodeModule *mod, const char *name,
                               uint8_t min_args, uint8_t max_args);
 int bytecode_find_builtin(BytecodeModule *mod, const char *name);
+
+/* Mutation requirements */
+uint16_t bytecode_add_mutation_req(BytecodeModule *mod, MutationType type, const char *target);
+void bytecode_mutation_req_add_field(BytecodeModule *mod, uint16_t idx, const char *field_name);
 
 /* Dynamic component references */
 uint16_t bytecode_add_comp_ref(BytecodeModule *mod, const char *name, const char *path);
