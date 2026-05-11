@@ -1594,6 +1594,7 @@ static AstNode *parse_insert(Parser *p) {
         return NULL;
     }
     char *target = get_identifier(p);
+    bool optimistic = !match(p, TOK_PESSIMISTIC);
     consume(p, TOK_GT, "Expected '>'");
 
     /* Parse body */
@@ -1617,7 +1618,7 @@ static AstNode *parse_insert(Parser *p) {
         consume(p, TOK_GT, "Expected '>' after </insert>");
     }
 
-    return ast_insert(p->arena, target, body, line, col);
+    return ast_insert(p->arena, target, body, optimistic, line, col);
 }
 
 /* <update contacts where id eq contact.id> ... </update> */
@@ -1638,6 +1639,7 @@ static AstNode *parse_update(Parser *p) {
         lexer_set_mode(&p->lexer, LEX_MODE_XML);
     }
 
+    bool optimistic = !match(p, TOK_PESSIMISTIC);
     consume(p, TOK_GT, "Expected '>'");
 
     /* Parse body */
@@ -1661,7 +1663,7 @@ static AstNode *parse_update(Parser *p) {
         consume(p, TOK_GT, "Expected '>' after </update>");
     }
 
-    return ast_update(p->arena, target, where, body, line, col);
+    return ast_update(p->arena, target, where, body, optimistic, line, col);
 }
 
 /* <delete from contacts where id eq contact.id> ... </delete> */
@@ -1683,6 +1685,7 @@ static AstNode *parse_delete(Parser *p) {
         lexer_set_mode(&p->lexer, LEX_MODE_XML);
     }
 
+    bool optimistic = !match(p, TOK_PESSIMISTIC);
     consume(p, TOK_GT, "Expected '>'");
 
     /* Parse body */
@@ -1706,7 +1709,7 @@ static AstNode *parse_delete(Parser *p) {
         consume(p, TOK_GT, "Expected '>' after </delete>");
     }
 
-    return ast_delete_stmt(p->arena, target, where, body, line, col);
+    return ast_delete_stmt(p->arena, target, where, body, optimistic, line, col);
 }
 
 /* <input contact.name /> inside mutation block */

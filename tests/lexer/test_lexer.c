@@ -178,6 +178,16 @@ TEST(self_closing) {
     ASSERT(tok.type == TOK_SLASH_GT, "Expected '/>'");
 }
 
+TEST(pessimistic_keyword) {
+    const char *src = "pessimistic";
+    Lexer lex;
+    lexer_init(&lex, src, strlen(src));
+    lexer_set_mode(&lex, LEX_MODE_XML);
+
+    Token tok = lexer_next(&lex);
+    ASSERT(tok.type == TOK_PESSIMISTIC, "Expected 'pessimistic' keyword");
+}
+
 int main(void) {
     printf("=== Lexer Tests ===\n");
 
@@ -190,6 +200,7 @@ int main(void) {
     RUN_TEST(comment);
     RUN_TEST(closing_tag);
     RUN_TEST(self_closing);
+    RUN_TEST(pessimistic_keyword);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return tests_passed == tests_run ? 0 : 1;

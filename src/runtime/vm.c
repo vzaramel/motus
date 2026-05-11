@@ -1587,9 +1587,11 @@ static VMResult vm_execute(VM *vm, bool single_step) {
                 const char *type_str = req->type == MUTATE_INSERT ? "insert" :
                                        req->type == MUTATE_UPDATE ? "update" : "delete";
                 char buf[512];
+                const char *opt_str = req->optimistic ? "true" : "false";
                 int n = snprintf(buf, sizeof(buf),
-                    "<form method=\"post\" data-mot-mutation=\"%s\" data-mot-type=\"%s\">",
-                    req->target, type_str);
+                    "<form method=\"post\" data-mot-mutation=\"%s\" "
+                    "data-mot-type=\"%s\" data-mot-optimistic=\"%s\">",
+                    req->target, type_str, opt_str);
                 if (n > 0 && (size_t)n < sizeof(buf)) {
                     emit_output(vm, buf, (uint32_t)n);
                 }

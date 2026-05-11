@@ -59,6 +59,7 @@ typedef enum {
     TOK_UPDATE,          /* update */
     TOK_DELETE,          /* delete */
     TOK_INTO,            /* into */
+    TOK_PESSIMISTIC,     /* pessimistic */
 
     /* SQL keywords */
     TOK_SELECT,

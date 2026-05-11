@@ -18,7 +18,7 @@
 
 /* Version */
 #define BYTECODE_VERSION_MAJOR 1
-#define BYTECODE_VERSION_MINOR 3
+#define BYTECODE_VERSION_MINOR 4
 
 /* Optional debug trailer magic: "MDBG" */
 #define BYTECODE_DEBUG_MAGIC 0x4742444Du
@@ -196,6 +196,7 @@ typedef struct {
     char **field_names;          /* Bound input field names */
     uint16_t field_count;
     uint16_t field_cap;
+    bool optimistic;             /* true (default) or false (pessimistic) */
 } MutationRequirement;
 
 /* Dynamic component reference (loaded at edge) */
@@ -331,7 +332,7 @@ uint16_t bytecode_add_builtin(BytecodeModule *mod, const char *name,
 int bytecode_find_builtin(BytecodeModule *mod, const char *name);
 
 /* Mutation requirements */
-uint16_t bytecode_add_mutation_req(BytecodeModule *mod, MutationType type, const char *target);
+uint16_t bytecode_add_mutation_req(BytecodeModule *mod, MutationType type, const char *target, bool optimistic);
 void bytecode_mutation_req_add_field(BytecodeModule *mod, uint16_t idx, const char *field_name);
 
 /* Dynamic component references */

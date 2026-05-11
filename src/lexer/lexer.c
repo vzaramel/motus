@@ -50,6 +50,7 @@ static const Keyword mot_keywords[] = {
     {"update", TOK_UPDATE},
     {"delete", TOK_DELETE},
     {"into", TOK_INTO},
+    {"pessimistic", TOK_PESSIMISTIC},
 
     /* SQL keywords */
     {"select", TOK_SELECT},
@@ -141,6 +142,7 @@ const char *token_type_name(TokenType type) {
         case TOK_UPDATE: return "UPDATE";
         case TOK_DELETE: return "DELETE";
         case TOK_INTO: return "INTO";
+        case TOK_PESSIMISTIC: return "PESSIMISTIC";
         case TOK_SELECT: return "SELECT";
         case TOK_WHERE: return "WHERE";
         case TOK_ORDER: return "ORDER";
@@ -205,7 +207,7 @@ const char *token_type_name(TokenType type) {
 int token_is_keyword(TokenType type) {
     /* Check if type is any keyword (Motus, SQL, boolean literals) */
     return (type >= TOK_TRUE && type <= TOK_NULL) ||      /* true, false, null */
-           (type >= TOK_LET && type <= TOK_INTO) ||          /* Motus + mutation keywords */
+           (type >= TOK_LET && type <= TOK_PESSIMISTIC) ||    /* Motus + mutation keywords */
            (type >= TOK_SELECT && type <= TOK_IS) ||       /* SQL keywords */
            (type >= TOK_LT_KW && type <= TOK_NOT);         /* Comparison/boolean keywords */
 }

@@ -718,6 +718,8 @@ TEST(e2e_insert_form) {
            "Should have mutation target attr");
     ASSERT(strstr(output_buffer, "data-mot-type=\"insert\"") != NULL,
            "Should have insert type attr");
+    ASSERT(strstr(output_buffer, "data-mot-optimistic=\"true\"") != NULL,
+           "Should default to optimistic=true");
     ASSERT(strstr(output_buffer, "</form>") != NULL, "Should close form");
 }
 
@@ -763,6 +765,37 @@ TEST(e2e_bound_input) {
     ASSERT(strstr(output_buffer, "<input") != NULL, "Should contain input tag");
     ASSERT(strstr(output_buffer, "name=\"name\"") != NULL, "Should have name attr");
     ASSERT(strstr(output_buffer, "type=\"text\"") != NULL, "Should have type attr");
+}
+
+TEST(e2e_pessimistic_insert) {
+    VMResult r = full_pipeline(
+        "<let contacts 0>"
+        "<insert into contacts pessimistic>"
+        "<button type=\"submit\">Add</button>"
+        "</insert>"
+        "</let>"
+    );
+    ASSERT(r == VM_OK, "Pessimistic insert should render");
+    ASSERT(strstr(output_buffer, "data-mot-optimistic=\"false\"") != NULL,
+           "Should have optimistic=false for pessimistic");
+    ASSERT(strstr(output_buffer, "data-mot-type=\"insert\"") != NULL,
+           "Should still have insert type");
+}
+
+TEST(e2e_pending_access) {
+    VMResult r = full_pipeline(
+        "<let items [1, 2]>"
+        "<for item in items>"
+        "<if item.pending>"
+        "<span>syncing</span>"
+        "</if>"
+        "</for>"
+        "</let>"
+    );
+    ASSERT(r == VM_OK, "Pending access should compile and render");
+    /* Server-side, .pending is null/falsy, so <span>syncing</span> should NOT appear */
+    ASSERT(strstr(output_buffer, "syncing") == NULL,
+           "Pending should be falsy server-side");
 }
 
 /* ======================================================================
@@ -836,6 +869,8 @@ int main(void) {
     RUN_TEST(e2e_update_form);
     RUN_TEST(e2e_delete_form);
     RUN_TEST(e2e_bound_input);
+    RUN_TEST(e2e_pessimistic_insert);
+    RUN_TEST(e2e_pending_access);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return tests_passed == tests_run ? 0 : 1;

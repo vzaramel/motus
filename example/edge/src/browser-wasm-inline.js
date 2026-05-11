@@ -1666,6 +1666,206 @@ export function renderBrowserWasmBootstrapScript(options = {}) {
     }
   }
 
+  /* ===== Optimistic Mutation Engine ===== */
+  var pendingMutations = Object.create(null);
+  var nextPendingId = 1;
+  var collectionState = Object.create(null);
+
+  function installOptimisticMutationHandlers() {
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.getAttribute) return;
+      if (!form.hasAttribute('data-mot-mutation')) {
+        form = form.closest ? form.closest('form[data-mot-mutation]') : null;
+        if (!form) return;
+      }
+
+      e.preventDefault();
+
+      var target = form.getAttribute('data-mot-mutation');
+      var type = form.getAttribute('data-mot-type') || 'insert';
+      var optimistic = form.getAttribute('data-mot-optimistic') !== 'false';
+
+      var formData = new FormData(form);
+      var data = {};
+      formData.forEach(function (v, k) { data[k] = v; });
+
+      var mutId = nextPendingId++;
+
+      if (optimistic) {
+        applyOptimistic(mutId, target, type, data, form);
+      }
+
+      syncMutationToServer(mutId, target, type, data, form, optimistic);
+    });
+  }
+
+  function ensureCollectionState(target) {
+    if (!collectionState[target]) {
+      collectionState[target] = [];
+      /* Try to hydrate from reactive state */
+      var existing = getPathValue(reactiveState, target);
+      if (Array.isArray(existing)) {
+        collectionState[target] = existing.map(function (item) {
+          return Object.assign({}, item);
+        });
+      }
+    }
+    return collectionState[target];
+  }
+
+  function applyOptimistic(mutId, target, type, data, form) {
+    var collection = ensureCollectionState(target);
+
+    if (type === 'insert') {
+      var newItem = Object.assign({}, data, { pending: true, __mutId: mutId });
+      collection.push(newItem);
+      pendingMutations[mutId] = { target: target, type: type, data: data, index: collection.length - 1 };
+    } else if (type === 'update') {
+      /* Find the item associated with this form (by position in the DOM) */
+      var idx = findFormItemIndex(form, target);
+      if (idx >= 0 && idx < collection.length) {
+        var original = Object.assign({}, collection[idx]);
+        Object.assign(collection[idx], data, { pending: true, __mutId: mutId });
+        pendingMutations[mutId] = { target: target, type: type, data: data, index: idx, original: original };
+      }
+    } else if (type === 'delete') {
+      var delIdx = findFormItemIndex(form, target);
+      if (delIdx >= 0 && delIdx < collection.length) {
+        collection[delIdx].pending = true;
+        collection[delIdx].__mutId = mutId;
+        collection[delIdx].__deleting = true;
+        pendingMutations[mutId] = { target: target, type: type, index: delIdx };
+      }
+    }
+
+    /* Push updated collection into reactive state and flush */
+    setReactiveStateForMutation(target, collection, target, collection);
+    enqueueMutation(target, collection, target, collection);
+    scheduleMutationFlush();
+  }
+
+  function findFormItemIndex(form, target) {
+    /* Find all forms for this target and determine which index this form is */
+    var allForms = document.querySelectorAll('form[data-mot-mutation="' + target + '"]');
+    var updateDeleteIdx = 0;
+    for (var i = 0; i < allForms.length; i++) {
+      var f = allForms[i];
+      var fType = f.getAttribute('data-mot-type');
+      if (fType === 'insert') continue;
+      if (f === form) return updateDeleteIdx;
+      updateDeleteIdx++;
+    }
+    return -1;
+  }
+
+  function syncMutationToServer(mutId, target, type, data, form, optimistic) {
+    var action = form.action || (rpcBasePath + '/mutate');
+    /* Use rpcBasePath if it looks like a default form action */
+    if (action === '' || action === window.location.href) {
+      action = rpcBasePath + '/mutate';
+    }
+
+    fetch(action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target: target, type: type, fields: data })
+    })
+    .then(function (response) { return response.json(); })
+    .then(function (result) {
+      if (result.ok || !result.error) {
+        confirmMutation(mutId, result.data || data);
+      } else {
+        revertMutation(mutId, result.error);
+      }
+    })
+    .catch(function (err) {
+      revertMutation(mutId, err.message || 'Network error');
+    });
+  }
+
+  function confirmMutation(mutId, serverData) {
+    var mutation = pendingMutations[mutId];
+    if (!mutation) return;
+
+    var collection = ensureCollectionState(mutation.target);
+
+    if (mutation.type === 'insert') {
+      /* Replace optimistic item with server-confirmed data */
+      for (var i = 0; i < collection.length; i++) {
+        if (collection[i].__mutId === mutId) {
+          collection[i] = Object.assign({}, serverData || collection[i]);
+          delete collection[i].pending;
+          delete collection[i].__mutId;
+          break;
+        }
+      }
+    } else if (mutation.type === 'update') {
+      if (mutation.index < collection.length) {
+        Object.assign(collection[mutation.index], serverData || {});
+        delete collection[mutation.index].pending;
+        delete collection[mutation.index].__mutId;
+      }
+    } else if (mutation.type === 'delete') {
+      /* Remove the item from the collection */
+      for (var d = collection.length - 1; d >= 0; d--) {
+        if (collection[d].__mutId === mutId) {
+          collection.splice(d, 1);
+          break;
+        }
+      }
+    }
+
+    delete pendingMutations[mutId];
+
+    setReactiveStateForMutation(mutation.target, collection, mutation.target, collection);
+    enqueueMutation(mutation.target, collection, mutation.target, collection);
+    scheduleMutationFlush();
+  }
+
+  function revertMutation(mutId, errorMessage) {
+    var mutation = pendingMutations[mutId];
+    if (!mutation) return;
+
+    var collection = ensureCollectionState(mutation.target);
+
+    if (mutation.type === 'insert') {
+      /* Remove the optimistic item */
+      for (var i = collection.length - 1; i >= 0; i--) {
+        if (collection[i].__mutId === mutId) {
+          collection.splice(i, 1);
+          break;
+        }
+      }
+    } else if (mutation.type === 'update') {
+      /* Restore original values */
+      if (mutation.original && mutation.index < collection.length) {
+        collection[mutation.index] = Object.assign({}, mutation.original);
+      }
+    } else if (mutation.type === 'delete') {
+      /* Un-mark the item */
+      if (mutation.index < collection.length) {
+        delete collection[mutation.index].pending;
+        delete collection[mutation.index].__mutId;
+        delete collection[mutation.index].__deleting;
+      }
+    }
+
+    delete pendingMutations[mutId];
+
+    setReactiveStateForMutation(mutation.target, collection, mutation.target, collection);
+    enqueueMutation(mutation.target, collection, mutation.target, collection);
+    scheduleMutationFlush();
+
+    if (errorMessage) {
+      console.warn('[motus] Mutation reverted:', errorMessage);
+    }
+  }
+
+  /* Expose for external use */
+  window.__motPendingMutations = pendingMutations;
+  window.__motCollectionState = collectionState;
+
   function installReactiveApi() {
     window.motSetVar = function (name, value) {
       return updateVarBindings(name, value, '', undefined);
@@ -2447,6 +2647,7 @@ export function renderBrowserWasmBootstrapScript(options = {}) {
 
   installReactiveApi();
   initReactiveWasmModule();
+  installOptimisticMutationHandlers();
 
   (async function () {
     try {

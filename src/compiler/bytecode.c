@@ -280,7 +280,7 @@ int bytecode_find_builtin(BytecodeModule *mod, const char *name) {
     return -1;
 }
 
-uint16_t bytecode_add_mutation_req(BytecodeModule *mod, MutationType type, const char *target) {
+uint16_t bytecode_add_mutation_req(BytecodeModule *mod, MutationType type, const char *target, bool optimistic) {
     if (mod->mut_req_count >= mod->mut_req_cap) {
         uint32_t new_cap = mod->mut_req_cap == 0 ? 8 : mod->mut_req_cap * 2;
         mod->mut_reqs = grow_array(mod->arena, mod->mut_reqs, mod->mut_req_cap,
@@ -294,6 +294,7 @@ uint16_t bytecode_add_mutation_req(BytecodeModule *mod, MutationType type, const
     req->field_names = NULL;
     req->field_count = 0;
     req->field_cap = 0;
+    req->optimistic = optimistic;
 
     return (uint16_t)mod->mut_req_count++;
 }
@@ -897,6 +898,7 @@ uint8_t *bytecode_serialize_ex(BytecodeModule *mod, uint32_t *out_len, bool incl
     /* Mutation requirements */
     for (uint32_t i = 0; i < mod->mut_req_count; i++) {
         size += 1;  /* type */
+        size += 1;  /* optimistic */
         size += 4 + (uint32_t)strlen(mod->mut_reqs[i].target);  /* target */
         size += 2;  /* field_count */
         for (uint16_t f = 0; f < mod->mut_reqs[i].field_count; f++) {
@@ -1045,6 +1047,7 @@ uint8_t *bytecode_serialize_ex(BytecodeModule *mod, uint32_t *out_len, bool incl
     for (uint32_t i = 0; i < mod->mut_req_count; i++) {
         MutationRequirement *req = &mod->mut_reqs[i];
         write_u8(&ptr, (uint8_t)req->type);
+        write_u8(&ptr, req->optimistic ? 1 : 0);
         uint32_t target_len = (uint32_t)strlen(req->target);
         write_u32(&ptr, target_len);
         write_bytes(&ptr, req->target, target_len);
@@ -1312,6 +1315,9 @@ BytecodeModule *bytecode_deserialize(const uint8_t *data, uint32_t len, Arena *a
         uint8_t type_u8 = 0;
         if (!read_u8(&ptr, end, &type_u8)) return NULL;
         req->type = (MutationType)type_u8;
+        uint8_t opt_u8 = 0;
+        if (!read_u8(&ptr, end, &opt_u8)) return NULL;
+        req->optimistic = (opt_u8 != 0);
         if (!read_string_copy(&ptr, end, arena, &req->target, NULL)) return NULL;
         if (!read_u16(&ptr, end, &req->field_count)) return NULL;
         req->field_cap = req->field_count;

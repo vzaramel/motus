@@ -571,26 +571,29 @@ AstNode *ast_require_auth(Arena *arena, const char *role, int line, int col) {
     return node;
 }
 
-AstNode *ast_insert(Arena *arena, const char *target, AstNode *body, int line, int col) {
+AstNode *ast_insert(Arena *arena, const char *target, AstNode *body, bool optimistic, int line, int col) {
     AstNode *node = ast_node_new(arena, NODE_INSERT, line, col);
     node->data.insert.target = arena_strdup(arena, target);
     node->data.insert.body = body;
+    node->data.insert.optimistic = optimistic;
     return node;
 }
 
-AstNode *ast_update(Arena *arena, const char *target, AstNode *where, AstNode *body, int line, int col) {
+AstNode *ast_update(Arena *arena, const char *target, AstNode *where, AstNode *body, bool optimistic, int line, int col) {
     AstNode *node = ast_node_new(arena, NODE_UPDATE, line, col);
     node->data.update.target = arena_strdup(arena, target);
     node->data.update.where = where;
     node->data.update.body = body;
+    node->data.update.optimistic = optimistic;
     return node;
 }
 
-AstNode *ast_delete_stmt(Arena *arena, const char *target, AstNode *where, AstNode *body, int line, int col) {
+AstNode *ast_delete_stmt(Arena *arena, const char *target, AstNode *where, AstNode *body, bool optimistic, int line, int col) {
     AstNode *node = ast_node_new(arena, NODE_DELETE, line, col);
     node->data.delete_stmt.target = arena_strdup(arena, target);
     node->data.delete_stmt.where = where;
     node->data.delete_stmt.body = body;
+    node->data.delete_stmt.optimistic = optimistic;
     return node;
 }
 

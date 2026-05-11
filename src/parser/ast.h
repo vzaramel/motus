@@ -271,6 +271,7 @@ struct AstNode {
         struct {
             char *target;        /* Binding name (e.g., "contacts") */
             AstNode *body;       /* Children (inputs, buttons) */
+            bool optimistic;     /* true (default) or false (pessimistic) */
         } insert;
 
         /* NODE_UPDATE */
@@ -278,6 +279,7 @@ struct AstNode {
             char *target;        /* Binding name */
             AstNode *where;      /* WHERE condition expression */
             AstNode *body;
+            bool optimistic;
         } update;
 
         /* NODE_DELETE */
@@ -285,6 +287,7 @@ struct AstNode {
             char *target;        /* Binding name */
             AstNode *where;      /* WHERE condition expression */
             AstNode *body;
+            bool optimistic;
         } delete_stmt;
 
         /* NODE_BOUND_INPUT */
@@ -468,9 +471,9 @@ AstNode *ast_export(Arena *arena, AstNode *names, bool is_default, int line, int
 AstNode *ast_require_auth(Arena *arena, const char *role, int line, int col);
 
 /* Mutations */
-AstNode *ast_insert(Arena *arena, const char *target, AstNode *body, int line, int col);
-AstNode *ast_update(Arena *arena, const char *target, AstNode *where, AstNode *body, int line, int col);
-AstNode *ast_delete_stmt(Arena *arena, const char *target, AstNode *where, AstNode *body, int line, int col);
+AstNode *ast_insert(Arena *arena, const char *target, AstNode *body, bool optimistic, int line, int col);
+AstNode *ast_update(Arena *arena, const char *target, AstNode *where, AstNode *body, bool optimistic, int line, int col);
+AstNode *ast_delete_stmt(Arena *arena, const char *target, AstNode *where, AstNode *body, bool optimistic, int line, int col);
 AstNode *ast_bound_input(Arena *arena, const char *object_name, const char *field_name, AstNode *attrs, int line, int col);
 
 /* Embedded code */

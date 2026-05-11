@@ -139,6 +139,7 @@ static int parse_debug_trailer(const uint8_t *data, size_t len,
 
     for (uint32_t i = 0; i < mut_req_count; i++) {
         if (!skip_bytes(len, &pos, 1)) return 0; /* type */
+        if (!skip_bytes(len, &pos, 1)) return 0; /* optimistic */
         if (!skip_string(data, len, &pos)) return 0; /* target */
         if (!read_u16_at(data, len, &pos, &tmp_u16)) return 0; /* field_count */
         for (uint16_t f = 0; f < tmp_u16; f++) {

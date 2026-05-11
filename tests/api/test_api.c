@@ -164,6 +164,7 @@ static int extract_debug_query_info(const uint8_t *data, size_t len,
 
     for (uint32_t i = 0; i < mut_req_count; i++) {
         if (!skip_bytes(len, &pos, 1)) return 0; /* type */
+        if (!skip_bytes(len, &pos, 1)) return 0; /* optimistic */
         if (!read_u32_at(data, len, &pos, &tmp_u32) || !skip_bytes(len, &pos, tmp_u32)) return 0; /* target */
         if (!read_u16_at(data, len, &pos, &tmp_u16)) return 0; /* field_count */
         for (uint16_t f = 0; f < tmp_u16; f++) {

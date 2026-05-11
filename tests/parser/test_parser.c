@@ -422,6 +422,58 @@ TEST(insert_statement) {
     ASSERT(ins->type == NODE_INSERT, "Expected NODE_INSERT");
     ASSERT(strcmp(ins->data.insert.target, "contacts") == 0, "Expected target 'contacts'");
     ASSERT(ins->data.insert.body != NULL, "Expected body");
+    ASSERT(ins->data.insert.optimistic == true, "Expected optimistic=true by default");
+
+    arena_destroy(arena);
+}
+
+TEST(insert_pessimistic) {
+    const char *src = "<insert into contacts pessimistic><button type=\"submit\">Add</button></insert>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    AstNode *ins = doc->data.document.children;
+    ASSERT(ins != NULL, "Expected insert node");
+    ASSERT(ins->type == NODE_INSERT, "Expected NODE_INSERT");
+    ASSERT(ins->data.insert.optimistic == false, "Expected optimistic=false for pessimistic");
+
+    arena_destroy(arena);
+}
+
+TEST(update_pessimistic) {
+    const char *src = "<update contacts where id eq 1 pessimistic><button type=\"submit\">Save</button></update>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    AstNode *upd = doc->data.document.children;
+    ASSERT(upd != NULL, "Expected update node");
+    ASSERT(upd->type == NODE_UPDATE, "Expected NODE_UPDATE");
+    ASSERT(upd->data.update.optimistic == false, "Expected optimistic=false for pessimistic");
+
+    arena_destroy(arena);
+}
+
+TEST(delete_pessimistic) {
+    const char *src = "<delete from contacts where id eq 1 pessimistic><button type=\"submit\">Del</button></delete>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    AstNode *del = doc->data.document.children;
+    ASSERT(del != NULL, "Expected delete node");
+    ASSERT(del->type == NODE_DELETE, "Expected NODE_DELETE");
+    ASSERT(del->data.delete_stmt.optimistic == false, "Expected optimistic=false for pessimistic");
 
     arena_destroy(arena);
 }
@@ -528,8 +580,11 @@ int main(void) {
     RUN_TEST(style_element);
     RUN_TEST(script_element);
     RUN_TEST(insert_statement);
+    RUN_TEST(insert_pessimistic);
     RUN_TEST(update_statement);
+    RUN_TEST(update_pessimistic);
     RUN_TEST(delete_statement);
+    RUN_TEST(delete_pessimistic);
     RUN_TEST(bound_input);
     RUN_TEST(regular_input_in_mutation);
 

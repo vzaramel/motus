@@ -2146,7 +2146,7 @@ static void collect_bound_fields(AstNode *body, BytecodeModule *mod, uint16_t mu
 static void compile_insert(Compiler *c, AstNode *node) {
     c->current_line = node->line;
 
-    uint16_t mut_idx = bytecode_add_mutation_req(c->module, MUTATE_INSERT, node->data.insert.target);
+    uint16_t mut_idx = bytecode_add_mutation_req(c->module, MUTATE_INSERT, node->data.insert.target, node->data.insert.optimistic);
     collect_bound_fields(node->data.insert.body, c->module, mut_idx);
 
     emit_op_u16(c, BC_MUTATE_START, mut_idx);
@@ -2160,7 +2160,7 @@ static void compile_insert(Compiler *c, AstNode *node) {
 static void compile_update(Compiler *c, AstNode *node) {
     c->current_line = node->line;
 
-    uint16_t mut_idx = bytecode_add_mutation_req(c->module, MUTATE_UPDATE, node->data.update.target);
+    uint16_t mut_idx = bytecode_add_mutation_req(c->module, MUTATE_UPDATE, node->data.update.target, node->data.update.optimistic);
     collect_bound_fields(node->data.update.body, c->module, mut_idx);
 
     emit_op_u16(c, BC_MUTATE_START, mut_idx);
@@ -2174,7 +2174,7 @@ static void compile_update(Compiler *c, AstNode *node) {
 static void compile_delete(Compiler *c, AstNode *node) {
     c->current_line = node->line;
 
-    uint16_t mut_idx = bytecode_add_mutation_req(c->module, MUTATE_DELETE, node->data.delete_stmt.target);
+    uint16_t mut_idx = bytecode_add_mutation_req(c->module, MUTATE_DELETE, node->data.delete_stmt.target, node->data.delete_stmt.optimistic);
     collect_bound_fields(node->data.delete_stmt.body, c->module, mut_idx);
 
     emit_op_u16(c, BC_MUTATE_START, mut_idx);
