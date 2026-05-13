@@ -11,6 +11,9 @@
 #include <ctype.h>
 
 #include "../mot.h"
+#include "../runtime/vm.h"
+#include "../compiler/bytecode.h"
+#include "../util/arena.h"
 
 typedef struct {
     const char *input_path;
@@ -20,6 +23,7 @@ typedef struct {
     const char *map_out;
     const char *css_out;
     const char *js_out;
+    const char *html_out;
     const char *linked_manifest;
     bool partial_eval;
     bool include_debug;
@@ -34,6 +38,19 @@ typedef struct {
     LinkedPathEntry *head;
 } LinkedPathRegistry;
 
+/* HTML output capture buffer */
+static char html_buf[256 * 1024];
+static int html_len = 0;
+
+static void html_capture(const char *data, uint32_t len, void *ud) {
+    (void)ud;
+    if (html_len + (int)len < (int)sizeof(html_buf) - 1) {
+        memcpy(html_buf + html_len, data, len);
+        html_len += (int)len;
+        html_buf[html_len] = '\0';
+    }
+}
+
 static void usage(const char *argv0) {
     fprintf(stderr,
         "Usage: %s [options]\n"
@@ -46,6 +63,7 @@ static void usage(const char *argv0) {
         "  --map-out <path>        Output source map JSON path\n"
         "  --css-out <path>        Output extracted css path\n"
         "  --js-out <path>         Output extracted js path\n"
+        "  --html-out <path>       Output rendered HTML path\n"
         "  --linked-manifest <p>   Manifest of linked component paths\n"
         "  --no-partial-eval       Disable partial evaluation\n"
         "  --no-debug              Disable debug metadata\n"
@@ -238,6 +256,8 @@ static int parse_args(int argc, char **argv, CliOptions *opts) {
             opts->css_out = argv[++i];
         } else if (strcmp(arg, "--js-out") == 0 && i + 1 < argc) {
             opts->js_out = argv[++i];
+        } else if (strcmp(arg, "--html-out") == 0 && i + 1 < argc) {
+            opts->html_out = argv[++i];
         } else if (strcmp(arg, "--linked-manifest") == 0 && i + 1 < argc) {
             opts->linked_manifest = argv[++i];
         } else if (strcmp(arg, "--no-partial-eval") == 0) {
@@ -363,6 +383,49 @@ int main(int argc, char **argv) {
             free_linked_registry(&linked_registry);
             return 1;
         }
+    }
+
+    /* HTML rendering: compile + execute in one pass */
+    if (opts.html_out) {
+        Arena *vm_arena = arena_create(64 * 1024);
+        if (!vm_arena) {
+            fprintf(stderr, "Failed to create VM arena\n");
+            mot_result_free(&result);
+            free_linked_registry(&linked_registry);
+            return 1;
+        }
+        BytecodeModule *vm_mod = bytecode_deserialize(
+            result.bytecode, (uint32_t)result.bytecode_len, vm_arena);
+        if (!vm_mod) {
+            fprintf(stderr, "Failed to deserialize bytecode for HTML rendering\n");
+            arena_destroy(vm_arena);
+            mot_result_free(&result);
+            free_linked_registry(&linked_registry);
+            return 1;
+        }
+
+        VM *vm = vm_new(vm_arena);
+        vm_init(vm, vm_mod);
+        html_len = 0;
+        vm_set_output(vm, html_capture, NULL);
+
+        VMResult vr = vm_run(vm);
+        if (vr != VM_OK) {
+            fprintf(stderr, "VM error: %s\n", vm_error_message(vm));
+            arena_destroy(vm_arena);
+            mot_result_free(&result);
+            free_linked_registry(&linked_registry);
+            return 1;
+        }
+
+        if (!write_file(opts.html_out, html_buf, (size_t)html_len)) {
+            fprintf(stderr, "Failed to write HTML output: %s\n", opts.html_out);
+            arena_destroy(vm_arena);
+            mot_result_free(&result);
+            free_linked_registry(&linked_registry);
+            return 1;
+        }
+        arena_destroy(vm_arena);
     }
 
     mot_result_free(&result);

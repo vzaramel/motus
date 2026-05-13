@@ -16,70 +16,11 @@
         margin: 0 auto;
         padding: 72px 20px 0 20px;
     }
-</style><style>
-    .header {
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        z-index: 1000;
-        background: rgba(6,12,16,0.85);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-bottom: 1px solid rgba(0,255,179,0.08);
-        height: 64px;
-    }
-    .header-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 24px;
-        height: 64px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .header-brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 800;
-        font-size: 1.2rem;
-        color: #e8f0ec;
-        text-decoration: none;
-    }
-    .header-brand svg {
-        width: 28px;
-        height: 28px;
-        color: #4cc496;
-    }
-    .header nav {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .header nav a {
-        color: rgba(232,240,236,0.55);
-        text-decoration: none;
-        padding: 7px 14px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: color 0.2s, background 0.2s;
-    }
-    .header nav a:hover {
-        color: #e8f0ec;
-        background: rgba(255,255,255,0.06);
-    }
-    .header-cta {
-        border: 1px solid rgba(0,255,179,0.3) !important;
-        color: #00ffb3 !important;
-        background: rgba(0,255,179,0.04);
-    }
-    .header-cta:hover {
-        background: rgba(0,255,179,0.1) !important;
-        border-color: rgba(0,255,179,0.5) !important;
-    }
-</style><header class="header"><div class="header-content"><a href="/motus/" class="header-brand"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="2" x2="16" y2="30"/><path d="M16 6 C12 6 8 10 8 14 C8 18 12 18 16 14"/><path d="M16 6 C20 6 24 10 24 14 C24 18 20 18 16 14"/><path d="M16 14 C11 14 6 18 6 22 C6 26 11 26 16 22"/><path d="M16 14 C21 14 26 18 26 22 C26 26 21 26 16 22"/><path d="M12 30 C12 26 14 24 16 24 C18 24 20 26 20 30"/></svg>
-            Motus
-        </a><nav><a href="/motus/">Home</a><a href="/motus/docs">Docs</a><a href="/motus/playground">Playground</a><a href="https://github.com/vzaramel/motus" class="header-cta" target="_blank">GitHub</a></nav></div></header><div class="layout-container"><main><style>
+</style>
+
+<Header />
+
+<div class="layout-container"><main><style>
     .docs-hero {
         padding: 40px 0 32px;
         border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -277,11 +218,140 @@
         }
         .docs-nav { position: static; }
     }
-</style><div class="docs-hero"><h1>Documentation</h1><p>Learn Motus &mdash; the compiled XML template language that outputs streaming HTML from the edge.</p></div><div class="docs-grid"><nav class="docs-nav"><div class="docs-nav-label">Guide</div><a href="#overview">Overview</a><a href="#quick-start">Quick Start</a><a href="#templates">Templates</a><a href="#components">Components</a><a href="#sql">SQL Queries</a><a href="#reactive">Reactive State</a><a href="#pipes">Pipe Transforms</a><a href="#ai-friendly">AI-Friendly</a><a href="#architecture">Architecture</a><a href="#comparison">Comparison Operators</a></nav><div class="docs-content"><h2 id="overview">Overview</h2><div class="docs-callout" style="border-color:rgba(226,199,126,0.25); background:rgba(226,199,126,0.04);"><strong>Note:</strong> Motus is heavily experimental and was entirely vibecoded. It&rsquo;s built on ideas 5+ years in the making &mdash; an exploration of how a language designed for the web from scratch could approach data fetching, rendering, and reactivity without inheriting assumptions from general-purpose languages.
-        </div><p>Motus is a compiled XML-based template language. You write .mot files that look like HTML with extra powers: scoped variables, SQL queries, components, reactive state, and pipe transforms. The compiler turns these into binary bytecode, which a WASM VM interprets at the edge to stream HTML to browsers.</p><div class="docs-callout"><strong>AI-Friendly:</strong> Motus uses standard HTML + CSS as its output format and XML as its input. LLMs already know both. No virtual DOM, no JSX, no framework-specific abstractions &mdash; just markup that any AI can read, write, and reason about.
-        </div><h2 id="quick-start">Quick Start</h2><p>A minimal Motus page is just HTML:</p><div class="docs-codeblock"><div class="docs-codeblock-header">hello.mot</div><pre id="code-hello"></pre></div><p>To add dynamic data, use <code>let</code> bindings and <code>output</code>:</p><div class="docs-codeblock"><div class="docs-codeblock-header">greeting.mot</div><pre id="code-greeting"></pre></div><h2 id="templates">Templates</h2><h3>Let Bindings</h3><p>The <code>let</code> tag creates scoped variables. The variable is visible only inside the body of the <code>let</code> tag. Use <code>output</code> to interpolate values.</p><div class="docs-codeblock"><pre id="code-let"></pre></div><h3>Conditionals</h3><p>Use <code>if</code>, <code>elsif</code>, and <code>else</code> for conditional rendering:</p><div class="docs-codeblock"><pre id="code-if"></pre></div><h3>Loops</h3><p>Iterate over collections with <code>for</code>. An optional index variable is available:</p><div class="docs-codeblock"><pre id="code-for"></pre></div><h3>Match</h3><p>Pattern matching for multi-branch conditionals:</p><div class="docs-codeblock"><pre id="code-match"></pre></div><h2 id="components">Components</h2><p>Define reusable components with <code>defcomp</code>. Props are declared between pipes. Use <code>children</code> for the default slot.</p><div class="docs-codeblock"><div class="docs-codeblock-header">Card.mot</div><pre id="code-defcomp"></pre></div><p>Import and use components:</p><div class="docs-codeblock"><pre id="code-import"></pre></div><h3>Component Features</h3><table class="docs-table"><tr><th>Feature</th><th>Syntax</th><th>Description</th></tr><tr><td>Props</td><td><code>| name, price: string = "0" |</code></td><td>Typed props with defaults</td></tr><tr><td>Slots</td><td><code>&lt;children&gt;</code></td><td>Default slot for nested content</td></tr><tr><td>Scoped CSS</td><td><code>&lt;style&gt;</code> inside defcomp</td><td>CSS scoped to component</td></tr><tr><td>Dynamic import</td><td><code>&lt;import X from "..." dynamic&gt;</code></td><td>Load at edge render time</td></tr></table><h2 id="sql">SQL Queries</h2><p id="docs-sql-desc"></p><div class="docs-codeblock"><pre id="code-sql"></pre></div><div class="docs-callout"><strong>Security:</strong> SQL queries are compiled to queryRef signatures. At runtime, the edge worker sends the queryRef to the origin, which validates and executes the query. Raw SQL never reaches the browser.
-        </div><h2 id="reactive">Reactive State</h2><p>Use <code>var</code> to declare reactive state and <code>set</code> to update it. Reactive binding markers enable browser-side targeted DOM updates.</p><div class="docs-codeblock"><pre id="code-reactive"></pre></div><h3>Reactive Binding Markers</h3><p>The compiler emits special markers (<code>@bind</code>, <code>@set</code>, <code>@exprbind</code>) that the browser runtime uses to update only the affected DOM nodes when state changes.</p><h2 id="pipes">Pipe Transforms</h2><p>Chain built-in transforms with the pipe operator:</p><div class="docs-codeblock"><pre id="code-pipes"></pre></div><h3>Built-in Functions</h3><table class="docs-table"><tr><th>Function</th><th>Description</th></tr><tr><td><code>uppercase</code></td><td>Convert string to uppercase</td></tr><tr><td><code>lowercase</code></td><td>Convert string to lowercase</td></tr><tr><td><code>trim</code></td><td>Strip leading/trailing whitespace</td></tr><tr><td><code>length</code></td><td>Return collection or string length</td></tr><tr><td><code>reverse</code></td><td>Reverse a string or array</td></tr><tr><td><code>json</code></td><td>Serialize value to JSON string</td></tr></table><h2 id="ai-friendly">AI-Friendly Design</h2><p>Motus is designed to be the ideal language for AI-assisted development:</p><ul><li><strong>XML syntax</strong> &mdash; LLMs are trained on billions of HTML/XML tokens. Motus templates are immediately familiar.</li><li><strong>HTML + CSS output</strong> &mdash; The output format is standard HTML and CSS. No framework-specific runtime, no virtual DOM diffing, no hydration mismatch.</li><li><strong>Position-based</strong> &mdash; No namespace prefixes or complex attribute binding syntax. <code>&lt;let name "Alice"&gt;</code> is self-evident.</li><li id="docs-ai-sql"></li><li><strong>Scoped components</strong> &mdash; Each component is a self-contained file with markup, style, and behavior. Perfect context window for an LLM.</li></ul><div class="docs-callout"><strong>Why this matters:</strong> When an AI generates or modifies a Motus template, the output is standard web markup. There is no transpilation gap, no framework-specific gotchas, and no hidden runtime behavior. What the AI writes is what the browser renders.
-        </div><h2 id="architecture">Architecture</h2><p>The Motus compilation pipeline:</p><ul><li><strong>Origin Server</strong> (C99) &mdash; Compiles .mot source to bytecode. Caches modules. Handles SQL data RPCs.</li><li><strong>Edge Worker</strong> (Cloudflare) &mdash; Interprets bytecode via WASM VM. Streams HTML response chunks.</li><li><strong>Browser</strong> &mdash; Receives streamed HTML. Reactive markers enable targeted DOM updates.</li></ul><p>Bytecode format: little-endian binary, magic <code>0x00544F4D</code> ("MOT\0"), version 1.2. Contains: constants pool, interned strings, data request signatures, dependency paths, component references, and instruction chunks.</p><h2 id="comparison">Comparison Operators</h2><p>Because Motus uses XML syntax, angle brackets are reserved. Use keyword operators instead:</p><table class="docs-table"><tr><th>Keyword</th><th>Meaning</th><th>Equivalent</th></tr><tr><td><code>eq</code></td><td>Equal</td><td><code>==</code></td></tr><tr><td><code>neq</code></td><td>Not equal</td><td><code>!=</code></td></tr><tr><td><code>lt</code></td><td>Less than</td><td><code>&lt;</code></td></tr><tr><td><code>gt</code></td><td>Greater than</td><td><code>&gt;</code></td></tr><tr><td><code>lte</code></td><td>Less than or equal</td><td><code>&lt;=</code></td></tr><tr><td><code>gte</code></td><td>Greater than or equal</td><td><code>&gt;=</code></td></tr></table></div></div><script>
+</style>
+
+<div class="docs-hero">
+    <h1>Documentation</h1>
+    <p>Learn Motus &mdash; the compiled XML template language that outputs streaming HTML from the edge.</p>
+</div>
+
+<div class="docs-grid">
+    <nav class="docs-nav">
+        <div class="docs-nav-label">Guide</div>
+        <a href="#overview">Overview</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#templates">Templates</a>
+        <a href="#components">Components</a>
+        <a href="#sql">SQL Queries</a>
+        <a href="#reactive">Reactive State</a>
+        <a href="#pipes">Pipe Transforms</a>
+        <a href="#ai-friendly">AI-Friendly</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#comparison">Comparison Operators</a>
+    </nav>
+
+    <div class="docs-content">
+        <h2 id="overview">Overview</h2>
+        <div class="docs-callout" style="border-color:rgba(226,199,126,0.25); background:rgba(226,199,126,0.04);">
+            <strong>Note:</strong> Motus is heavily experimental and was entirely vibecoded. It&rsquo;s built on ideas 5+ years in the making &mdash; an exploration of how a language designed for the web from scratch could approach data fetching, rendering, and reactivity without inheriting assumptions from general-purpose languages.
+        </div>
+        <p>Motus is a compiled XML-based template language. You write .mot files that look like HTML with extra powers: scoped variables, SQL queries, components, reactive state, and pipe transforms. The compiler turns these into binary bytecode, which a WASM VM interprets at the edge to stream HTML to browsers.</p>
+        <div class="docs-callout">
+            <strong>AI-Friendly:</strong> Motus uses standard HTML + CSS as its output format and XML as its input. LLMs already know both. No virtual DOM, no JSX, no framework-specific abstractions &mdash; just markup that any AI can read, write, and reason about.
+        </div>
+
+        <h2 id="quick-start">Quick Start</h2>
+        <p>A minimal Motus page is just HTML:</p>
+        <div class="docs-codeblock"><div class="docs-codeblock-header">hello.mot</div><pre id="code-hello"></pre></div>
+        <p>To add dynamic data, use <code>let</code> bindings and <code>output</code>:</p>
+        <div class="docs-codeblock"><div class="docs-codeblock-header">greeting.mot</div><pre id="code-greeting"></pre></div>
+
+        <h2 id="templates">Templates</h2>
+        <h3>Let Bindings</h3>
+        <p>The <code>let</code> tag creates scoped variables. The variable is visible only inside the body of the <code>let</code> tag. Use <code>output</code> to interpolate values.</p>
+        <div class="docs-codeblock"><pre id="code-let"></pre></div>
+
+        <h3>Conditionals</h3>
+        <p>Use <code>if</code>, <code>elsif</code>, and <code>else</code> for conditional rendering:</p>
+        <div class="docs-codeblock"><pre id="code-if"></pre></div>
+
+        <h3>Loops</h3>
+        <p>Iterate over collections with <code>for</code>. An optional index variable is available:</p>
+        <div class="docs-codeblock"><pre id="code-for"></pre></div>
+
+        <h3>Match</h3>
+        <p>Pattern matching for multi-branch conditionals:</p>
+        <div class="docs-codeblock"><pre id="code-match"></pre></div>
+
+        <h2 id="components">Components</h2>
+        <p>Define reusable components with <code>defcomp</code>. Props are declared between pipes. Use <code>children</code> for the default slot.</p>
+        <div class="docs-codeblock"><div class="docs-codeblock-header">Card.mot</div><pre id="code-defcomp"></pre></div>
+        <p>Import and use components:</p>
+        <div class="docs-codeblock"><pre id="code-import"></pre></div>
+
+        <h3>Component Features</h3>
+        <table class="docs-table">
+            <tr><th>Feature</th><th>Syntax</th><th>Description</th></tr>
+            <tr><td>Props</td><td><code>| name, price: string = "0" |</code></td><td>Typed props with defaults</td></tr>
+            <tr><td>Slots</td><td><code>&lt;children&gt;</code></td><td>Default slot for nested content</td></tr>
+            <tr><td>Scoped CSS</td><td><code>&lt;style&gt;</code> inside defcomp</td><td>CSS scoped to component</td></tr>
+            <tr><td>Dynamic import</td><td><code>&lt;import X from "..." dynamic&gt;</code></td><td>Load at edge render time</td></tr>
+        </table>
+
+        <h2 id="sql">SQL Queries</h2>
+        <p id="docs-sql-desc"></p>
+        <div class="docs-codeblock"><pre id="code-sql"></pre></div>
+        <div class="docs-callout">
+            <strong>Security:</strong> SQL queries are compiled to queryRef signatures. At runtime, the edge worker sends the queryRef to the origin, which validates and executes the query. Raw SQL never reaches the browser.
+        </div>
+
+        <h2 id="reactive">Reactive State</h2>
+        <p>Use <code>var</code> to declare reactive state and <code>set</code> to update it. Reactive binding markers enable browser-side targeted DOM updates.</p>
+        <div class="docs-codeblock"><pre id="code-reactive"></pre></div>
+        <h3>Reactive Binding Markers</h3>
+        <p>The compiler emits special markers (<code>@bind</code>, <code>@set</code>, <code>@exprbind</code>) that the browser runtime uses to update only the affected DOM nodes when state changes.</p>
+
+        <h2 id="pipes">Pipe Transforms</h2>
+        <p>Chain built-in transforms with the pipe operator:</p>
+        <div class="docs-codeblock"><pre id="code-pipes"></pre></div>
+        <h3>Built-in Functions</h3>
+        <table class="docs-table">
+            <tr><th>Function</th><th>Description</th></tr>
+            <tr><td><code>uppercase</code></td><td>Convert string to uppercase</td></tr>
+            <tr><td><code>lowercase</code></td><td>Convert string to lowercase</td></tr>
+            <tr><td><code>trim</code></td><td>Strip leading/trailing whitespace</td></tr>
+            <tr><td><code>length</code></td><td>Return collection or string length</td></tr>
+            <tr><td><code>reverse</code></td><td>Reverse a string or array</td></tr>
+            <tr><td><code>json</code></td><td>Serialize value to JSON string</td></tr>
+        </table>
+
+        <h2 id="ai-friendly">AI-Friendly Design</h2>
+        <p>Motus is designed to be the ideal language for AI-assisted development:</p>
+        <ul>
+            <li><strong>XML syntax</strong> &mdash; LLMs are trained on billions of HTML/XML tokens. Motus templates are immediately familiar.</li>
+            <li><strong>HTML + CSS output</strong> &mdash; The output format is standard HTML and CSS. No framework-specific runtime, no virtual DOM diffing, no hydration mismatch.</li>
+            <li><strong>Position-based</strong> &mdash; No namespace prefixes or complex attribute binding syntax. <code>&lt;let name "Alice"&gt;</code> is self-evident.</li>
+            <li id="docs-ai-sql"></li>
+            <li><strong>Scoped components</strong> &mdash; Each component is a self-contained file with markup, style, and behavior. Perfect context window for an LLM.</li>
+        </ul>
+        <div class="docs-callout">
+            <strong>Why this matters:</strong> When an AI generates or modifies a Motus template, the output is standard web markup. There is no transpilation gap, no framework-specific gotchas, and no hidden runtime behavior. What the AI writes is what the browser renders.
+        </div>
+
+        <h2 id="architecture">Architecture</h2>
+        <p>The Motus compilation pipeline:</p>
+        <ul>
+            <li><strong>Origin Server</strong> (C99) &mdash; Compiles .mot source to bytecode. Caches modules. Handles SQL data RPCs.</li>
+            <li><strong>Edge Worker</strong> (Cloudflare) &mdash; Interprets bytecode via WASM VM. Streams HTML response chunks.</li>
+            <li><strong>Browser</strong> &mdash; Receives streamed HTML. Reactive markers enable targeted DOM updates.</li>
+        </ul>
+        <p>Bytecode format: little-endian binary, magic <code>0x00544F4D</code> ("MOT\0"), version 1.2. Contains: constants pool, interned strings, data request signatures, dependency paths, component references, and instruction chunks.</p>
+
+        <h2 id="comparison">Comparison Operators</h2>
+        <p>Because Motus uses XML syntax, angle brackets are reserved. Use keyword operators instead:</p>
+        <table class="docs-table">
+            <tr><th>Keyword</th><th>Meaning</th><th>Equivalent</th></tr>
+            <tr><td><code>eq</code></td><td>Equal</td><td><code>==</code></td></tr>
+            <tr><td><code>neq</code></td><td>Not equal</td><td><code>!=</code></td></tr>
+            <tr><td><code>lt</code></td><td>Less than</td><td><code>&lt;</code></td></tr>
+            <tr><td><code>gt</code></td><td>Greater than</td><td><code>&gt;</code></td></tr>
+            <tr><td><code>lte</code></td><td>Less than or equal</td><td><code>&lt;=</code></td></tr>
+            <tr><td><code>gte</code></td><td>Greater than or equal</td><td><code>&gt;=</code></td></tr>
+        </table>
+    </div>
+</div>
+
+<script>
 (function() {
     function s(cls, text) {
         return '<span class="s-' + cls + '">' + text + '</span>';
@@ -421,74 +491,7 @@
         s('tag','&lt;') + s('comp','Badge') + ' ' + s('attr','label') + s('punct','=') + s('var','status') + ' ' + s('pipe','|') + ' ' + s('kw','lowercase') + ' ' + s('tag','/&gt;')
     ].join('\n');
 })();
-</script></main></div><style>
-    .footer {
-        margin-top: 0;
-        background: #060c10;
-        border-top: 1px solid rgba(0,255,179,0.08);
-        padding: 56px 24px 32px;
-        color: rgba(232,240,236,0.4);
-    }
-    .footer-inner {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1.5fr 1fr 1fr;
-        gap: 48px;
-        align-items: start;
-    }
-    .footer-brand {
-        font-size: 1.15rem;
-        font-weight: 800;
-        color: #e8f0ec;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .footer-brand-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #00ffb3;
-        box-shadow: 0 0 8px rgba(0,255,179,0.4);
-    }
-    .footer-desc {
-        font-size: 0.88rem;
-        line-height: 1.7;
-        max-width: 320px;
-        margin: 0;
-    }
-    .footer-col h5 {
-        color: rgba(232,240,236,0.6);
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        margin: 0 0 14px 0;
-        font-weight: 600;
-    }
-    .footer-col a {
-        display: block;
-        font-size: 0.88rem;
-        color: rgba(232,240,236,0.4);
-        text-decoration: none;
-        margin-bottom: 10px;
-        transition: color 0.2s;
-    }
-    .footer-col a:hover { color: #4cc496; }
-    .footer-bottom {
-        max-width: 1200px;
-        margin: 36px auto 0;
-        padding-top: 24px;
-        border-top: 1px solid rgba(255,255,255,0.04);
-        font-size: 0.78rem;
-        color: rgba(232,240,236,0.2);
-        text-align: center;
-    }
-    .footer-bottom p { margin: 0; }
-    @media (max-width: 640px) {
-        .footer-inner { grid-template-columns: 1fr; gap: 32px; }
-    }
-</style><footer class="footer"><div class="footer-inner"><div><div class="footer-brand"><span class="footer-brand-dot"></span>
-                Motus
-            </div><p class="footer-desc">A compiled XML language for streaming HTML from the edge. Bytecode today, WASM everywhere tomorrow.</p></div><div class="footer-col"><h5>Pages</h5><a href="/motus/">Home</a><a href="/motus/docs">Docs</a></div><div class="footer-col"><h5>Tools</h5><a href="/motus/playground">Playground</a></div></div><div class="footer-bottom"><p>Powered by Motus &mdash; Streaming HTML from the Edge</p></div></footer>
+</script>
+</main></div>
+
+<Footer />

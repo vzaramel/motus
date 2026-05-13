@@ -17,7 +17,7 @@ LIB = $(BUILD_DIR)/libmot.a
 CLI = $(BUILD_DIR)/mot
 TRANSPILER_CLI = $(BUILD_DIR)/mot-bytecode-transpiler
 
-.PHONY: all lib cli transpiler lsp vscode vscode-install test clean
+.PHONY: all lib cli transpiler lsp vscode vscode-install test clean site
 
 all: lib
 
@@ -176,6 +176,22 @@ test_integration: $(LIB) $(TEST_INTEGRATION_SRCS)
 	./$(TEST_INTEGRATION)
 
 test: test_lexer test_parser test_analyzer test_compiler test_partial_eval test_vm test_codegen test_api test_cli test_debug_metadata test_sourcemap test_host_contract test_transpiler test_integration
+
+# Static site generation from .mot source files
+SITE_DIR = site
+SITE_COMPONENTS = $(SITE_DIR)/components/Header.mot $(SITE_DIR)/components/Footer.mot
+DOCS_OUT = docs
+
+site: cli
+	@mkdir -p $(DOCS_OUT)/docs $(DOCS_OUT)/playground
+	@cat $(SITE_COMPONENTS) $(SITE_DIR)/pages/index.mot > $(BUILD_DIR)/_site_index.mot
+	$(CLI) --input $(BUILD_DIR)/_site_index.mot --html-out $(DOCS_OUT)/index.html
+	@cat $(SITE_COMPONENTS) $(SITE_DIR)/pages/docs.mot > $(BUILD_DIR)/_site_docs.mot
+	$(CLI) --input $(BUILD_DIR)/_site_docs.mot --html-out $(DOCS_OUT)/docs/index.html
+	@cat $(SITE_COMPONENTS) $(SITE_DIR)/pages/playground.mot > $(BUILD_DIR)/_site_playground.mot
+	$(CLI) --input $(BUILD_DIR)/_site_playground.mot --html-out $(DOCS_OUT)/playground/index.html
+	@rm -f $(BUILD_DIR)/_site_*.mot
+	@echo "Site generated in $(DOCS_OUT)/"
 
 clean:
 	rm -rf $(BUILD_DIR)

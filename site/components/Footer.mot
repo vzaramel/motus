@@ -1,0 +1,94 @@
+<defcomp Footer ||>
+<style>
+    .footer {
+        margin-top: 0;
+        background: #060c10;
+        border-top: 1px solid rgba(0,255,179,0.08);
+        padding: 56px 24px 32px;
+        color: rgba(232,240,236,0.4);
+    }
+    .footer-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr;
+        gap: 48px;
+        align-items: start;
+    }
+    .footer-brand {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #e8f0ec;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .footer-brand-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #00ffb3;
+        box-shadow: 0 0 8px rgba(0,255,179,0.4);
+    }
+    .footer-desc {
+        font-size: 0.88rem;
+        line-height: 1.7;
+        max-width: 320px;
+        margin: 0;
+    }
+    .footer-col h5 {
+        color: rgba(232,240,236,0.6);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin: 0 0 14px 0;
+        font-weight: 600;
+    }
+    .footer-col a {
+        display: block;
+        font-size: 0.88rem;
+        color: rgba(232,240,236,0.4);
+        text-decoration: none;
+        margin-bottom: 10px;
+        transition: color 0.2s;
+    }
+    .footer-col a:hover { color: #4cc496; }
+    .footer-bottom {
+        max-width: 1200px;
+        margin: 36px auto 0;
+        padding-top: 24px;
+        border-top: 1px solid rgba(255,255,255,0.04);
+        font-size: 0.78rem;
+        color: rgba(232,240,236,0.2);
+        text-align: center;
+    }
+    .footer-bottom p { margin: 0; }
+    @media (max-width: 640px) {
+        .footer-inner { grid-template-columns: 1fr; gap: 32px; }
+    }
+</style>
+<footer class="footer">
+    <div class="footer-inner">
+        <div>
+            <div class="footer-brand">
+                <span class="footer-brand-dot"></span>
+                Motus
+            </div>
+            <p class="footer-desc">A compiled XML language for streaming HTML from the edge. Bytecode today, WASM everywhere tomorrow.</p>
+        </div>
+        <div class="footer-col">
+            <h5>Pages</h5>
+            <a href="/motus/">Home</a>
+            <a href="/motus/docs">Docs</a>
+        </div>
+        <div class="footer-col">
+            <h5>Tools</h5>
+            <a href="/motus/playground">Playground</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>Powered by Motus &mdash; Streaming HTML from the Edge</p>
+    </div>
+</footer>
+</defcomp>
