@@ -17,7 +17,12 @@ LIB = $(BUILD_DIR)/libmot.a
 CLI = $(BUILD_DIR)/mot
 TRANSPILER_CLI = $(BUILD_DIR)/mot-bytecode-transpiler
 
-.PHONY: all lib cli transpiler lsp vscode vscode-install test clean site
+# Cap'n Proto plugin
+CAPNPC_MOT = $(BUILD_DIR)/capnpc-mot
+CXX = c++
+CXXFLAGS = -std=c++17
+
+.PHONY: all lib cli transpiler lsp vscode vscode-install test clean site capnpc-mot
 
 all: lib
 
@@ -35,6 +40,10 @@ transpiler: $(LIB) $(TRANSPILER_CLI_SRC)
 
 lsp: $(LIB) $(LSP_CLI_SRC)
 	$(CC) $(CFLAGS) $(LSP_CLI_SRC) -L$(BUILD_DIR) -lmot -o $(BUILD_DIR)/mot-lsp
+
+capnpc-mot: tools/capnpc-mot.cpp
+	@mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -o $(CAPNPC_MOT) $< -lcapnp -lkj
 
 # VSCode extension
 VSCODE_DIR = editors/vscode
@@ -175,7 +184,14 @@ test_integration: $(LIB) $(TEST_INTEGRATION_SRCS)
 	$(CC) $(CFLAGS) $(TEST_INTEGRATION_SRCS) -L$(BUILD_DIR) -lmot -o $(TEST_INTEGRATION)
 	./$(TEST_INTEGRATION)
 
-test: test_lexer test_parser test_analyzer test_compiler test_partial_eval test_vm test_codegen test_api test_cli test_debug_metadata test_sourcemap test_host_contract test_transpiler test_integration
+TEST_SCHEMA_SRCS = $(TEST_DIR)/schema/test_schema.c
+TEST_SCHEMA = $(BUILD_DIR)/test_schema
+
+test_schema: $(LIB) $(TEST_SCHEMA_SRCS)
+	$(CC) $(CFLAGS) $(TEST_SCHEMA_SRCS) -L$(BUILD_DIR) -lmot -o $(TEST_SCHEMA)
+	./$(TEST_SCHEMA)
+
+test: test_lexer test_parser test_analyzer test_compiler test_partial_eval test_vm test_codegen test_api test_cli test_debug_metadata test_sourcemap test_host_contract test_transpiler test_integration test_schema
 
 # Static site generation from .mot source files
 SITE_DIR = site

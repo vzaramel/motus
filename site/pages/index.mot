@@ -616,9 +616,9 @@
             <p>Pure HTML + CSS output. LLMs already know XML. No virtual DOM, no JSX transforms &mdash; just markup that any AI can read, write, and reason about.</p>
         </div>
         <div class="lp-fcard">
-            <div class="lp-fcard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg></div>
-            <h3>Cache at Every Level</h3>
-            <p>Compiled bytecode is cached at origin. Edge workers cache rendered pages. Fine-grained dependency tracking (product.name, not product) enables precision invalidation.</p>
+            <div class="lp-fcard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <h3>Strong Schema</h3>
+            <p id="lp-feat-schema"></p>
         </div>
     </div>
 </section>
@@ -693,6 +693,26 @@
             </div>
         </div>
     </div>
+
+    <div class="lp-syntax-row">
+        <div class="lp-syntax-panel lp-syntax-left">
+            <div class="lp-syntax-header"><span class="lp-dot lp-dot-r"></span><span class="lp-dot lp-dot-y"></span><span class="lp-dot lp-dot-g"></span>
+                schema + page.mot
+            </div>
+            <div class="lp-syntax-body"><pre id="ex-schema"></pre></div>
+        </div>
+        <div class="lp-syntax-panel lp-syntax-right">
+            <div class="lp-syntax-header">Output</div>
+            <div class="lp-syntax-body">
+                <div class="lp-result-label">Compile-time Validation</div>
+                <div class="lp-result-card">
+                    <p style="margin:0 0 8px; color:#00ffb3; font-size:0.85rem;" id="lp-schema-ok"></p>
+                    <p style="margin:0; color:#ff5f57; font-size:0.85rem;" id="lp-schema-err"></p>
+                </div>
+                <p style="color:rgba(232,240,236,0.3); font-size:0.78rem; margin:10px 0 0;" id="lp-schema-note"></p>
+            </div>
+        </div>
+    </div>
 </section>
 
 <!-- Architecture Section -->
@@ -752,6 +772,7 @@
     }
 
     var heroCode = [
+        s('tag','&lt;import') + ' ' + s('kw','schema') + ' ' + s('str','"models/store.capnp"') + ' ' + s('tag','/&gt;'),
         s('tag','&lt;import') + ' ' + s('comp','Layout') + ' ' + s('kw','from') + ' ' + s('str','"components/Layout"') + s('tag','&gt;'),
         s('tag','&lt;import') + ' ' + s('comp','ProductCard') + ' ' + s('kw','from') + ' ' + s('str','"components/ProductCard"') + s('tag','&gt;'),
         '',
@@ -812,12 +833,37 @@
     ].join('\n');
 
     /* ===== Inject text that contains reserved keywords ===== */
-    document.getElementById('lp-badge').innerHTML = '<span class="lp-badge-dot"></span> Partial Evaluation &middot; Multi-layer Caching &middot; Edge Streaming';
+    document.getElementById('lp-badge').innerHTML = '<span class="lp-badge-dot"></span> Partial Evaluation &middot; Schema Types &middot; Edge Streaming';
     document.getElementById('lp-headline').innerHTML = 'Build for the Edge.<br/>Write in XML.';
     document.getElementById('lp-sub').innerHTML = 'Motus compiles XML templates into streamable bytecode via partial evaluation &mdash; static parts fold at compile time, only dynamic holes reach the edge. AI-native by design, cacheable at every layer.<br/><br/><em style="color:rgba(232,240,236,0.4); font-size:0.88em;">Heavily experimental. Entirely vibecoded. Built on ideas 5+ years in the making &mdash; exploring how a language designed for the web from scratch could approach data, rendering, and reactivity.</em>';
     document.getElementById('lp-feat-sql').innerHTML = 'Embed queries directly in templates. No ORM layer, no boilerplate. Data flows from SQL into your view.';
+    document.getElementById('lp-feat-schema').innerHTML = 'Cap\u2019n Proto schemas give your templates typed data models. Field access is validated at compile time. SQL results auto-type via <code>$table</code> annotations.';
     document.getElementById('lp-sql-note').innerHTML = 'SQL queries become queryRef + signature in bytecode. No raw SQL ships to the edge. Data is fetched via RPC at render time.';
     document.getElementById('lp-cta-title').innerHTML = 'See Motus in Action';
+
+    var exSchema = [
+        s('comm','&lt;!-- contact.capnp --&gt;'),
+        s('kw','struct') + ' ' + s('comp','Contact') + ' ' + s('punct','$') + s('kw','table') + s('punct','(') + s('str','"contacts"') + s('punct',')') + ' {',
+        '  ' + s('var','name') + '  ' + s('punct','@1') + ' :' + s('kw','Text') + '   ' + s('punct','$') + s('kw','label') + s('punct','(') + s('str','"Full Name"') + s('punct',')') + ';',
+        '  ' + s('var','email') + ' ' + s('punct','@2') + ' :' + s('kw','Text') + '   ' + s('punct','$') + s('kw','placeholder') + s('punct','(') + s('str','"user@co.com"') + s('punct',')') + ';',
+        '  ' + s('var','age') + '   ' + s('punct','@3') + ' :' + s('kw','UInt16') + ' ' + s('punct','$') + s('kw','formOptional') + ';',
+        '}',
+        '',
+        s('comm','&lt;!-- page.mot --&gt;'),
+        s('tag','&lt;import') + ' ' + s('kw','schema') + ' ' + s('str','"contact.capnp"') + ' ' + s('tag','/&gt;'),
+        '',
+        s('tag','&lt;let') + ' ' + s('var','contacts') + ' ' + s('kw','select') + ' ' + s('sql','*') + ' ' + s('kw','from') + ' ' + s('sql','contacts') + s('tag','&gt;'),
+        '  ' + s('tag','&lt;for') + ' ' + s('var','c') + ' ' + s('kw','in') + ' ' + s('var','contacts') + s('tag','&gt;'),
+        '    ' + s('tag','&lt;output') + ' ' + s('var','c.name') + s('tag','&gt;') + '  ' + s('comm','&lt;!-- OK: Text --&gt;'),
+        '    ' + s('tag','&lt;output') + ' ' + s('var','c.phone') + s('tag','&gt;') + ' ' + s('comm','&lt;!-- ERROR --&gt;'),
+        '  ' + s('tag','&lt;/for&gt;'),
+        s('tag','&lt;/let&gt;')
+    ].join('\n');
+
+    document.getElementById('ex-schema').innerHTML = exSchema;
+    document.getElementById('lp-schema-ok').innerHTML = '\u2713 c.name \u2192 Text (valid field on Contact)';
+    document.getElementById('lp-schema-err').innerHTML = '\u2717 c.phone \u2192 compile error: field "phone" not found on Contact';
+    document.getElementById('lp-schema-note').innerHTML = 'SQL results are automatically typed when the schema has a $table annotation matching the query table.';
 
     document.getElementById('hero-code').innerHTML = heroCode;
     document.getElementById('ex-component').innerHTML = exComponent;

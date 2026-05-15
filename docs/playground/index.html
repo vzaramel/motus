@@ -145,28 +145,138 @@
             color: #e8f0ec;
         }
 
+        /* ===== 3-column layout: sidebar + editor + output ===== */
         .playground-grid {
             display: grid;
-            grid-template-columns: minmax(420px, 1fr) minmax(420px, 1fr);
+            grid-template-columns: 240px minmax(360px, 1fr) minmax(360px, 1fr);
             gap: 8px;
             flex: 1;
             min-height: 0;
         }
 
+        /* ===== Examples Sidebar ===== */
+        .examples-sidebar {
+            background: #0c1820;
+            border: 1px solid rgba(0,255,179,0.08);
+            border-radius: 8px;
+            overflow-y: auto;
+            padding: 8px 0;
+            min-height: 0;
+        }
+        .examples-category {
+            padding: 12px 14px 4px;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 700;
+            color: rgba(232,240,236,0.3);
+        }
+        .examples-category:first-child {
+            padding-top: 6px;
+        }
+        .example-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            cursor: pointer;
+            font-size: 0.85em;
+            color: rgba(232,240,236,0.55);
+            transition: color 0.15s, background 0.15s;
+            border-left: 2px solid transparent;
+        }
+        .example-item:hover {
+            color: #e8f0ec;
+            background: rgba(255,255,255,0.03);
+        }
+        .example-item.active {
+            color: #00ffb3;
+            background: rgba(0,255,179,0.06);
+            border-left-color: #00ffb3;
+        }
+        .example-item-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .example-item-badge {
+            font-size: 0.72em;
+            padding: 1px 6px;
+            border-radius: 8px;
+            background: rgba(0,255,179,0.08);
+            color: rgba(0,255,179,0.6);
+            flex-shrink: 0;
+        }
+
+        /* ===== Editor with file tabs ===== */
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .file-tabs {
+            display: flex;
+            gap: 0;
+            background: rgba(12,24,32,0.9);
+            border: 1px solid rgba(0,255,179,0.08);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .file-tab {
+            padding: 6px 14px;
+            border: none;
+            background: transparent;
+            color: rgba(232,240,236,0.4);
+            font-size: 0.78em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s, background 0.2s;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        .file-tab:hover {
+            color: rgba(232,240,236,0.7);
+            background: rgba(0,255,179,0.04);
+        }
+        .file-tab.active {
+            color: #e8f0ec;
+            border-bottom-color: #00ffb3;
+            background: rgba(0,255,179,0.06);
+        }
+        .file-tab .tab-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .tab-dot-mot { background: #00ffb3; }
+        .tab-dot-capnp { background: #e2c77e; }
+        .tab-dot-css { background: #4488ff; }
+
         .playground-form {
             margin: 0;
             min-height: 0;
-            height: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .playground-editor {
             width: 100%;
-            height: 100%;
+            flex: 1;
             min-height: 0;
             border: 1px solid rgba(0,255,179,0.12);
-            border-radius: 8px;
+            border-radius: 0 0 8px 8px;
             overflow: hidden;
             background: #0f1e2c;
+        }
+        .playground-editor.no-tabs {
+            border-radius: 8px;
         }
 
         .playground-source {
@@ -177,7 +287,7 @@
             font-size: 13px;
             line-height: 1.4;
             border: 1px solid rgba(0,255,179,0.12);
-            border-radius: 8px;
+            border-radius: 0 0 8px 8px;
             padding: 8px;
             resize: none;
             display: none;
@@ -556,7 +666,57 @@
             margin-left: auto;
         }
 
-        @media (max-width: 980px) {
+        /* ===== Schema info note ===== */
+        .schema-note {
+            font-size: 0.78em;
+            color: rgba(226,199,126,0.7);
+            background: rgba(226,199,126,0.05);
+            border: 1px solid rgba(226,199,126,0.12);
+            border-radius: 6px;
+            padding: 5px 10px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* ===== Mobile sidebar toggle ===== */
+        .sidebar-toggle {
+            display: none;
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(0,255,179,0.2);
+            background: rgba(0,255,179,0.06);
+            color: #00ffb3;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        @media (max-width: 1100px) {
+            .playground-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .examples-sidebar {
+                display: none;
+            }
+            .examples-sidebar.mobile-visible {
+                display: block;
+                position: fixed;
+                top: 64px;
+                left: 0;
+                bottom: 0;
+                width: 260px;
+                z-index: 999;
+                border-radius: 0 8px 8px 0;
+                box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+            }
+            .sidebar-toggle {
+                display: inline-flex;
+            }
+        }
+        @media (max-width: 800px) {
             .playground-shell {
                 min-height: auto;
             }
@@ -564,7 +724,7 @@
                 grid-template-columns: 1fr;
                 min-height: auto;
             }
-            .playground-editor,
+            .editor-panel,
             .playground-source,
             .playground-output {
                 min-height: 46vh;
@@ -581,7 +741,7 @@
                 max-width: unset;
             }
         }
-    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><span id="playground-mode-wrap"></span><div id="playground-status" class="playground-status"></div></div><div id="pipeline-viz" class="pipeline-viz"><div class="pipeline-controls"><span id="sim-latency-wrap"></span><span id="sim-chunk-wrap"></span><button type="button" id="pipeline-reset" class="pipeline-reset-btn">Reset Cache</button><span id="pipeline-cache-stats" class="pipeline-cache-stats"></span></div><div class="pipeline-diagram"><div class="pipeline-node" id="node-origin"><div class="pipeline-node-icon" id="icon-origin"></div><div class="pipeline-node-label">Origin</div><div class="pipeline-node-status" id="status-origin">Idle</div></div><div class="pipeline-link" id="link-oe"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-oe"></div><div class="pipeline-link-timing" id="timing-oe"></div></div><div class="pipeline-node" id="node-edge"><div class="pipeline-node-icon" id="icon-edge"></div><div class="pipeline-node-label">Edge</div><div class="pipeline-node-status" id="status-edge">Idle</div></div><div class="pipeline-link" id="link-eb"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-eb"></div><div class="pipeline-link-timing" id="timing-eb"></div></div><div class="pipeline-node" id="node-browser"><div class="pipeline-node-icon" id="icon-browser"></div><div class="pipeline-node-label">Browser</div><div class="pipeline-node-status" id="status-browser">Idle</div></div></div><div class="pipeline-waterfall" id="pipeline-waterfall"></div></div><section class="playground-grid"><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><div class="output-panel"><div class="output-tabs" id="output-tabs"><button type="button" class="output-tab" data-tab="origin">Origin</button><button type="button" class="output-tab" data-tab="edge">Edge</button><button type="button" class="output-tab active" data-tab="browser">Browser</button></div><div id="output-origin" class="playground-output output-pane" data-pane="origin"></div><div id="output-edge" class="playground-output output-pane" data-pane="edge"></div><div id="playground-output" class="playground-output output-pane active" data-pane="browser"></div></div></section></section><script>
+    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle examples">&#9776;</button><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><span id="playground-mode-wrap"></span><div id="playground-status" class="playground-status"></div></div><div id="pipeline-viz" class="pipeline-viz"><div class="pipeline-controls"><span id="sim-latency-wrap"></span><span id="sim-chunk-wrap"></span><button type="button" id="pipeline-reset" class="pipeline-reset-btn">Reset Cache</button><span id="pipeline-cache-stats" class="pipeline-cache-stats"></span></div><div class="pipeline-diagram"><div class="pipeline-node" id="node-origin"><div class="pipeline-node-icon" id="icon-origin"></div><div class="pipeline-node-label">Origin</div><div class="pipeline-node-status" id="status-origin">Idle</div></div><div class="pipeline-link" id="link-oe"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-oe"></div><div class="pipeline-link-timing" id="timing-oe"></div></div><div class="pipeline-node" id="node-edge"><div class="pipeline-node-icon" id="icon-edge"></div><div class="pipeline-node-label">Edge</div><div class="pipeline-node-status" id="status-edge">Idle</div></div><div class="pipeline-link" id="link-eb"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-eb"></div><div class="pipeline-link-timing" id="timing-eb"></div></div><div class="pipeline-node" id="node-browser"><div class="pipeline-node-icon" id="icon-browser"></div><div class="pipeline-node-label">Browser</div><div class="pipeline-node-status" id="status-browser">Idle</div></div></div><div class="pipeline-waterfall" id="pipeline-waterfall"></div></div><section class="playground-grid"><aside class="examples-sidebar" id="examples-sidebar"></aside><div class="editor-panel"><div class="file-tabs" id="file-tabs"></div><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor no-tabs"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><p class="schema-note" id="schema-note" style="display:none"></p></div><div class="output-panel"><div class="output-tabs" id="output-tabs"><button type="button" class="output-tab" data-tab="origin">Origin</button><button type="button" class="output-tab" data-tab="edge">Edge</button><button type="button" class="output-tab active" data-tab="browser">Browser</button></div><div id="output-origin" class="playground-output output-pane" data-pane="origin"></div><div id="output-edge" class="playground-output output-pane" data-pane="edge"></div><div id="playground-output" class="playground-output output-pane active" data-pane="browser"></div></div></section></section><script>
         (function () {
             var form = document.getElementById('playground-form');
             var editorEl = document.getElementById('playground-editor');
@@ -590,17 +750,283 @@
             var outputEl = document.getElementById('playground-output');
             var runButton = document.getElementById('playground-run');
             var pipelineViz = document.getElementById('pipeline-viz');
+            var fileTabsEl = document.getElementById('file-tabs');
+            var sidebarEl = document.getElementById('examples-sidebar');
+            var sidebarToggle = document.getElementById('sidebar-toggle');
+            var schemaNoteEl = document.getElementById('schema-note');
             var editor = null;
             var motWasm = null;
             var swReady = false;
             var pipelineRunning = false;
             var ACE_CDN_URL = 'https://cdn.jsdelivr.net/npm/ace-builds@1.36.2/src-min-noconflict/ace.js';
+            var currentExample = null;
+            var currentFileIndex = 0;
+            var fileContents = {}; /* saved edits per file */
 
             if (!form || !editorEl || !sourceEl || !statusEl || !outputEl || !runButton) return;
 
             var outputTabsEl = document.getElementById('output-tabs');
             var originPane = document.getElementById('output-origin');
             var edgePane = document.getElementById('output-edge');
+
+            /* ===== Example Library ===== */
+            var examples = [
+                { id: 'hello', name: 'Hello World', category: 'Basics', files: [
+                    { name: 'hello.mot', main: true, content: '<h1>Hello, World!</h1>\n<p>This is a Motus page.</p>' }
+                ]},
+                { id: 'let-bindings', name: 'Let Bindings', category: 'Basics', files: [
+                    { name: 'bindings.mot', main: true, content: '<let greeting "Hello">\n  <let name "Alice">\n    <p><output greeting>, <output name>!</p>\n  </let>\n</let>\n\n<let items 3>\n  <p>We have <output items> items.</p>\n</let>' }
+                ]},
+                { id: 'conditionals', name: 'Conditionals', category: 'Basics', files: [
+                    { name: 'conditionals.mot', main: true, content: '<let role "admin">\n  <if role eq "admin">\n    <p style="color:#00ffb3">Welcome, administrator.</p>\n  <elsif role eq "editor">\n    <p>Welcome, editor.</p>\n  <else>\n    <p>Welcome, guest.</p>\n  </if>\n</let>\n\n<let score 85>\n  <if score gt 90>\n    <p>Grade: A</p>\n  <elsif score gt 80>\n    <p>Grade: B</p>\n  <else>\n    <p>Grade: C</p>\n  </if>\n</let>' }
+                ]},
+                { id: 'loops', name: 'Loops', category: 'Basics', files: [
+                    { name: 'loops.mot', main: true, content: '<let items 5>\n  <style>\n    .loop-item { padding: 8px 12px; margin: 4px 0; background: #152436; border-radius: 6px; border: 1px solid rgba(0,255,179,0.1); color: #e8f0ec; }\n  </style>\n  <for item in items>\n    <div class="loop-item">Item #<output item></div>\n  </for>\n</let>' }
+                ]},
+                { id: 'simple-component', name: 'Simple Component', category: 'Components', files: [
+                    { name: 'page.mot', main: true, content: '<defcomp Alert | message, level = "info" |>\n  <style>\n    .alert { padding: 12px 16px; border-radius: 8px; margin: 8px 0; font-size: 0.9em; }\n    .alert-info { background: rgba(68,136,255,0.1); border: 1px solid rgba(68,136,255,0.3); color: #88bbff; }\n    .alert-warn { background: rgba(255,170,68,0.1); border: 1px solid rgba(255,170,68,0.3); color: #ffaa44; }\n  </style>\n  <div class="alert alert-info">\n    <output message>\n  </div>\n</defcomp>\n\n<Alert message="This is an informational alert." />\n<Alert message="Watch out for this one!" level="warn" />' }
+                ]},
+                { id: 'slots-props', name: 'Slots & Props', category: 'Components', files: [
+                    { name: 'page.mot', main: true, content: '<defcomp Card | title |>\n  <style>\n    .card { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 12px; padding: 20px; margin: 8px 0; }\n    .card h3 { margin: 0 0 8px; color: #e8f0ec; }\n    .card-body { color: rgba(232,240,236,0.6); line-height: 1.6; }\n  </style>\n  <div class="card">\n    <h3><output title></h3>\n    <div class="card-body"><children></div>\n  </div>\n</defcomp>\n\n<Card title="Welcome">\n  <p>This content goes into the default <strong>slot</strong>.</p>\n  <p>You can put any HTML here.</p>\n</Card>\n\n<Card title="Features">\n  <ul>\n    <li>Props for data</li>\n    <li>Slots for content</li>\n    <li>Scoped CSS</li>\n  </ul>\n</Card>' }
+                ]},
+                { id: 'scoped-css', name: 'Scoped CSS', category: 'Components', files: [
+                    { name: 'page.mot', main: true, content: '<defcomp Badge | label, color = "green" |>\n  <style>\n    .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.82em; font-weight: 600; }\n    .badge-green { background: rgba(0,255,179,0.12); color: #00ffb3; border: 1px solid rgba(0,255,179,0.3); }\n    .badge-blue { background: rgba(68,136,255,0.12); color: #4488ff; border: 1px solid rgba(68,136,255,0.3); }\n    .badge-orange { background: rgba(255,136,68,0.12); color: #ff8844; border: 1px solid rgba(255,136,68,0.3); }\n  </style>\n  <span class="badge badge-green"><output label></span>\n</defcomp>\n\n<p style="color:#e8f0ec">Status: <Badge label="Active" color="green" /> <Badge label="Beta" color="blue" /> <Badge label="Urgent" color="orange" /></p>' }
+                ]},
+                { id: 'sql-query', name: 'SQL Query', category: 'Data', files: [
+                    { name: 'products.mot', main: true, content: '<style>\n  .product-grid { display: grid; gap: 12px; }\n  .product-card { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 16px; }\n  .product-card h3 { margin: 0 0 4px; color: #e8f0ec; }\n  .product-price { color: #00ffb3; font-weight: 700; font-size: 1.1em; }\n  .product-note { color: rgba(232,240,236,0.4); font-size: 0.85em; margin: 8px 0 0; }\n</style>\n\n<h2 style="color:#e8f0ec; margin:0 0 16px">Product Catalog</h2>\n\n<let items 3>\n  <div class="product-grid">\n    <for item in items>\n      <div class="product-card">\n        <h3>Product #<output item></h3>\n        <p class="product-price">$<output item>9.99</p>\n        <p class="product-note">In stock</p>\n      </div>\n    </for>\n  </div>\n</let>' }
+                ]},
+                { id: 'crm-dashboard', name: 'CRM Dashboard', category: 'Data', pipeline: true, files: [
+                    { name: 'crm.mot', main: true, content: '' }
+                ]},
+                { id: 'typed-contacts', name: 'Typed Contacts', category: 'Schema', files: [
+                    { name: 'contact.capnp', content: '@0xdbb9ad1f14bf0b36;\n\n# Motus schema annotations\nannotation table(struct) :Text;\nannotation label(field) :Text;\nannotation placeholder(field) :Text;\nannotation computed(field) :Void;\nannotation formOptional(field) :Void;\nannotation multiline(field) :Void;\n\nstruct Contact $table("contacts") {\n  id        @0 :UInt64   $computed;\n  name      @1 :Text     $label("Full Name");\n  email     @2 :Text     $label("Email")\n                         $placeholder("user@example.com");\n  age       @3 :UInt16   $formOptional;\n  active    @4 :Bool = true;\n  bio       @5 :Text     $multiline $formOptional;\n  createdAt @6 :Int64    $computed;\n}' },
+                    { name: 'contacts.mot', main: true, content: '<import schema "contact.capnp" />\n\n<style>\n  .contact-list { display: grid; gap: 10px; }\n  .contact-card { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 16px; }\n  .contact-card h3 { margin: 0 0 4px; color: #e8f0ec; }\n  .contact-info { color: rgba(232,240,236,0.5); font-size: 0.9em; margin: 2px 0; }\n  .type-badge { display: inline-block; font-size: 0.72em; padding: 1px 6px; border-radius: 4px; background: rgba(0,255,179,0.08); color: rgba(0,255,179,0.7); margin-left: 6px; }\n</style>\n\n<h2 style="color:#e8f0ec; margin:0 0 6px">Contacts</h2>\n<p style="color:rgba(232,240,236,0.4); font-size:0.85em; margin:0 0 16px">Schema-typed via contact.capnp &mdash; field access validated at compile time.</p>\n\n<let items 3>\n  <div class="contact-list">\n    <for item in items>\n      <div class="contact-card">\n        <h3>Contact #<output item> <span class="type-badge">Contact</span></h3>\n        <p class="contact-info">name: Text</p>\n        <p class="contact-info">email: Text</p>\n        <p class="contact-info">age: UInt16 (optional)</p>\n      </div>\n    </for>\n  </div>\n</let>' }
+                ]},
+                { id: 'product-catalog', name: 'Product Catalog', category: 'Schema', files: [
+                    { name: 'product.capnp', content: '@0xa1b2c3d4e5f60718;\n\nannotation table(struct) :Text;\nannotation label(field) :Text;\nannotation computed(field) :Void;\nannotation formOptional(field) :Void;\n\nstruct Product $table("products") {\n  id       @0 :UInt64   $computed;\n  name     @1 :Text     $label("Product Name");\n  price    @2 :Float64  $label("Price");\n  tags     @3 :List(Text) $formOptional;\n  inStock  @4 :Bool = true;\n}' },
+                    { name: 'catalog.mot', main: true, content: '<import schema "product.capnp" />\n\n<style>\n  .catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }\n  .product { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 16px; }\n  .product h3 { margin: 0 0 6px; color: #e8f0ec; font-size: 1rem; }\n  .product .price { color: #00ffb3; font-weight: 700; }\n  .product .tags { color: rgba(232,240,236,0.4); font-size: 0.82em; margin-top: 6px; }\n  .field-info { font-size: 0.75em; color: rgba(226,199,126,0.6); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }\n</style>\n\n<h2 style="color:#e8f0ec; margin:0 0 6px">Product Catalog</h2>\n<p style="color:rgba(232,240,236,0.4); font-size:0.85em; margin:0 0 16px">Schema: Product with name (Text), price (Float64), tags (List&lt;Text&gt;)</p>\n\n<let items 4>\n  <div class="catalog">\n    <for item in items>\n      <div class="product">\n        <h3>Product #<output item></h3>\n        <p class="price">$<output item>4.99</p>\n        <p class="tags">tags: [\"electronics\", \"sale\"]</p>\n        <p class="field-info">Typed via product.capnp</p>\n      </div>\n    </for>\n  </div>\n</let>' }
+                ]},
+                { id: 'counter', name: 'Counter', category: 'Reactive', files: [
+                    { name: 'counter.mot', main: true, content: '<var counter 0 />\n\n<style>\n  .counter-display { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 20px; display: inline-block; }\n  .counter-value { font-size: 2rem; font-weight: 800; color: #e8f0ec; margin: 0 0 4px; }\n  .counter-label { color: rgba(232,240,236,0.4); font-size: 0.85em; margin: 0 0 12px; }\n  .counter-btn { background: rgba(0,255,179,0.1); border: 1px solid rgba(0,255,179,0.3); color: #00ffb3; padding: 8px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }\n</style>\n\n<div class="counter-display">\n  <p class="counter-value"><output counter></p>\n  <p class="counter-label">Double: <output counter * 2></p>\n  <set counter counter + 1 />\n</div>' }
+                ]},
+                { id: 'form-binding', name: 'Form Binding', category: 'Reactive', files: [
+                    { name: 'form.mot', main: true, content: '<var username "Guest" />\n\n<style>\n  .form-demo { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 20px; max-width: 400px; }\n  .form-demo label { display: block; color: rgba(232,240,236,0.5); font-size: 0.82em; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }\n  .form-demo input { width: 100%; background: #0f1e2c; border: 1px solid rgba(0,255,179,0.15); color: #e8f0ec; padding: 8px 12px; border-radius: 6px; font-size: 0.9em; margin-bottom: 12px; }\n  .greeting { color: #e8f0ec; font-size: 1.1em; margin: 12px 0 0; }\n</style>\n\n<div class="form-demo">\n  <label>Your name</label>\n  <p class="greeting">Hello, <strong><output username></strong>!</p>\n</div>' }
+                ]}
+            ];
+
+            /* CRM source (loaded separately since it uses pipeline mode) */
+            var crmSource = [
+                '<let contacts select * from contacts order by name>',
+                '',
+                '<style>',
+                '    .crm-grid { display: grid; gap: 12px; }',
+                '    .contact-card {',
+                '        border: 1px solid rgba(0,255,179,0.15);',
+                '        border-radius: 10px;',
+                '        padding: 16px;',
+                '        background: #152436;',
+                '    }',
+                '    .contact-card h3 { margin: 0 0 4px; color: #e8f0ec; }',
+                '    .contact-info { color: rgba(232,240,236,0.5); font-size: 0.9em; margin: 0; }',
+                '    .crm-title { color: #e8f0ec; margin: 0 0 16px; }',
+                '    .crm-subtitle { color: rgba(232,240,236,0.5); margin: 0 0 20px; font-size: 0.9em; }',
+                '    .crm-form { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }',
+                '    .crm-field { display: flex; flex-direction: column; gap: 2px; }',
+                '    .crm-field label { font-size: 0.75em; color: rgba(232,240,236,0.4); text-transform: uppercase; letter-spacing: 0.04em; }',
+                '    .crm-field input { background: #0f1e2c; border: 1px solid rgba(0,255,179,0.15); color: #e8f0ec; padding: 6px 10px; border-radius: 6px; font-size: 0.88em; outline: none; }',
+                '    .crm-field input:focus { border-color: rgba(0,255,179,0.4); }',
+                '    .crm-submit { background: rgba(0,255,179,0.1); border: 1px solid rgba(0,255,179,0.3); color: #00ffb3; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 0.88em; font-weight: 600; }',
+                '    .crm-submit:hover { background: rgba(0,255,179,0.18); }',
+                '</style>',
+                '',
+                '<h2 class="crm-title">CRM Dashboard</h2>',
+                '<p class="crm-subtitle">Contact data fetched from SQLite (sql.js) via the simulated origin server.</p>',
+                '<insert into contacts>',
+                '    <div class="crm-form">',
+                '        <div class="crm-field">',
+                '            <label>Name</label>',
+                '            <input contact.name placeholder="Jane Doe" required />',
+                '        </div>',
+                '        <div class="crm-field">',
+                '            <label>Email</label>',
+                '            <input contact.email placeholder="jane@example.com" required />',
+                '        </div>',
+                '        <div class="crm-field">',
+                '            <label>Company</label>',
+                '            <input contact.company placeholder="Acme Corp" required />',
+                '        </div>',
+                '        <button type="submit" class="crm-submit">Add Contact</button>',
+                '    </div>',
+                '</insert>',
+                '<div class="crm-grid" id="crm-contacts">',
+                '    <for contact in contacts>',
+                '        <div class="contact-card">',
+                '            <h3><output contact.name></h3>',
+                '            <p class="contact-info"><output contact.email></p>',
+                '            <p class="contact-info"><output contact.company></p>',
+                '        </div>',
+                '    </for>',
+                '</div>'
+            ].join('\n');
+
+            /* Set CRM source on its example */
+            for (var ei = 0; ei < examples.length; ei++) {
+                if (examples[ei].id === 'crm-dashboard') {
+                    examples[ei].files[0].content = crmSource;
+                    break;
+                }
+            }
+
+            /* ===== Build Sidebar ===== */
+            function buildSidebar() {
+                var html = '';
+                var lastCat = '';
+                for (var i = 0; i < examples.length; i++) {
+                    var ex = examples[i];
+                    if (ex.category !== lastCat) {
+                        html += '<div class="examples-category">' + ex.category + '</div>';
+                        lastCat = ex.category;
+                    }
+                    var badge = ex.files.length > 1 ? '<span class="example-item-badge">' + ex.files.length + ' files</span>' : '';
+                    html += '<div class="example-item" data-example="' + ex.id + '"><span class="example-item-name">' + ex.name + '</span>' + badge + '</div>';
+                }
+                sidebarEl.innerHTML = html;
+
+                sidebarEl.addEventListener('click', function(e) {
+                    var item = e.target.closest('.example-item');
+                    if (!item) return;
+                    loadExample(item.getAttribute('data-example'));
+                    /* Close mobile sidebar */
+                    sidebarEl.classList.remove('mobile-visible');
+                });
+            }
+
+            /* ===== File Tabs ===== */
+            function buildFileTabs(ex) {
+                if (ex.files.length <= 1) {
+                    fileTabsEl.innerHTML = '';
+                    fileTabsEl.style.display = 'none';
+                    editorEl.classList.add('no-tabs');
+                    return;
+                }
+                fileTabsEl.style.display = 'flex';
+                editorEl.classList.remove('no-tabs');
+                var html = '';
+                for (var i = 0; i < ex.files.length; i++) {
+                    var f = ex.files[i];
+                    var dotClass = 'tab-dot-mot';
+                    if (f.name.indexOf('.capnp') !== -1) dotClass = 'tab-dot-capnp';
+                    else if (f.name.indexOf('.css') !== -1) dotClass = 'tab-dot-css';
+                    var active = i === currentFileIndex ? ' active' : '';
+                    html += '<button type="button" class="file-tab' + active + '" data-file="' + i + '"><span class="tab-dot ' + dotClass + '"></span>' + f.name + '</button>';
+                }
+                fileTabsEl.innerHTML = html;
+            }
+
+            fileTabsEl.addEventListener('click', function(e) {
+                var tab = e.target.closest('.file-tab');
+                if (!tab) return;
+                var idx = parseInt(tab.getAttribute('data-file'), 10);
+                switchFile(idx);
+            });
+
+            function switchFile(idx) {
+                if (!currentExample || idx >= currentExample.files.length) return;
+                /* Save current content */
+                saveCurrentFile();
+                currentFileIndex = idx;
+                var f = currentExample.files[idx];
+                var content = fileContents[f.name] || f.content;
+                if (editor) editor.setValue(content, -1);
+                else sourceEl.value = content;
+
+                /* Set ace mode */
+                if (editor) {
+                    if (f.name.indexOf('.capnp') !== -1) editor.session.setMode('ace/mode/text');
+                    else if (f.name.indexOf('.css') !== -1) editor.session.setMode('ace/mode/css');
+                    else editor.session.setMode('ace/mode/html');
+                }
+
+                /* Update active tab */
+                var tabs = fileTabsEl.querySelectorAll('.file-tab');
+                for (var i = 0; i < tabs.length; i++) {
+                    tabs[i].classList.toggle('active', i === idx);
+                }
+            }
+
+            function saveCurrentFile() {
+                if (!currentExample) return;
+                var f = currentExample.files[currentFileIndex];
+                if (editor) fileContents[f.name] = editor.getValue();
+                else fileContents[f.name] = sourceEl.value;
+            }
+
+            /* ===== Load Example ===== */
+            function loadExample(id) {
+                var ex = null;
+                for (var i = 0; i < examples.length; i++) {
+                    if (examples[i].id === id) { ex = examples[i]; break; }
+                }
+                if (!ex) return;
+
+                currentExample = ex;
+                currentFileIndex = 0;
+                fileContents = {};
+
+                /* Find main file index */
+                for (var j = 0; j < ex.files.length; j++) {
+                    if (ex.files[j].main) { currentFileIndex = j; break; }
+                }
+
+                /* Load content */
+                var f = ex.files[currentFileIndex];
+                if (editor) {
+                    editor.setValue(f.content, -1);
+                    if (f.name.indexOf('.capnp') !== -1) editor.session.setMode('ace/mode/text');
+                    else if (f.name.indexOf('.css') !== -1) editor.session.setMode('ace/mode/css');
+                    else editor.session.setMode('ace/mode/html');
+                } else {
+                    sourceEl.value = f.content;
+                }
+
+                /* Build tabs */
+                buildFileTabs(ex);
+
+                /* Show schema note for schema examples */
+                var hasSchema = false;
+                for (var k = 0; k < ex.files.length; k++) {
+                    if (ex.files[k].name.indexOf('.capnp') !== -1) { hasSchema = true; break; }
+                }
+                if (hasSchema) {
+                    schemaNoteEl.style.display = 'block';
+                    schemaNoteEl.innerHTML = 'Schema files are shown for reference. The browser WASM compiler does not run the capnp toolchain \u2014 schema validation and auto-typing happen in the full <code>mot</code> CLI compiler.';
+                } else {
+                    schemaNoteEl.style.display = 'none';
+                }
+
+                /* Highlight sidebar */
+                var items = sidebarEl.querySelectorAll('.example-item');
+                for (var m = 0; m < items.length; m++) {
+                    items[m].classList.toggle('active', items[m].getAttribute('data-example') === id);
+                }
+
+                /* Switch to pipeline mode for CRM */
+                var modeSelect = document.getElementById('playground-mode');
+                if (ex.pipeline && modeSelect) {
+                    modeSelect.value = 'pipeline';
+                    modeSelect.dispatchEvent(new Event('change'));
+                } else if (modeSelect && modeSelect.value === 'pipeline' && !ex.pipeline) {
+                    modeSelect.value = 'direct';
+                    modeSelect.dispatchEvent(new Event('change'));
+                }
+            }
+
+            /* ===== Sidebar mobile toggle ===== */
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebarEl.classList.toggle('mobile-visible');
+                });
+            }
 
             /* ===== Output Tab Switching ===== */
             function switchOutputTab(tabName) {
@@ -795,93 +1221,6 @@
                 return h;
             }
 
-            var defaultSource = [
-                '<defcomp DemoCard | title, body |>',
-                '    <style>',
-                '        .demo-card {',
-                '            border: 1px solid rgba(0,255,179,0.15);',
-                '            border-radius: 10px;',
-                '            padding: 14px;',
-                '            background: #152436;',
-                '        }',
-                '        .demo-card h3 {',
-                '            margin: 0 0 8px 0;',
-                '            color: #e8f0ec;',
-                '        }',
-                '        .demo-card p {',
-                '            margin: 0;',
-                '            color: rgba(232,240,236,0.6);',
-                '            line-height: 1.5;',
-                '        }',
-                '    </style>',
-                '    <article class="demo-card">',
-                '        <h3><output title></h3>',
-                '        <p><output body></p>',
-                '    </article>',
-                '</defcomp>',
-                '',
-                '<DemoCard',
-                '    title="Hello from Motus"',
-                '    body="Compiled and rendered entirely by WASM." />'
-            ].join('\n');
-
-            /* CRM demo source for pipeline mode */
-            var crmSource = [
-                '<let contacts select * from contacts order by name>',
-                '',
-                '<style>',
-                '    .crm-grid { display: grid; gap: 12px; }',
-                '    .contact-card {',
-                '        border: 1px solid rgba(0,255,179,0.15);',
-                '        border-radius: 10px;',
-                '        padding: 16px;',
-                '        background: #152436;',
-                '    }',
-                '    .contact-card h3 { margin: 0 0 4px; color: #e8f0ec; }',
-                '    .contact-info { color: rgba(232,240,236,0.5); font-size: 0.9em; margin: 0; }',
-                '    .crm-title { color: #e8f0ec; margin: 0 0 16px; }',
-                '    .crm-subtitle { color: rgba(232,240,236,0.5); margin: 0 0 20px; font-size: 0.9em; }',
-                '    .crm-form { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }',
-                '    .crm-field { display: flex; flex-direction: column; gap: 2px; }',
-                '    .crm-field label { font-size: 0.75em; color: rgba(232,240,236,0.4); text-transform: uppercase; letter-spacing: 0.04em; }',
-                '    .crm-field input { background: #0f1e2c; border: 1px solid rgba(0,255,179,0.15); color: #e8f0ec; padding: 6px 10px; border-radius: 6px; font-size: 0.88em; outline: none; }',
-                '    .crm-field input:focus { border-color: rgba(0,255,179,0.4); }',
-                '    .crm-submit { background: rgba(0,255,179,0.1); border: 1px solid rgba(0,255,179,0.3); color: #00ffb3; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 0.88em; font-weight: 600; }',
-                '    .crm-submit:hover { background: rgba(0,255,179,0.18); }',
-                '</style>',
-                '',
-                '<h2 class="crm-title">CRM Dashboard</h2>',
-                '<p class="crm-subtitle">Contact data fetched from SQLite (sql.js) via the simulated origin server.</p>',
-                '<insert into contacts>',
-                '    <div class="crm-form">',
-                '        <div class="crm-field">',
-                '            <label>Name</label>',
-                '            <input contact.name placeholder="Jane Doe" required />',
-                '        </div>',
-                '        <div class="crm-field">',
-                '            <label>Email</label>',
-                '            <input contact.email placeholder="jane@example.com" required />',
-                '        </div>',
-                '        <div class="crm-field">',
-                '            <label>Company</label>',
-                '            <input contact.company placeholder="Acme Corp" required />',
-                '        </div>',
-                '        <button type="submit" class="crm-submit">Add Contact</button>',
-                '    </div>',
-                '</insert>',
-                '<div class="crm-grid" id="crm-contacts">',
-                '    <for contact in contacts>',
-                '        <div class="contact-card">',
-                '            <h3><output contact.name></h3>',
-                '            <p class="contact-info"><output contact.email></p>',
-                '            <p class="contact-info"><output contact.company></p>',
-                '        </div>',
-                '    </for>',
-                '</div>'
-            ].join('\n');
-
-            sourceEl.value = defaultSource;
-
             /* ===== Inject text with "in" keyword (parser workaround) ===== */
             var bannerEl = document.getElementById('playground-banner');
             if (bannerEl) bannerEl.innerHTML = '<strong>100% browser-side.</strong> The Motus compiler and VM run entirely in your browser via WebAssembly (282 KB). No server, no backend \u2014 everything is compiled and rendered right here in real time. Switch to <strong>Pipeline Simulation</strong> to see the Origin \u2192 Edge \u2192 Browser flow animated with streaming.';
@@ -1014,7 +1353,8 @@
                 editor.session.setMode('ace/mode/html');
                 editor.setTheme('ace/theme/tomorrow_night');
                 editor.setOptions({ fontSize: '13px', showPrintMargin: false, useWorker: false });
-                editor.setValue(defaultSource, -1);
+                var defaultContent = currentExample ? currentExample.files[currentFileIndex].content : examples[0].files[0].content;
+                editor.setValue(defaultContent, -1);
                 editor.commands.addCommand({
                     name: 'run-playground',
                     bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
@@ -1030,6 +1370,15 @@
             }
 
             function readSource() {
+                /* Always compile the main .mot file */
+                if (currentExample) {
+                    saveCurrentFile();
+                    for (var i = 0; i < currentExample.files.length; i++) {
+                        if (currentExample.files[i].main) {
+                            return fileContents[currentExample.files[i].name] || currentExample.files[i].content;
+                        }
+                    }
+                }
                 if (editor) return editor.getValue();
                 return sourceEl.value || '';
             }
@@ -1222,11 +1571,11 @@
                 var row = {};
                 formData.forEach(function(v, k) { row[k] = v; });
 
-                /* Animate: Browser → Origin */
+                /* Animate: Browser -> Origin */
                 resetAllNodes();
                 setNodeState('browser', 'active');
                 setNodeStatus('browser', 'Submitting...');
-                await animatePacket('eb'); /* reverse direction visually */
+                await animatePacket('eb');
 
                 setNodeState('origin', 'active');
                 setNodeStatus('origin', 'Inserting...');
@@ -1252,7 +1601,6 @@
                     setNodeStatus('origin', 'Inserted');
                     setNodeState('origin', 'done');
 
-                    /* Animate: Edge re-renders */
                     setNodeState('edge', 'active');
                     setNodeStatus('edge', 'Re-rendering...');
                     await animatePacket('oe');
@@ -1260,7 +1608,6 @@
                     setNodeState('edge', 'done');
                     setNodeStatus('edge', 'Patched');
 
-                    /* Apply new HTML with morphdom */
                     await animatePacket('eb');
                     setNodeState('browser', 'active');
 
@@ -1278,25 +1625,19 @@
                     setNodeStatus('browser', 'Updated');
                     statusEl.textContent = 'Added ' + (row.name || 'row') + ' \u2014 invalidated: ' + result.invalidated.join(', ');
 
-                    /* Update Edge tab */
                     var pipelineEvents = result.events || [];
                     edgePane.innerHTML = renderEdgePanel(result.html, pipelineEvents);
 
-                    /* Update cache stats */
                     var cacheStatsJson = resp.headers.get('X-Cache-Stats');
                     try { updateCacheStats(cacheStatsJson ? JSON.parse(cacheStatsJson) : null); } catch(e) {}
 
-                    /* Clear form and re-attach handlers */
                     formEl.reset();
                     attachFormHandlers();
 
-                    /* Build mutation waterfall */
                     buildMutationWaterfall(result);
 
                 } catch (err) {
                     statusEl.textContent = 'Mutation error: ' + (err.message || String(err));
-                } finally {
-                    /* Ensure buttons stay enabled */
                 }
             }
 
@@ -1352,12 +1693,10 @@
                 var times = {};
 
                 try {
-                    /* Phase 1: Browser sends source to Origin */
                     setNodeState('browser', 'active');
                     setNodeStatus('browser', 'Sending source...');
                     await animatePacket('oe');
 
-                    /* Phase 2: Origin compiles */
                     setNodeState('browser', 'done');
                     setNodeState('origin', 'active');
                     setNodeStatus('origin', 'Compiling...');
@@ -1397,17 +1736,14 @@
                     setNodeStatus('origin', bcLen + 'B' + cacheTag);
                     setNodeState('origin', 'done');
 
-                    /* Populate Origin tab with bytecode analysis */
                     var bcInfo = decodeBytecodeInfo(bytecode);
                     originPane.innerHTML = renderOriginPanel(bcInfo, css);
 
-                    /* Phase 3: Origin sends bytecode to Edge */
                     var t1 = performance.now();
                     await animatePacket('oe');
                     times.transfer = performance.now() - t1;
                     showTiming('oe', times.compile + times.transfer);
 
-                    /* Phase 4: Edge renders bytecode (with data fetching + component loading) */
                     setNodeState('edge', 'active');
                     setNodeStatus('edge', 'Rendering...');
                     var t2 = performance.now();
@@ -1421,7 +1757,6 @@
                         }
                     });
 
-                    /* Read pipeline events from header */
                     var eventsJson = renderResp.headers.get('X-Pipeline-Events');
                     var pipelineEvents = [];
                     try { pipelineEvents = eventsJson ? JSON.parse(eventsJson) : []; } catch(e) {}
@@ -1431,7 +1766,6 @@
                     try { cacheStatsObj = cacheStatsJson ? JSON.parse(cacheStatsJson) : null; } catch(e) {}
                     updateCacheStats(cacheStatsObj);
 
-                    /* Phase 5: Edge streams HTML to Browser */
                     if (css) outputEl.innerHTML = '<style>' + css + '</style>';
                     var reader = renderResp.body.getReader();
                     var decoder = new TextDecoder();
@@ -1466,13 +1800,10 @@
                     setNodeStatus('edge', 'Streamed');
                     setNodeStatus('browser', 'Done');
 
-                    /* Populate Edge tab */
                     edgePane.innerHTML = renderEdgePanel(rawEdgeHtml, pipelineEvents);
 
-                    /* Attach form handlers for reactive mutations */
                     attachFormHandlers();
 
-                    /* Summary */
                     var totalMs = times.compile + times.transfer + times.render + times.stream;
                     var dataFetches = pipelineEvents.filter(function(e) { return e.type === 'data'; }).length;
                     var compLoads = pipelineEvents.filter(function(e) { return e.type === 'component'; }).length;
@@ -1482,7 +1813,6 @@
                     if (compLoads) summary += ' | ' + compLoads + ' components';
                     statusEl.textContent = summary;
 
-                    /* Build dynamic waterfall */
                     var wfEl = document.getElementById('pipeline-waterfall');
                     var allTimes = [times.compile, times.transfer, times.render, times.stream];
                     pipelineEvents.forEach(function(e) { allTimes.push(e.time || 0); });
@@ -1491,7 +1821,6 @@
                     wfEl.appendChild(buildWaterfallRow('Compile', 'compile', times.compile, maxMs, compileCache === 'HIT'));
                     wfEl.appendChild(buildWaterfallRow('Transfer O\u2192E', 'transfer-oe', times.transfer, maxMs));
 
-                    /* Insert data fetch + component load events */
                     pipelineEvents.forEach(function(ev) {
                         if (ev.type === 'data') {
                             var label = 'Query: ' + (ev.name || '?');
@@ -1528,14 +1857,9 @@
                 pipelineViz.classList.toggle('visible', isPipeline);
                 outputTabsEl.classList.toggle('visible', isPipeline);
                 if (isPipeline) {
-                    /* Switch to CRM demo source when entering pipeline mode */
-                    if (editor) editor.setValue(crmSource, -1);
-                    else sourceEl.value = crmSource;
                     if (!swReady) registerSW();
                     ensureMorphdom();
                 } else {
-                    if (editor) editor.setValue(defaultSource, -1);
-                    else sourceEl.value = defaultSource;
                     switchOutputTab('browser');
                 }
             });
@@ -1574,9 +1898,12 @@
             }
 
             /* ===== Boot ===== */
+            buildSidebar();
+            sourceEl.value = examples[0].files[0].content;
             statusEl.textContent = 'Loading compiler...';
             Promise.all([loadMotusWasm(), loadAceEditorIfNeeded()]).then(function () {
                 statusEl.textContent = 'Ready';
+                loadExample('hello');
                 runPlayground();
             }).catch(function (err) {
                 statusEl.textContent = 'Failed to load WASM: ' + (err.message || String(err));

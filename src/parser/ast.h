@@ -248,6 +248,7 @@ struct AstNode {
             bool is_external;
             bool is_dynamic;     /* Dynamic: load at edge, Static: inline in bytecode */
             char *as_name;       /* For "import * as X" */
+            bool is_schema;      /* True for <import schema "file.capnp" /> */
         } import;
 
         /* NODE_EXPORT */

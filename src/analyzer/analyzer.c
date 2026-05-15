@@ -21,6 +21,9 @@ Analyzer *analyzer_new(Arena *arena) {
     a->errors = NULL;
     a->error_tail = &a->errors;
     a->error_count = 0;
+    a->schemas = NULL;
+    a->schema_count = 0;
+    a->schema_cap = 0;
     a->strict_types = false;
     a->track_deps = true;
 
@@ -80,7 +83,17 @@ Type *analyzer_resolve_type_name(Analyzer *a, const char *name) {
     if (strcmp(name, "any") == 0) return type_any(a->types);
     if (strcmp(name, "void") == 0) return type_void(a->types);
 
-    /* TODO: Look up user-defined types */
+    /* Look up schema-defined types */
+    for (uint32_t i = 0; i < a->schema_count; i++) {
+        SchemaStruct *s = a->schemas[i]->structs;
+        while (s) {
+            if (s->name && strcmp(s->name, name) == 0) {
+                return analyzer_schema_to_type(a, s);
+            }
+            s = s->next;
+        }
+    }
+
     return type_unknown(a->types);
 }
 
@@ -565,8 +578,20 @@ static void analyze_let(Analyzer *a, AstNode *node) {
         ExprResult val = analyze_expr(a, node->data.binding.value);
         val_type = val.type;
     } else if (node->data.binding.sql) {
-        /* SQL query - type is array of row objects */
-        val_type = type_array(a->types, type_any(a->types));
+        /* SQL query - try to resolve row type from schema $table annotation */
+        Type *row_type = type_any(a->types);
+        if (node->data.binding.sql->type == NODE_SQL &&
+            node->data.binding.sql->data.sql.from &&
+            node->data.binding.sql->data.sql.from->type == NODE_SQL_FROM) {
+            const char *tbl = node->data.binding.sql->data.sql.from->data.sql_table.table;
+            if (tbl) {
+                SchemaStruct *ss = analyzer_find_schema_for_table(a, tbl);
+                if (ss) {
+                    row_type = analyzer_schema_to_type(a, ss);
+                }
+            }
+        }
+        val_type = type_array(a->types, row_type);
     }
 
     /* Let creates a new scope - the binding is visible only inside this scope */
@@ -845,6 +870,25 @@ static void analyze_defcomp(Analyzer *a, AstNode *node) {
 
 /* Analyze import */
 static void analyze_import(Analyzer *a, AstNode *node) {
+    /* Schema imports: register all structs as types */
+    if (node->data.import.is_schema) {
+        /* Schema loading is done by the CLI/API layer before analysis.
+         * The schemas are already in a->schemas by the time we get here.
+         * Register each struct as a symbol in the global scope. */
+        for (uint32_t i = 0; i < a->schema_count; i++) {
+            SchemaStruct *s = a->schemas[i]->structs;
+            while (s) {
+                if (s->name && !scope_is_defined_local(a->scope, s->name)) {
+                    Symbol *sym = scope_define(a->scope, s->name, SYM_SCHEMA,
+                                              node, node->line, node->column);
+                    symbol_set_type(sym, analyzer_schema_to_type(a, s));
+                }
+                s = s->next;
+            }
+        }
+        return;
+    }
+
     /* Define imported symbols */
     for (AstNode *name = node->data.import.names; name; name = name->next) {
         if (name->type == NODE_IDENT) {
@@ -1135,4 +1179,105 @@ ExprResult analyzer_analyze_expr(Analyzer *a, AstNode *expr) {
 
 void analyzer_analyze_node(Analyzer *a, AstNode *node) {
     analyze_node(a, node);
+}
+
+/* --- Schema integration --- */
+
+void analyzer_add_schema(Analyzer *a, SchemaFile *schema) {
+    if (!schema) return;
+
+    /* Grow array if needed */
+    if (a->schema_count >= a->schema_cap) {
+        uint32_t new_cap = a->schema_cap ? a->schema_cap * 2 : 4;
+        SchemaFile **new_arr = arena_alloc(a->arena, sizeof(SchemaFile *) * new_cap);
+        if (a->schemas) {
+            memcpy(new_arr, a->schemas, sizeof(SchemaFile *) * a->schema_count);
+        }
+        a->schemas = new_arr;
+        a->schema_cap = new_cap;
+    }
+
+    a->schemas[a->schema_count++] = schema;
+}
+
+/* Map a Cap'n Proto type name to a Motus Type */
+static Type *capnp_type_to_mot(Analyzer *a, const char *type_name) {
+    if (!type_name) return type_unknown(a->types);
+
+    /* Primitives */
+    if (strcmp(type_name, "Bool") == 0) return type_bool(a->types);
+    if (strcmp(type_name, "Text") == 0) return type_string(a->types);
+    if (strcmp(type_name, "Data") == 0) return type_string(a->types);
+    if (strcmp(type_name, "Void") == 0) return type_void(a->types);
+
+    /* Integers */
+    if (strcmp(type_name, "Int8") == 0 || strcmp(type_name, "Int16") == 0 ||
+        strcmp(type_name, "Int32") == 0 || strcmp(type_name, "Int64") == 0 ||
+        strcmp(type_name, "UInt8") == 0 || strcmp(type_name, "UInt16") == 0 ||
+        strcmp(type_name, "UInt32") == 0 || strcmp(type_name, "UInt64") == 0) {
+        return type_int(a->types);
+    }
+
+    /* Floats */
+    if (strcmp(type_name, "Float32") == 0 || strcmp(type_name, "Float64") == 0) {
+        return type_number(a->types);
+    }
+
+    /* List(T) */
+    if (strncmp(type_name, "List(", 5) == 0) {
+        size_t len = strlen(type_name);
+        if (len > 6 && type_name[len - 1] == ')') {
+            char inner[128];
+            size_t inner_len = len - 6;  /* strip "List(" and ")" */
+            if (inner_len < sizeof(inner)) {
+                memcpy(inner, type_name + 5, inner_len);
+                inner[inner_len] = '\0';
+                Type *elem = capnp_type_to_mot(a, inner);
+                return type_array(a->types, elem);
+            }
+        }
+        return type_array(a->types, type_any(a->types));
+    }
+
+    /* Named struct — recurse into schema registry */
+    return analyzer_resolve_type_name(a, type_name);
+}
+
+Type *analyzer_schema_to_type(Analyzer *a, SchemaStruct *s) {
+    if (!s) return type_unknown(a->types);
+
+    /* Build a TYPE_OBJECT with typed fields */
+    TypeField *fields = NULL;
+    TypeField **tail = &fields;
+
+    for (SchemaField *f = s->fields; f; f = f->next) {
+        Type *ft = capnp_type_to_mot(a, f->type_name);
+
+        /* Check if field has a default or is formOptional */
+        bool opt = false;
+        if (f->default_value != NULL) opt = true;
+        if (f->annotations && schema_annotation_has(f->annotations, "formOptional")) opt = true;
+
+        TypeField *tf = type_field(a->types, f->name, ft, opt);
+        *tail = tf;
+        tail = &tf->next;
+    }
+
+    return type_object(a->types, fields);
+}
+
+SchemaStruct *analyzer_find_schema_for_table(Analyzer *a, const char *table_name) {
+    if (!table_name) return NULL;
+
+    for (uint32_t i = 0; i < a->schema_count; i++) {
+        SchemaStruct *s = a->schemas[i]->structs;
+        while (s) {
+            const char *tbl = schema_annotation_get(s->annotations, "table");
+            if (tbl && strcmp(tbl, table_name) == 0) {
+                return s;
+            }
+            s = s->next;
+        }
+    }
+    return NULL;
 }

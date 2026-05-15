@@ -233,6 +233,7 @@
         <a href="#templates">Templates</a>
         <a href="#components">Components</a>
         <a href="#sql">SQL Queries</a>
+        <a href="#schemas">Schema Types</a>
         <a href="#reactive">Reactive State</a>
         <a href="#pipes">Pipe Transforms</a>
         <a href="#ai-friendly">AI-Friendly</a>
@@ -293,6 +294,52 @@
         <div class="docs-codeblock"><pre id="code-sql"></pre></div>
         <div class="docs-callout">
             <strong>Security:</strong> SQL queries are compiled to queryRef signatures. At runtime, the edge worker sends the queryRef to the origin, which validates and executes the query. Raw SQL never reaches the browser.
+        </div>
+
+        <h2 id="schemas">Schema Types</h2>
+        <p id="docs-schema-intro"></p>
+
+        <h3>Schema File</h3>
+        <p>Define your data models as standard Cap'n Proto schemas with Motus-specific annotations:</p>
+        <div class="docs-codeblock"><div class="docs-codeblock-header">models/contact.capnp</div><pre id="code-schema-capnp"></pre></div>
+
+        <h3>Importing Schemas</h3>
+        <p>Import schema files with the <code>schema</code> keyword. The compiler auto-invokes the <code>capnp</code> toolchain:</p>
+        <div class="docs-codeblock"><pre id="code-schema-import"></pre></div>
+
+        <h3>SQL Auto-Typing</h3>
+        <p id="docs-schema-sql-desc"></p>
+        <div class="docs-codeblock"><pre id="code-schema-sql"></pre></div>
+
+        <h3>Type Mapping</h3>
+        <table class="docs-table">
+            <tr><th>Cap'n Proto</th><th>Motus Type</th></tr>
+            <tr><td><code>Bool</code></td><td>bool</td></tr>
+            <tr><td><code>Int8&ndash;64, UInt8&ndash;64</code></td><td>int</td></tr>
+            <tr><td><code>Float32, Float64</code></td><td>number</td></tr>
+            <tr><td><code>Text, Data</code></td><td>string</td></tr>
+            <tr><td><code>List(T)</code></td><td>array of T</td></tr>
+            <tr><td><code>Void</code></td><td>void</td></tr>
+            <tr><td>Named struct</td><td>object (with typed fields)</td></tr>
+        </table>
+
+        <h3>Annotations</h3>
+        <p>Motus recognizes these annotations on schema fields for form generation and validation:</p>
+        <table class="docs-table">
+            <tr><th>Annotation</th><th>Effect</th></tr>
+            <tr><td><code>$table("name")</code></td><td>Links struct to SQL table for auto-typing</td></tr>
+            <tr><td><code>$label("text")</code></td><td>Form label text</td></tr>
+            <tr><td><code>$placeholder("text")</code></td><td>Input placeholder</td></tr>
+            <tr><td><code>$computed</code></td><td>Backend-generated &mdash; excluded from all forms</td></tr>
+            <tr><td><code>$noInsert</code></td><td>Excluded from insert forms</td></tr>
+            <tr><td><code>$noUpdate</code></td><td>Excluded from update forms</td></tr>
+            <tr><td><code>$formOptional</code></td><td>Optional in form even if required in model</td></tr>
+            <tr><td><code>$multiline</code></td><td>Render as textarea instead of input</td></tr>
+            <tr><td><code>$hidden</code></td><td>Excluded from visible form fields</td></tr>
+        </table>
+
+        <div class="docs-callout">
+            <strong>Compile-time safety:</strong> When you access <code>contact.phone</code> on a Contact-typed variable, the compiler emits an error if <code>phone</code> is not a field in the schema. No more runtime surprises from typos.
         </div>
 
         <h2 id="reactive">Reactive State</h2>
@@ -360,6 +407,47 @@
     /* Inject text containing reserved keywords */
     document.getElementById('docs-sql-desc').innerHTML = 'SQL is a first-class citizen. Embed queries directly in <code>let</code> bindings. The compiler extracts SQL into queryRef + signature pairs &mdash; no raw SQL text ships in bytecode.';
     document.getElementById('docs-ai-sql').innerHTML = '<strong>Declarative SQL</strong> &mdash; Data requirements are declared in-template. An AI can see exactly what data a page needs without tracing through service layers.';
+
+    document.getElementById('docs-schema-intro').innerHTML = 'Motus integrates with <a href="https://capnproto.org" target="_blank">Cap\u2019n Proto</a> for strong data typing. Define your models in <code>.capnp</code> schema files and import them into templates. The compiler validates field access at compile time and auto-types SQL query results.';
+    document.getElementById('docs-schema-sql-desc').innerHTML = 'When a schema struct has a <code>$table("contacts")</code> annotation and you write <code>&lt;let x select * from contacts&gt;</code>, the compiler automatically types each row as a Contact object. Field access is validated against the schema.';
+
+    document.getElementById('code-schema-capnp').innerHTML = [
+        s('comm','@0xdbb9ad1f14bf0b36;'),
+        '',
+        s('kw','struct') + ' ' + s('comp','Contact') + ' ' + s('punct','$') + s('kw','table') + s('punct','(') + s('str','"contacts"') + s('punct',')') + ' {',
+        '  ' + s('var','id') + '        ' + s('punct','@0') + ' :' + s('kw','UInt64') + '   ' + s('punct','$') + s('kw','computed') + ';',
+        '  ' + s('var','name') + '      ' + s('punct','@1') + ' :' + s('kw','Text') + '     ' + s('punct','$') + s('kw','label') + s('punct','(') + s('str','"Full Name"') + s('punct',')') + ';',
+        '  ' + s('var','email') + '     ' + s('punct','@2') + ' :' + s('kw','Text') + '     ' + s('punct','$') + s('kw','placeholder') + s('punct','(') + s('str','"user@example.com"') + s('punct',')') + ';',
+        '  ' + s('var','age') + '       ' + s('punct','@3') + ' :' + s('kw','UInt16') + '   ' + s('punct','$') + s('kw','formOptional') + ';',
+        '  ' + s('var','bio') + '       ' + s('punct','@5') + ' :' + s('kw','Text') + '     ' + s('punct','$') + s('kw','multiline') + ' ' + s('punct','$') + s('kw','formOptional') + ';',
+        '  ' + s('var','createdAt') + ' ' + s('punct','@7') + ' :' + s('kw','Int64') + '    ' + s('punct','$') + s('kw','computed') + ';',
+        '}'
+    ].join('\n');
+
+    document.getElementById('code-schema-import').innerHTML = [
+        s('tag','&lt;import') + ' ' + s('kw','schema') + ' ' + s('str','"models/contact.capnp"') + ' ' + s('tag','/&gt;'),
+        '',
+        s('comm','&lt;!-- Contact is now a known type --&gt;'),
+        s('tag','&lt;defcomp') + ' ' + s('comp','ContactCard') + ' ' + s('punct','|') + ' ' + s('prop','contact') + s('punct',':') + ' ' + s('comp','Contact') + ' ' + s('punct','|&gt;'),
+        '  ' + s('html','&lt;h2&gt;') + s('tag','&lt;output') + ' ' + s('var','contact.name') + s('tag','&gt;') + s('html','&lt;/h2&gt;'),
+        '  ' + s('html','&lt;p&gt;') + s('tag','&lt;output') + ' ' + s('var','contact.email') + s('tag','&gt;') + s('html','&lt;/p&gt;'),
+        s('tag','&lt;/defcomp&gt;')
+    ].join('\n');
+
+    document.getElementById('code-schema-sql').innerHTML = [
+        s('tag','&lt;import') + ' ' + s('kw','schema') + ' ' + s('str','"models/contact.capnp"') + ' ' + s('tag','/&gt;'),
+        '',
+        s('comm','&lt;!-- SQL results auto-typed as Contact[] --&gt;'),
+        s('tag','&lt;let') + ' ' + s('var','contacts'),
+        '    ' + s('kw','select') + ' ' + s('sql','*') + ' ' + s('kw','from') + ' ' + s('sql','contacts'),
+        '    ' + s('kw','order by') + ' ' + s('sql','name') + s('tag','&gt;'),
+        '  ' + s('tag','&lt;for') + ' ' + s('var','c') + ' ' + s('kw','in') + ' ' + s('var','contacts') + s('tag','&gt;'),
+        '    ' + s('tag','&lt;output') + ' ' + s('var','c.name') + s('tag','&gt;') + '  ' + s('comm','&lt;!-- OK: Text --&gt;'),
+        '    ' + s('tag','&lt;output') + ' ' + s('var','c.email') + s('tag','&gt;') + ' ' + s('comm','&lt;!-- OK: Text --&gt;'),
+        '    ' + s('tag','&lt;output') + ' ' + s('var','c.phone') + s('tag','&gt;') + ' ' + s('comm','&lt;!-- COMPILE ERROR --&gt;'),
+        '  ' + s('tag','&lt;/for&gt;'),
+        s('tag','&lt;/let&gt;')
+    ].join('\n');
 
     document.getElementById('code-hello').innerHTML = [
         s('html','&lt;!DOCTYPE html&gt;'),

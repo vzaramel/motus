@@ -13,6 +13,7 @@
 #include "compiler/compiler.h"
 #include "compiler/bytecode.h"
 #include "codegen/codegen.h"
+#include "schema/schema_reader.h"
 
 /* ---- MotModule: opaque handle owning compiled module + arena ---- */
 struct MotModule {
@@ -81,11 +82,19 @@ static MotCompileOptions resolve_options(const MotCompileOptions *options) {
     resolved.include_debug = true;
     resolved.linked_component_resolver = NULL;
     resolved.linked_component_userdata = NULL;
+    resolved.schemas = NULL;
+    resolved.schema_count = 0;
 
     if (!options) {
         return resolved;
     }
-    resolved = *options;
+    resolved.target = options->target;
+    resolved.partial_eval = options->partial_eval;
+    resolved.include_debug = options->include_debug;
+    resolved.linked_component_resolver = options->linked_component_resolver;
+    resolved.linked_component_userdata = options->linked_component_userdata;
+    resolved.schemas = options->schemas;
+    resolved.schema_count = options->schema_count;
     if (resolved.target != MOT_TARGET_BYTECODE &&
         resolved.target != MOT_TARGET_WASM &&
         resolved.target != MOT_TARGET_BOTH) {
@@ -120,6 +129,12 @@ static BytecodeModule *compile_ast_internal(Arena *arena, AstNode *doc,
                                             const MotCompileOptions *opts,
                                             MotErrorList *errors) {
     Analyzer *analyzer = analyzer_new(arena);
+
+    /* Register schemas before analysis */
+    for (uint32_t si = 0; si < opts->schema_count; si++) {
+        analyzer_add_schema(analyzer, opts->schemas[si]);
+    }
+
     if (!analyzer_analyze(analyzer, doc)) {
         for (AnalysisError *err = analyzer_errors(analyzer); err; err = err->next) {
             append_error_to_list(errors, err->message, err->line, err->col);
@@ -230,6 +245,8 @@ MotCompileResult mot_compile(const char *source, size_t source_len) {
     options.include_debug = true;
     options.linked_component_resolver = NULL;
     options.linked_component_userdata = NULL;
+    options.schemas = NULL;
+    options.schema_count = 0;
     return mot_compile_with_options(source, source_len, &options);
 }
 

@@ -14,6 +14,7 @@
 #include "../runtime/vm.h"
 #include "../compiler/bytecode.h"
 #include "../util/arena.h"
+#include "../schema/schema_reader.h"
 
 typedef struct {
     const char *input_path;
@@ -222,6 +223,136 @@ static int write_file(const char *path, const void *data, size_t len) {
     return n == len;
 }
 
+/* --- Schema auto-invocation --- */
+
+/* Portable memmem for platforms that don't have it */
+static const void *mot_memmem(const void *haystack, size_t hlen,
+                              const void *needle, size_t nlen) {
+    const char *h = (const char *)haystack;
+    const char *n = (const char *)needle;
+    if (nlen == 0) return haystack;
+    if (nlen > hlen) return NULL;
+    size_t limit = hlen - nlen;
+    for (size_t i = 0; i <= limit; i++) {
+        if (memcmp(h + i, n, nlen) == 0) return h + i;
+    }
+    return NULL;
+}
+
+/* Extract directory from a file path.  Returns malloc'd string. */
+static char *dir_of(const char *path) {
+    const char *last_slash = strrchr(path, '/');
+    if (!last_slash) return dup_cstr(".");
+    size_t len = (size_t)(last_slash - path);
+    char *dir = (char *)malloc(len + 1);
+    if (!dir) return NULL;
+    memcpy(dir, path, len);
+    dir[len] = '\0';
+    return dir;
+}
+
+/*
+ * Scan source for <import schema "path"> directives.
+ * Returns an array of malloc'd path strings.  *out_count is set to the count.
+ * Paths are resolved relative to input_dir.
+ */
+static char **scan_schema_imports(const char *source, size_t source_len,
+                                  const char *input_dir, int *out_count) {
+    int cap = 4, count = 0;
+    char **paths = (char **)malloc(cap * sizeof(char *));
+    if (!paths) { *out_count = 0; return NULL; }
+
+    const char *p = source;
+    const char *end = source + source_len;
+
+    while (p < end) {
+        /* Look for <import */
+        const char *found = (const char *)mot_memmem(p, (size_t)(end - p), "<import", 7);
+        if (!found) break;
+        const char *after = found + 7;
+        /* Skip whitespace */
+        while (after < end && isspace((unsigned char)*after)) after++;
+        /* Check for "schema" keyword */
+        if (after + 6 <= end && strncmp(after, "schema", 6) == 0 &&
+            (after + 6 >= end || isspace((unsigned char)after[6]) || after[6] == '"')) {
+            after += 6;
+            while (after < end && isspace((unsigned char)*after)) after++;
+            /* Extract quoted path */
+            if (after < end && *after == '"') {
+                after++;
+                const char *path_start = after;
+                while (after < end && *after != '"') after++;
+                if (after < end) {
+                    size_t path_len = (size_t)(after - path_start);
+                    /* Resolve relative to input dir */
+                    size_t dir_len = strlen(input_dir);
+                    char *full_path = (char *)malloc(dir_len + 1 + path_len + 1);
+                    if (full_path) {
+                        memcpy(full_path, input_dir, dir_len);
+                        full_path[dir_len] = '/';
+                        memcpy(full_path + dir_len + 1, path_start, path_len);
+                        full_path[dir_len + 1 + path_len] = '\0';
+
+                        if (count >= cap) {
+                            cap *= 2;
+                            char **tmp = (char **)realloc(paths, cap * sizeof(char *));
+                            if (!tmp) { free(full_path); break; }
+                            paths = tmp;
+                        }
+                        paths[count++] = full_path;
+                    }
+                }
+            }
+        }
+        p = found + 1;
+    }
+
+    *out_count = count;
+    return paths;
+}
+
+/*
+ * Run capnp compile with capnpc-mot plugin on a schema file.
+ * Returns the JSON output as a malloc'd string (NULL on failure).
+ */
+static char *invoke_capnp_compile(const char *schema_path, size_t *out_len) {
+    /* Build command: capnp compile -o capnpc-mot schema.capnp */
+    char cmd[2048];
+    snprintf(cmd, sizeof(cmd), "capnp compile -o capnpc-mot '%s' 2>/dev/null", schema_path);
+
+    FILE *pipe = popen(cmd, "r");
+    if (!pipe) {
+        fprintf(stderr, "Failed to run capnp compile for %s\n", schema_path);
+        return NULL;
+    }
+
+    size_t cap = 4096, len = 0;
+    char *buf = (char *)malloc(cap);
+    if (!buf) { pclose(pipe); return NULL; }
+
+    size_t n;
+    while ((n = fread(buf + len, 1, cap - len - 1, pipe)) > 0) {
+        len += n;
+        if (len + 1 >= cap) {
+            cap *= 2;
+            char *tmp = (char *)realloc(buf, cap);
+            if (!tmp) { free(buf); pclose(pipe); return NULL; }
+            buf = tmp;
+        }
+    }
+    buf[len] = '\0';
+
+    int status = pclose(pipe);
+    if (status != 0 || len == 0) {
+        fprintf(stderr, "capnp compile failed for %s (status=%d)\n", schema_path, status);
+        free(buf);
+        return NULL;
+    }
+
+    *out_len = len;
+    return buf;
+}
+
 static MotCompileTarget parse_target(const char *target) {
     if (!target || strcmp(target, "bytecode") == 0) return MOT_TARGET_BYTECODE;
     if (strcmp(target, "wasm") == 0) return MOT_TARGET_WASM;
@@ -311,6 +442,48 @@ int main(int argc, char **argv) {
     compile_opts.target = parse_target(opts.target);
     compile_opts.partial_eval = opts.partial_eval;
     compile_opts.include_debug = opts.include_debug;
+    compile_opts.schemas = NULL;
+    compile_opts.schema_count = 0;
+
+    /* Auto-detect and compile schema imports */
+    {
+        char *input_dir = dir_of(opts.input_path);
+        int schema_path_count = 0;
+        char **schema_paths = scan_schema_imports(source, source_len, input_dir,
+                                                  &schema_path_count);
+        if (schema_path_count > 0) {
+            Arena *schema_arena = arena_create(16 * 1024);
+            struct SchemaFile **schema_files = (struct SchemaFile **)malloc(
+                (size_t)schema_path_count * sizeof(struct SchemaFile *));
+            uint32_t loaded = 0;
+
+            for (int si = 0; si < schema_path_count; si++) {
+                size_t json_len = 0;
+                char *json = invoke_capnp_compile(schema_paths[si], &json_len);
+                if (json) {
+                    SchemaFile *sf = schema_read_json(json, json_len, schema_arena);
+                    if (sf) {
+                        schema_files[loaded++] = sf;
+                    } else {
+                        fprintf(stderr, "Failed to parse schema JSON for %s\n",
+                                schema_paths[si]);
+                    }
+                    free(json);
+                }
+                free(schema_paths[si]);
+            }
+            free(schema_paths);
+
+            if (loaded > 0) {
+                compile_opts.schemas = schema_files;
+                compile_opts.schema_count = loaded;
+            } else {
+                free(schema_files);
+                arena_destroy(schema_arena);
+            }
+        }
+        free(input_dir);
+    }
     if (opts.linked_manifest) {
         linked_manifest_loaded = load_linked_manifest(&linked_registry, opts.linked_manifest);
         if (!linked_manifest_loaded) {
@@ -430,5 +603,6 @@ int main(int argc, char **argv) {
 
     mot_result_free(&result);
     free_linked_registry(&linked_registry);
+    free(compile_opts.schemas);
     return 0;
 }

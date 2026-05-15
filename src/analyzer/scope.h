@@ -23,6 +23,7 @@ typedef enum {
     SYM_SLOT,        /* slot definition */
     SYM_IMPORT,      /* imported symbol */
     SYM_BUILTIN,     /* built-in function */
+    SYM_SCHEMA,      /* schema type from .capnp */
 } SymbolKind;
 
 /* Symbol flags */

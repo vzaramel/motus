@@ -1055,6 +1055,22 @@ static AstNode *parse_import(Parser *p) {
     bool is_external = false;
     bool is_dynamic = false;
 
+    /* Check for <import schema "path.capnp" /> */
+    if (match(p, TOK_SCHEMA)) {
+        if (!match(p, TOK_STRING)) {
+            error_current(p, "Expected path string after 'schema'");
+            return NULL;
+        }
+        char *from_path = arena_strndup(p->arena, p->previous.start + 1, p->previous.length - 2);
+        /* Consume closing /> or > */
+        if (!match(p, TOK_SLASH_GT)) {
+            consume(p, TOK_GT, "Expected '>' or '/>' after schema import");
+        }
+        AstNode *node = ast_import(p->arena, NULL, from_path, false, false, NULL, line, col);
+        if (node) node->data.import.is_schema = true;
+        return node;
+    }
+
     /* Check for * as Name */
     if (match(p, TOK_STAR)) {
         if (!consume(p, TOK_AS, "Expected 'as' after '*'")) {

@@ -18,6 +18,7 @@ struct AstNode;
 struct Lexer;
 struct Parser;
 struct Compiler;
+struct SchemaFile;
 
 /* Error handling */
 #ifndef MOT_ERROR_TYPES_DEFINED
@@ -63,6 +64,8 @@ typedef struct {
     bool include_debug;
     MotLinkedComponentResolverFn linked_component_resolver;
     void *linked_component_userdata;
+    struct SchemaFile **schemas;    /* Array of imported schema files */
+    uint32_t schema_count;
 } MotCompileOptions;
 
 /* Main API */

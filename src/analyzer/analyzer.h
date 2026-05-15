@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include "../util/arena.h"
 #include "../parser/ast.h"
+#include "../schema/schema_reader.h"
 #include "scope.h"
 #include "types.h"
 #include "deps.h"
@@ -46,6 +47,11 @@ typedef struct Analyzer {
     AnalysisError *errors;
     AnalysisError **error_tail;
     int error_count;
+
+    /* Schema registry */
+    SchemaFile **schemas;    /* Array of imported schema files */
+    uint32_t schema_count;
+    uint32_t schema_cap;
 
     /* Analysis options */
     bool strict_types;       /* Require explicit types */
@@ -81,5 +87,10 @@ void analyzer_error(Analyzer *a, int line, int col, const char *fmt, ...);
 
 /* Type helpers */
 Type *analyzer_resolve_type_name(Analyzer *a, const char *name);
+
+/* Schema integration */
+void analyzer_add_schema(Analyzer *a, SchemaFile *schema);
+Type *analyzer_schema_to_type(Analyzer *a, SchemaStruct *s);
+SchemaStruct *analyzer_find_schema_for_table(Analyzer *a, const char *table_name);
 
 #endif /* MOT_ANALYZER_H */

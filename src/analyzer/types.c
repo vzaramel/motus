@@ -9,13 +9,14 @@
 /* Create a basic type */
 static Type *make_type(Arena *arena, TypeKind kind) {
     Type *t = arena_alloc(arena, sizeof(Type));
+    memset(t, 0, sizeof(Type));
     t->kind = kind;
-    t->hash = 0;
     return t;
 }
 
 TypeContext *type_context_new(Arena *arena) {
     TypeContext *ctx = arena_alloc(arena, sizeof(TypeContext));
+    memset(ctx, 0, sizeof(TypeContext));
     ctx->arena = arena;
 
     /* Create cached primitive types */

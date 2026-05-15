@@ -51,6 +51,7 @@ static const Keyword mot_keywords[] = {
     {"delete", TOK_DELETE},
     {"into", TOK_INTO},
     {"pessimistic", TOK_PESSIMISTIC},
+    {"schema", TOK_SCHEMA},
 
     /* SQL keywords */
     {"select", TOK_SELECT},
@@ -143,6 +144,7 @@ const char *token_type_name(TokenType type) {
         case TOK_DELETE: return "DELETE";
         case TOK_INTO: return "INTO";
         case TOK_PESSIMISTIC: return "PESSIMISTIC";
+        case TOK_SCHEMA: return "SCHEMA";
         case TOK_SELECT: return "SELECT";
         case TOK_WHERE: return "WHERE";
         case TOK_ORDER: return "ORDER";

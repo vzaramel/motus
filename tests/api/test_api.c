@@ -356,11 +356,10 @@ TEST(serialized_includes_debug_trailer) {
 TEST(compile_with_options_bytecode_target) {
     const char *src = "<output \"Hello\">";
     MotCompileOptions options;
+    memset(&options, 0, sizeof(options));
     options.target = MOT_TARGET_BYTECODE;
     options.partial_eval = true;
     options.include_debug = true;
-    options.linked_component_resolver = NULL;
-    options.linked_component_userdata = NULL;
 
     MotCompileResult result = mot_compile_with_options(src, strlen(src), &options);
     ASSERT(result.errors.count == 0, "Bytecode target should compile cleanly");
@@ -375,11 +374,10 @@ TEST(compile_with_options_bytecode_target) {
 TEST(compile_with_options_wasm_target_not_implemented) {
     const char *src = "<output \"Hello\">";
     MotCompileOptions options;
+    memset(&options, 0, sizeof(options));
     options.target = MOT_TARGET_WASM;
     options.partial_eval = true;
     options.include_debug = true;
-    options.linked_component_resolver = NULL;
-    options.linked_component_userdata = NULL;
 
     MotCompileResult result = mot_compile_with_options(src, strlen(src), &options);
     ASSERT(result.errors.count > 0, "WASM target should currently report a clear error");
@@ -392,11 +390,10 @@ TEST(compile_with_options_wasm_target_not_implemented) {
 TEST(compile_with_options_both_target_not_implemented) {
     const char *src = "<output \"Hello\">";
     MotCompileOptions options;
+    memset(&options, 0, sizeof(options));
     options.target = MOT_TARGET_BOTH;
     options.partial_eval = true;
     options.include_debug = true;
-    options.linked_component_resolver = NULL;
-    options.linked_component_userdata = NULL;
 
     MotCompileResult result = mot_compile_with_options(src, strlen(src), &options);
     ASSERT(result.errors.count > 0, "BOTH target should currently report a clear error");
@@ -415,11 +412,10 @@ TEST(compile_with_options_disable_debug_trailer) {
         "</let>";
 
     MotCompileOptions options;
+    memset(&options, 0, sizeof(options));
     options.target = MOT_TARGET_BYTECODE;
     options.partial_eval = true;
     options.include_debug = false;
-    options.linked_component_resolver = NULL;
-    options.linked_component_userdata = NULL;
 
     MotCompileResult result = mot_compile_with_options(src, strlen(src), &options);
     uint32_t query_count = 0;
