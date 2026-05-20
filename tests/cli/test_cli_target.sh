@@ -32,7 +32,7 @@ if [[ ! -s "$TMP_DIR/page-nodebug.bc" ]]; then
   echo "FAILED: no-debug bytecode output was not generated" >&2
   exit 1
 fi
-if xxd -p "$TMP_DIR/page-nodebug.bc" | tr -d '\n' | rg -q "59444247"; then
+if xxd -p "$TMP_DIR/page-nodebug.bc" | tr -d '\n' | grep -q "59444247"; then
   echo "FAILED: no-debug bytecode should not include YDBG trailer magic" >&2
   exit 1
 fi
@@ -46,7 +46,7 @@ if [[ "$WASM_RC" -eq 0 ]]; then
   echo "FAILED: wasm target should fail until compiler target is implemented" >&2
   exit 1
 fi
-if ! rg -q "WASM target is not implemented" "$TMP_DIR/wasm.log"; then
+if ! grep -q "WASM target is not implemented" "$TMP_DIR/wasm.log"; then
   echo "FAILED: wasm target failure message missing" >&2
   cat "$TMP_DIR/wasm.log"
   exit 1
@@ -61,7 +61,7 @@ if [[ "$BOTH_RC" -eq 0 ]]; then
   echo "FAILED: both target should fail until compiler target is implemented" >&2
   exit 1
 fi
-if ! rg -q "WASM target is not implemented" "$TMP_DIR/both.log"; then
+if ! grep -q "WASM target is not implemented" "$TMP_DIR/both.log"; then
   echo "FAILED: both target failure message missing" >&2
   cat "$TMP_DIR/both.log"
   exit 1
