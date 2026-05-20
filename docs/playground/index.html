@@ -351,10 +351,44 @@
             overflow: auto;
         }
         .output-pane.active { display: block; }
+        .log-pane-wrap.active { display: flex; }
         .output-tabs.visible + .output-pane,
         .output-tabs.visible ~ .output-pane {
             border-radius: 0 0 8px 8px;
         }
+
+        /* ===== Log Terminal ===== */
+        .log-terminal {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            padding: 8px 10px;
+            overflow-y: auto;
+            background: #080e14;
+            flex: 1;
+            min-height: 0;
+        }
+        .log-entry { margin: 0; white-space: pre-wrap; word-break: break-all; }
+        .log-entry.log-step { color: rgba(232,240,236,0.4); }
+        .log-entry.log-info { color: rgba(0,255,179,0.7); }
+        .log-entry.log-warn { color: #e2c77e; }
+        .log-entry.log-error { color: #ff6b6b; }
+        .log-entry.log-output { color: rgba(68,136,255,0.8); }
+        .log-entry .log-ts { color: rgba(232,240,236,0.2); margin-right: 6px; }
+        .log-clear-btn {
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            background: none;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(232,240,236,0.3);
+            font-size: 0.7em;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .log-clear-btn:hover { color: rgba(232,240,236,0.6); border-color: rgba(255,255,255,0.2); }
+        .log-pane-wrap { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
         /* Origin panel styles */
         .bc-summary {
@@ -741,7 +775,7 @@
                 max-width: unset;
             }
         }
-    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle examples">&#9776;</button><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><span id="playground-mode-wrap"></span><div id="playground-status" class="playground-status"></div></div><div id="pipeline-viz" class="pipeline-viz"><div class="pipeline-controls"><span id="sim-latency-wrap"></span><span id="sim-chunk-wrap"></span><button type="button" id="pipeline-reset" class="pipeline-reset-btn">Reset Cache</button><span id="pipeline-cache-stats" class="pipeline-cache-stats"></span></div><div class="pipeline-diagram"><div class="pipeline-node" id="node-origin"><div class="pipeline-node-icon" id="icon-origin"></div><div class="pipeline-node-label">Origin</div><div class="pipeline-node-status" id="status-origin">Idle</div></div><div class="pipeline-link" id="link-oe"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-oe"></div><div class="pipeline-link-timing" id="timing-oe"></div></div><div class="pipeline-node" id="node-edge"><div class="pipeline-node-icon" id="icon-edge"></div><div class="pipeline-node-label">Edge</div><div class="pipeline-node-status" id="status-edge">Idle</div></div><div class="pipeline-link" id="link-eb"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-eb"></div><div class="pipeline-link-timing" id="timing-eb"></div></div><div class="pipeline-node" id="node-browser"><div class="pipeline-node-icon" id="icon-browser"></div><div class="pipeline-node-label">Browser</div><div class="pipeline-node-status" id="status-browser">Idle</div></div></div><div class="pipeline-waterfall" id="pipeline-waterfall"></div></div><section class="playground-grid"><aside class="examples-sidebar" id="examples-sidebar"></aside><div class="editor-panel"><div class="file-tabs" id="file-tabs"></div><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor no-tabs"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><p class="schema-note" id="schema-note" style="display:none"></p></div><div class="output-panel"><div class="output-tabs" id="output-tabs"><button type="button" class="output-tab" data-tab="origin">Origin</button><button type="button" class="output-tab" data-tab="edge">Edge</button><button type="button" class="output-tab active" data-tab="browser">Browser</button></div><div id="output-origin" class="playground-output output-pane" data-pane="origin"></div><div id="output-edge" class="playground-output output-pane" data-pane="edge"></div><div id="playground-output" class="playground-output output-pane active" data-pane="browser"></div></div></section></section><script>
+    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle examples">&#9776;</button><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><span id="playground-mode-wrap"></span><div id="playground-status" class="playground-status"></div></div><div id="pipeline-viz" class="pipeline-viz"><div class="pipeline-controls"><span id="sim-latency-wrap"></span><span id="sim-chunk-wrap"></span><button type="button" id="pipeline-reset" class="pipeline-reset-btn">Reset Cache</button><span id="pipeline-cache-stats" class="pipeline-cache-stats"></span></div><div class="pipeline-diagram"><div class="pipeline-node" id="node-origin"><div class="pipeline-node-icon" id="icon-origin"></div><div class="pipeline-node-label">Origin</div><div class="pipeline-node-status" id="status-origin">Idle</div></div><div class="pipeline-link" id="link-oe"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-oe"></div><div class="pipeline-link-timing" id="timing-oe"></div></div><div class="pipeline-node" id="node-edge"><div class="pipeline-node-icon" id="icon-edge"></div><div class="pipeline-node-label">Edge</div><div class="pipeline-node-status" id="status-edge">Idle</div></div><div class="pipeline-link" id="link-eb"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-eb"></div><div class="pipeline-link-timing" id="timing-eb"></div></div><div class="pipeline-node" id="node-browser"><div class="pipeline-node-icon" id="icon-browser"></div><div class="pipeline-node-label">Browser</div><div class="pipeline-node-status" id="status-browser">Idle</div></div></div><div class="pipeline-waterfall" id="pipeline-waterfall"></div></div><section class="playground-grid"><aside class="examples-sidebar" id="examples-sidebar"></aside><div class="editor-panel"><div class="file-tabs" id="file-tabs"></div><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor no-tabs"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><p class="schema-note" id="schema-note" style="display:none"></p></div><div class="output-panel"><div class="output-tabs visible" id="output-tabs"><button type="button" class="output-tab active" data-tab="browser">Browser</button><button type="button" class="output-tab" data-tab="log">Log</button><button type="button" class="output-tab" data-tab="origin">Origin</button><button type="button" class="output-tab" data-tab="edge">Edge</button></div><div id="playground-output" class="playground-output output-pane active" data-pane="browser"></div><div class="output-pane log-pane-wrap" id="output-log" data-pane="log"><button type="button" class="log-clear-btn" id="log-clear">clear</button><div class="log-terminal" id="log-terminal"></div></div><div id="output-origin" class="playground-output output-pane" data-pane="origin"></div><div id="output-edge" class="playground-output output-pane" data-pane="edge"></div></div></section></section><script>
         (function () {
             var form = document.getElementById('playground-form');
             var editorEl = document.getElementById('playground-editor');
@@ -766,8 +800,28 @@
             if (!form || !editorEl || !sourceEl || !statusEl || !outputEl || !runButton) return;
 
             var outputTabsEl = document.getElementById('output-tabs');
+            var logTermEl = document.getElementById('log-terminal');
+            var logClearBtn = document.getElementById('log-clear');
+            var logPane = document.getElementById('output-log');
             var originPane = document.getElementById('output-origin');
             var edgePane = document.getElementById('output-edge');
+
+            /* ===== Log Terminal ===== */
+            var logRunId = 0;
+            function logClear() { if (logTermEl) logTermEl.innerHTML = ''; }
+            function logAppend(level, msg) {
+                if (!logTermEl) return;
+                var el = document.createElement('div');
+                el.className = 'log-entry log-' + level;
+                var ts = document.createElement('span');
+                ts.className = 'log-ts';
+                ts.textContent = new Date().toLocaleTimeString('en', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+                el.appendChild(ts);
+                el.appendChild(document.createTextNode(msg));
+                logTermEl.appendChild(el);
+                logTermEl.scrollTop = logTermEl.scrollHeight;
+            }
+            if (logClearBtn) logClearBtn.addEventListener('click', logClear);
 
             /* ===== Example Library ===== */
             var examples = [
@@ -775,42 +829,42 @@
                     { name: 'hello.mot', main: true, content: '<h1>Hello, World!</h1>\n<p>This is a Motus page.</p>' }
                 ]},
                 { id: 'let-bindings', name: 'Let Bindings', category: 'Basics', files: [
-                    { name: 'bindings.mot', main: true, content: '<let greeting "Hello">\n  <let name "Alice">\n    <p><output greeting>, <output name>!</p>\n  </let>\n</let>\n\n<let items 3>\n  <p>We have <output items> items.</p>\n</let>' }
+                    { name: 'bindings.mot', main: true, content: '<let greeting "Hello">\n  <let who "Alice">\n    <p><output greeting>, <output who>!</p>\n  </let>\n</let>\n\n<let items 42>\n  <p>We have <output items> items.</p>\n</let>' }
                 ]},
                 { id: 'conditionals', name: 'Conditionals', category: 'Basics', files: [
                     { name: 'conditionals.mot', main: true, content: '<let role "admin">\n  <if role eq "admin">\n    <p style="color:#00ffb3">Welcome, administrator.</p>\n  <elsif role eq "editor">\n    <p>Welcome, editor.</p>\n  <else>\n    <p>Welcome, guest.</p>\n  </if>\n</let>\n\n<let score 85>\n  <if score gt 90>\n    <p>Grade: A</p>\n  <elsif score gt 80>\n    <p>Grade: B</p>\n  <else>\n    <p>Grade: C</p>\n  </if>\n</let>' }
                 ]},
                 { id: 'loops', name: 'Loops', category: 'Basics', files: [
-                    { name: 'loops.mot', main: true, content: '<let items 5>\n  <style>\n    .loop-item { padding: 8px 12px; margin: 4px 0; background: #152436; border-radius: 6px; border: 1px solid rgba(0,255,179,0.1); color: #e8f0ec; }\n  </style>\n  <for item in items>\n    <div class="loop-item">Item #<output item></div>\n  </for>\n</let>' }
+                    { name: 'loops.mot', main: true, content: '<let items ["Alpha", "Beta", "Gamma", "Delta", "Epsilon"]>\n  <style>\n    .loop-item { padding: 8px 12px; margin: 4px 0; background: #152436; border-radius: 6px; border: 1px solid rgba(0,255,179,0.1); color: #e8f0ec; }\n  </style>\n  <for item in items>\n    <div class="loop-item"><output item></div>\n  </for>\n</let>' }
                 ]},
                 { id: 'simple-component', name: 'Simple Component', category: 'Components', files: [
-                    { name: 'page.mot', main: true, content: '<defcomp Alert | message, level = "info" |>\n  <style>\n    .alert { padding: 12px 16px; border-radius: 8px; margin: 8px 0; font-size: 0.9em; }\n    .alert-info { background: rgba(68,136,255,0.1); border: 1px solid rgba(68,136,255,0.3); color: #88bbff; }\n    .alert-warn { background: rgba(255,170,68,0.1); border: 1px solid rgba(255,170,68,0.3); color: #ffaa44; }\n  </style>\n  <div class="alert alert-info">\n    <output message>\n  </div>\n</defcomp>\n\n<Alert message="This is an informational alert." />\n<Alert message="Watch out for this one!" level="warn" />' }
+                    { name: 'page.mot', main: true, content: '<defcomp Alert | message: string |>\n  <style>\n    .alert { padding: 12px 16px; border-radius: 8px; margin: 8px 0; font-size: 0.9em; }\n    .alert-info { background: rgba(68,136,255,0.1); border: 1px solid rgba(68,136,255,0.3); color: #88bbff; }\n    .alert-warn { background: rgba(255,170,68,0.1); border: 1px solid rgba(255,170,68,0.3); color: #ffaa44; }\n  </style>\n  <div class="alert alert-info">\n    <output message>\n  </div>\n</defcomp>\n\n<Alert message="This is an informational alert." />\n<Alert message="Watch out for this one." />' }
                 ]},
                 { id: 'slots-props', name: 'Slots & Props', category: 'Components', files: [
-                    { name: 'page.mot', main: true, content: '<defcomp Card | title |>\n  <style>\n    .card { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 12px; padding: 20px; margin: 8px 0; }\n    .card h3 { margin: 0 0 8px; color: #e8f0ec; }\n    .card-body { color: rgba(232,240,236,0.6); line-height: 1.6; }\n  </style>\n  <div class="card">\n    <h3><output title></h3>\n    <div class="card-body"><children></div>\n  </div>\n</defcomp>\n\n<Card title="Welcome">\n  <p>This content goes into the default <strong>slot</strong>.</p>\n  <p>You can put any HTML here.</p>\n</Card>\n\n<Card title="Features">\n  <ul>\n    <li>Props for data</li>\n    <li>Slots for content</li>\n    <li>Scoped CSS</li>\n  </ul>\n</Card>' }
+                    { name: 'page.mot', main: true, content: '<defcomp Card | title: string |>\n  <style>\n    .card { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 12px; padding: 20px; margin: 8px 0; }\n    .card h3 { margin: 0 0 8px; color: #e8f0ec; }\n    .card-body { color: rgba(232,240,236,0.6); line-height: 1.6; }\n  </style>\n  <div class="card">\n    <h3><output title></h3>\n    <div class="card-body"><children></div>\n  </div>\n</defcomp>\n\n<Card title="Welcome">\n  <p>This content goes into the default <strong>slot</strong>.</p>\n  <p>You can put any HTML here.</p>\n</Card>\n\n<Card title="Features">\n  <ul>\n    <li>Props for data</li>\n    <li>Slots for content</li>\n    <li>Scoped CSS</li>\n  </ul>\n</Card>' }
                 ]},
                 { id: 'scoped-css', name: 'Scoped CSS', category: 'Components', files: [
-                    { name: 'page.mot', main: true, content: '<defcomp Badge | label, color = "green" |>\n  <style>\n    .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.82em; font-weight: 600; }\n    .badge-green { background: rgba(0,255,179,0.12); color: #00ffb3; border: 1px solid rgba(0,255,179,0.3); }\n    .badge-blue { background: rgba(68,136,255,0.12); color: #4488ff; border: 1px solid rgba(68,136,255,0.3); }\n    .badge-orange { background: rgba(255,136,68,0.12); color: #ff8844; border: 1px solid rgba(255,136,68,0.3); }\n  </style>\n  <span class="badge badge-green"><output label></span>\n</defcomp>\n\n<p style="color:#e8f0ec">Status: <Badge label="Active" color="green" /> <Badge label="Beta" color="blue" /> <Badge label="Urgent" color="orange" /></p>' }
+                    { name: 'page.mot', main: true, content: '<defcomp Badge | label: string |>\n  <style>\n    .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.82em; font-weight: 600; }\n    .badge-green { background: rgba(0,255,179,0.12); color: #00ffb3; border: 1px solid rgba(0,255,179,0.3); }\n    .badge-blue { background: rgba(68,136,255,0.12); color: #4488ff; border: 1px solid rgba(68,136,255,0.3); }\n    .badge-orange { background: rgba(255,136,68,0.12); color: #ff8844; border: 1px solid rgba(255,136,68,0.3); }\n  </style>\n  <span class="badge badge-green"><output label></span>\n</defcomp>\n\n<p style="color:#e8f0ec">Status: <Badge label="Active" /> <Badge label="Beta" /> <Badge label="Urgent" /></p>' }
                 ]},
                 { id: 'sql-query', name: 'SQL Query', category: 'Data', files: [
-                    { name: 'products.mot', main: true, content: '<style>\n  .product-grid { display: grid; gap: 12px; }\n  .product-card { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 16px; }\n  .product-card h3 { margin: 0 0 4px; color: #e8f0ec; }\n  .product-price { color: #00ffb3; font-weight: 700; font-size: 1.1em; }\n  .product-note { color: rgba(232,240,236,0.4); font-size: 0.85em; margin: 8px 0 0; }\n</style>\n\n<h2 style="color:#e8f0ec; margin:0 0 16px">Product Catalog</h2>\n\n<let items 3>\n  <div class="product-grid">\n    <for item in items>\n      <div class="product-card">\n        <h3>Product #<output item></h3>\n        <p class="product-price">$<output item>9.99</p>\n        <p class="product-note">In stock</p>\n      </div>\n    </for>\n  </div>\n</let>' }
+                    { name: 'products.mot', main: true, content: '<style>\n  .product-grid { display: grid; gap: 12px; }\n  .product-card { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 16px; }\n  .product-card h3 { margin: 0 0 4px; color: #e8f0ec; }\n  .product-price { color: #00ffb3; font-weight: 700; font-size: 1.1em; }\n  .product-note { color: rgba(232,240,236,0.4); font-size: 0.85em; margin: 8px 0 0; }\n</style>\n\n<h2 style="color:#e8f0ec; margin:0 0 16px">Product Catalog</h2>\n\n<let items ["Widget", "Gadget", "Sprocket"]>\n  <div class="product-grid">\n    <for item in items>\n      <div class="product-card">\n        <h3><output item></h3>\n        <p class="product-price">$29.99</p>\n        <p class="product-note">In stock</p>\n      </div>\n    </for>\n  </div>\n</let>' }
                 ]},
                 { id: 'crm-dashboard', name: 'CRM Dashboard', category: 'Data', pipeline: true, files: [
                     { name: 'crm.mot', main: true, content: '' }
                 ]},
                 { id: 'typed-contacts', name: 'Typed Contacts', category: 'Schema', files: [
                     { name: 'contact.capnp', content: '@0xdbb9ad1f14bf0b36;\n\n# Motus schema annotations\nannotation table(struct) :Text;\nannotation label(field) :Text;\nannotation placeholder(field) :Text;\nannotation computed(field) :Void;\nannotation formOptional(field) :Void;\nannotation multiline(field) :Void;\n\nstruct Contact $table("contacts") {\n  id        @0 :UInt64   $computed;\n  name      @1 :Text     $label("Full Name");\n  email     @2 :Text     $label("Email")\n                         $placeholder("user@example.com");\n  age       @3 :UInt16   $formOptional;\n  active    @4 :Bool = true;\n  bio       @5 :Text     $multiline $formOptional;\n  createdAt @6 :Int64    $computed;\n}' },
-                    { name: 'contacts.mot', main: true, content: '<import schema "contact.capnp" />\n\n<style>\n  .contact-list { display: grid; gap: 10px; }\n  .contact-card { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 16px; }\n  .contact-card h3 { margin: 0 0 4px; color: #e8f0ec; }\n  .contact-info { color: rgba(232,240,236,0.5); font-size: 0.9em; margin: 2px 0; }\n  .type-badge { display: inline-block; font-size: 0.72em; padding: 1px 6px; border-radius: 4px; background: rgba(0,255,179,0.08); color: rgba(0,255,179,0.7); margin-left: 6px; }\n</style>\n\n<h2 style="color:#e8f0ec; margin:0 0 6px">Contacts</h2>\n<p style="color:rgba(232,240,236,0.4); font-size:0.85em; margin:0 0 16px">Schema-typed via contact.capnp &mdash; field access validated at compile time.</p>\n\n<let items 3>\n  <div class="contact-list">\n    <for item in items>\n      <div class="contact-card">\n        <h3>Contact #<output item> <span class="type-badge">Contact</span></h3>\n        <p class="contact-info">name: Text</p>\n        <p class="contact-info">email: Text</p>\n        <p class="contact-info">age: UInt16 (optional)</p>\n      </div>\n    </for>\n  </div>\n</let>' }
+                    { name: 'contacts.mot', main: true, content: '<!-- Schema: contact.capnp (see tab) -->\n\n<style>\n  .contact-list { display: grid; gap: 10px; }\n  .contact-card { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 16px; }\n  .contact-card h3 { margin: 0 0 4px; color: #e8f0ec; }\n  .contact-info { color: rgba(232,240,236,0.5); font-size: 0.9em; margin: 2px 0; }\n  .type-badge { display: inline-block; font-size: 0.72em; padding: 1px 6px; border-radius: 4px; background: rgba(0,255,179,0.08); color: rgba(0,255,179,0.7); margin-left: 6px; }\n</style>\n\n<h2 style="color:#e8f0ec; margin:0 0 6px">Contacts</h2>\n<p style="color:rgba(232,240,236,0.4); font-size:0.85em; margin:0 0 16px">Schema-typed via contact.capnp &mdash; field access validated at compile time.</p>\n\n<let names ["Alice Johnson", "Bob Smith", "Carol Chen"]>\n  <div class="contact-list">\n    <for who in names>\n      <div class="contact-card">\n        <h3><output who> <span class="type-badge">Contact</span></h3>\n        <p class="contact-info">email: Text</p>\n        <p class="contact-info">age: UInt16 (optional)</p>\n        <p class="contact-info">active: Bool = true</p>\n      </div>\n    </for>\n  </div>\n</let>' }
                 ]},
                 { id: 'product-catalog', name: 'Product Catalog', category: 'Schema', files: [
                     { name: 'product.capnp', content: '@0xa1b2c3d4e5f60718;\n\nannotation table(struct) :Text;\nannotation label(field) :Text;\nannotation computed(field) :Void;\nannotation formOptional(field) :Void;\n\nstruct Product $table("products") {\n  id       @0 :UInt64   $computed;\n  name     @1 :Text     $label("Product Name");\n  price    @2 :Float64  $label("Price");\n  tags     @3 :List(Text) $formOptional;\n  inStock  @4 :Bool = true;\n}' },
-                    { name: 'catalog.mot', main: true, content: '<import schema "product.capnp" />\n\n<style>\n  .catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }\n  .product { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 16px; }\n  .product h3 { margin: 0 0 6px; color: #e8f0ec; font-size: 1rem; }\n  .product .price { color: #00ffb3; font-weight: 700; }\n  .product .tags { color: rgba(232,240,236,0.4); font-size: 0.82em; margin-top: 6px; }\n  .field-info { font-size: 0.75em; color: rgba(226,199,126,0.6); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }\n</style>\n\n<h2 style="color:#e8f0ec; margin:0 0 6px">Product Catalog</h2>\n<p style="color:rgba(232,240,236,0.4); font-size:0.85em; margin:0 0 16px">Schema: Product with name (Text), price (Float64), tags (List&lt;Text&gt;)</p>\n\n<let items 4>\n  <div class="catalog">\n    <for item in items>\n      <div class="product">\n        <h3>Product #<output item></h3>\n        <p class="price">$<output item>4.99</p>\n        <p class="tags">tags: [\"electronics\", \"sale\"]</p>\n        <p class="field-info">Typed via product.capnp</p>\n      </div>\n    </for>\n  </div>\n</let>' }
+                    { name: 'catalog.mot', main: true, content: '<!-- Schema: product.capnp (see tab) -->\n\n<style>\n  .catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }\n  .product { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 16px; }\n  .product h3 { margin: 0 0 6px; color: #e8f0ec; font-size: 1rem; }\n  .product .price { color: #00ffb3; font-weight: 700; }\n  .product .tags { color: rgba(232,240,236,0.4); font-size: 0.82em; margin-top: 6px; }\n  .field-info { font-size: 0.75em; color: rgba(226,199,126,0.6); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }\n</style>\n\n<h2 style="color:#e8f0ec; margin:0 0 6px">Product Catalog</h2>\n<p style="color:rgba(232,240,236,0.4); font-size:0.85em; margin:0 0 16px">Schema: Product with name (Text), price (Float64), tags (List of Text)</p>\n\n<let items ["Wireless Keyboard", "USB-C Hub", "Mechanical Switch", "LED Monitor"]>\n  <div class="catalog">\n    <for item in items>\n      <div class="product">\n        <h3><output item></h3>\n        <p class="price">$49.99</p>\n        <p class="tags">tags: electronics, sale</p>\n        <p class="field-info">Typed via product.capnp</p>\n      </div>\n    </for>\n  </div>\n</let>' }
                 ]},
                 { id: 'counter', name: 'Counter', category: 'Reactive', files: [
-                    { name: 'counter.mot', main: true, content: '<var counter 0 />\n\n<style>\n  .counter-display { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 20px; display: inline-block; }\n  .counter-value { font-size: 2rem; font-weight: 800; color: #e8f0ec; margin: 0 0 4px; }\n  .counter-label { color: rgba(232,240,236,0.4); font-size: 0.85em; margin: 0 0 12px; }\n  .counter-btn { background: rgba(0,255,179,0.1); border: 1px solid rgba(0,255,179,0.3); color: #00ffb3; padding: 8px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }\n</style>\n\n<div class="counter-display">\n  <p class="counter-value"><output counter></p>\n  <p class="counter-label">Double: <output counter * 2></p>\n  <set counter counter + 1 />\n</div>' }
+                    { name: 'counter.mot', main: true, content: '<defcomp Counter>\n  <var counter 0 />\n\n  <style>\n    .counter-display { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 20px; display: inline-block; }\n    .counter-value { font-size: 2rem; font-weight: 800; color: #e8f0ec; margin: 0 0 4px; }\n    .counter-label { color: rgba(232,240,236,0.4); font-size: 0.85em; margin: 0 0 12px; }\n  </style>\n\n  <div class="counter-display">\n    <p class="counter-value"><output counter></p>\n    <p class="counter-label">Double: <output counter * 2></p>\n    <set counter counter + 1 />\n  </div>\n</defcomp>\n\n<Counter />' }
                 ]},
                 { id: 'form-binding', name: 'Form Binding', category: 'Reactive', files: [
-                    { name: 'form.mot', main: true, content: '<var username "Guest" />\n\n<style>\n  .form-demo { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 20px; max-width: 400px; }\n  .form-demo label { display: block; color: rgba(232,240,236,0.5); font-size: 0.82em; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }\n  .form-demo input { width: 100%; background: #0f1e2c; border: 1px solid rgba(0,255,179,0.15); color: #e8f0ec; padding: 8px 12px; border-radius: 6px; font-size: 0.9em; margin-bottom: 12px; }\n  .greeting { color: #e8f0ec; font-size: 1.1em; margin: 12px 0 0; }\n</style>\n\n<div class="form-demo">\n  <label>Your name</label>\n  <p class="greeting">Hello, <strong><output username></strong>!</p>\n</div>' }
+                    { name: 'form.mot', main: true, content: '<defcomp Greeter>\n  <var username "Guest" />\n\n  <style>\n    .form-demo { background: #152436; border: 1px solid rgba(0,255,179,0.15); border-radius: 10px; padding: 20px; max-width: 400px; }\n    .form-demo label { display: block; color: rgba(232,240,236,0.5); font-size: 0.82em; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }\n    .form-demo input { width: 100%; background: #0f1e2c; border: 1px solid rgba(0,255,179,0.15); color: #e8f0ec; padding: 8px 12px; border-radius: 6px; font-size: 0.9em; margin-bottom: 12px; }\n    .greeting { color: #e8f0ec; font-size: 1.1em; margin: 12px 0 0; }\n  </style>\n\n  <div class="form-demo">\n    <label>Your name</label>\n    <p class="greeting">Hello, <strong><output username></strong></p>\n  </div>\n</defcomp>\n\n<Greeter />' }
                 ]}
             ];
 
@@ -999,7 +1053,7 @@
                 }
                 if (hasSchema) {
                     schemaNoteEl.style.display = 'block';
-                    schemaNoteEl.innerHTML = 'Schema files are shown for reference. The browser WASM compiler does not run the capnp toolchain \u2014 schema validation and auto-typing happen in the full <code>mot</code> CLI compiler.';
+                    schemaNoteEl.innerHTML = 'The <code>.capnp</code> schema file is shown for reference. In production, <code>&lt;import schema&gt;</code> enables compile-time field validation and SQL auto-typing via the <code>mot</code> CLI.';
                 } else {
                     schemaNoteEl.style.display = 'none';
                 }
@@ -1035,6 +1089,7 @@
                     tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === tabName);
                 }
                 outputEl.classList.toggle('active', tabName === 'browser');
+                logPane.classList.toggle('active', tabName === 'log');
                 originPane.classList.toggle('active', tabName === 'origin');
                 edgePane.classList.toggle('active', tabName === 'edge');
             }
@@ -1260,31 +1315,44 @@
                     env: {
                         host_output: function(ptr, len) {
                             var bytes = new Uint8Array(motWasm.memory.buffer, ptr, len);
-                            htmlBuf += new TextDecoder().decode(bytes);
+                            var chunk = new TextDecoder().decode(bytes);
+                            htmlBuf += chunk;
+                            logAppend('output', 'emit: ' + chunk.substring(0, 200) + (chunk.length > 200 ? '...' : ''));
                         },
                         host_output_text: function(ptr, len) {
                             var bytes = new Uint8Array(motWasm.memory.buffer, ptr, len);
                             var text = new TextDecoder().decode(bytes);
                             htmlBuf += text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                            logAppend('output', 'text: ' + text.substring(0, 200));
                         },
                         host_error: function(ptr, len) {
                             var bytes = new Uint8Array(motWasm.memory.buffer, ptr, len);
-                            console.error('[mot]', new TextDecoder().decode(bytes));
+                            var msg = new TextDecoder().decode(bytes);
+                            console.error('[mot]', msg);
+                            logAppend('error', msg);
                         },
                         host_log: function(ptr, len) {
                             var bytes = new Uint8Array(motWasm.memory.buffer, ptr, len);
-                            console.log('[mot]', new TextDecoder().decode(bytes));
+                            var msg = new TextDecoder().decode(bytes);
+                            console.log('[mot]', msg);
+                            logAppend('step', msg);
                         },
-                        host_render_complete: function() {},
-                        host_dep_start: function() {},
-                        host_dep_end: function() {},
-                        host_component_start: function() {},
-                        host_component_end: function() {},
+                        host_render_complete: function() {
+                            logAppend('info', 'render complete');
+                        },
+                        host_dep_start: function() { logAppend('step', 'dep tracking start'); },
+                        host_dep_end: function() { logAppend('step', 'dep tracking end'); },
+                        host_component_start: function() { logAppend('step', 'component start'); },
+                        host_component_end: function() { logAppend('step', 'component end'); },
                         host_slot_default_start: function() {},
                         host_slot_default_end: function() {},
                         host_debug_step: function() {},
-                        host_fetch_data: function() {},
-                        host_load_component: function() {},
+                        host_fetch_data: function() {
+                            logAppend('warn', 'data fetch requested (no data source in browser)');
+                        },
+                        host_load_component: function() {
+                            logAppend('warn', 'external component load requested (not available in browser)');
+                        },
                         host_load_component_linked: function() {}
                     }
                 };
@@ -1417,32 +1485,48 @@
                     return;
                 }
 
+                logClear();
+                logAppend('step', 'compile started (' + source.length + ' bytes source)');
                 runButton.disabled = true;
                 statusEl.textContent = 'Compiling...';
 
                 try {
+                    var t0 = performance.now();
                     var compiled = motWasm.compile(source);
+                    var t1 = performance.now();
                     if (compiled.error) {
+                        console.error('[mot compile]', compiled.error);
+                        logAppend('error', 'compile failed: ' + compiled.error);
                         statusEl.textContent = 'Error: ' + compiled.error;
-                        outputEl.innerHTML = '';
+                        outputEl.innerHTML = '<pre style="color:#ff6b6b;white-space:pre-wrap;font-size:0.85em;margin:12px">' + compiled.error.replace(/</g,'&lt;') + '</pre>';
                         runButton.disabled = false;
                         return;
                     }
+                    logAppend('info', 'compile ok — ' + compiled.bytecode.length + ' bytes bytecode in ' + (t1 - t0).toFixed(1) + 'ms');
+                    if (compiled.css) logAppend('info', 'extracted CSS: ' + compiled.css.length + ' bytes');
 
+                    logAppend('step', 'render started');
+                    var t2 = performance.now();
                     var rendered = motWasm.render(compiled.bytecode);
+                    var t3 = performance.now();
                     if (rendered.error) {
+                        console.error('[mot render]', rendered.error);
+                        logAppend('error', 'render failed: ' + rendered.error);
                         statusEl.textContent = 'Render error: ' + rendered.error;
-                        outputEl.innerHTML = '';
+                        outputEl.innerHTML = '<pre style="color:#ff6b6b;white-space:pre-wrap;font-size:0.85em;margin:12px">' + rendered.error.replace(/</g,'&lt;') + '</pre>';
                         runButton.disabled = false;
                         return;
                     }
+                    logAppend('info', 'render ok — ' + rendered.html.length + ' bytes HTML in ' + (t3 - t2).toFixed(1) + 'ms');
 
                     var html = '';
                     if (compiled.css) html += '<style>' + compiled.css + '</style>';
                     html += rendered.html;
                     outputEl.innerHTML = html;
+                    logAppend('info', 'total: ' + ((t3 - t0)).toFixed(1) + 'ms');
                     statusEl.textContent = 'Done (' + compiled.bytecode.length + ' bytes bytecode)';
                 } catch (err) {
+                    logAppend('error', 'exception: ' + (err.message || String(err)));
                     statusEl.textContent = 'Error: ' + (err.message || String(err));
                     outputEl.innerHTML = '';
                 } finally {

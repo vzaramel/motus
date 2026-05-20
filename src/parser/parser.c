@@ -92,6 +92,13 @@ static bool consume(Parser *p, TokenType type, const char *message) {
     return false;
 }
 
+/* Consume '>' that closes an opening tag, then switch lexer to content mode
+ * so subsequent text (whitespace, punctuation) is scanned as TOK_TEXT. */
+static bool consume_tag_gt(Parser *p) {
+    p->lexer.in_element_content = true;
+    return consume(p, TOK_GT, "Expected '>'");
+}
+
 /* Check if current token can be used as an identifier (including keywords) */
 static bool is_name_token(Parser *p) {
     TokenType t = p->current.type;
@@ -719,7 +726,8 @@ static AstNode *parse_let_or_var(Parser *p, bool is_var) {
 
     if (match(p, TOK_SLASH_GT)) {
         /* Self-closing */
-    } else if (match(p, TOK_GT)) {
+    } else if (check(p, TOK_GT)) {
+        consume_tag_gt(p);
         /* Has children */
         AstNode **tail = &body;
         while (!check(p, TOK_LT_SLASH) && !check(p, TOK_EOF)) {
@@ -787,7 +795,7 @@ static AstNode *parse_output(Parser *p) {
     AstNode *expr = parse_expression(p);
     lexer_set_mode(&p->lexer, LEX_MODE_XML);
 
-    consume(p, TOK_GT, "Expected '>' after output expression");
+    consume_tag_gt(p);
 
     return ast_output(p->arena, expr, line, col);
 }
@@ -801,7 +809,7 @@ static AstNode *parse_if(Parser *p) {
     AstNode *condition = parse_expression(p);
     lexer_set_mode(&p->lexer, LEX_MODE_XML);
 
-    consume(p, TOK_GT, "Expected '>' after if condition");
+    consume_tag_gt(p);
 
     /* Parse then body */
     AstNode *then_body = NULL;
@@ -836,7 +844,7 @@ static AstNode *parse_if(Parser *p) {
             else_branch = parse_if(p);  /* Reuse if parsing */
             else_branch->type = NODE_ELSIF;
         } else if (match(p, TOK_ELSE)) {
-            consume(p, TOK_GT, "Expected '>' after else");
+            consume_tag_gt(p);
 
             AstNode *else_body = NULL;
             AstNode **else_tail = &else_body;
@@ -899,7 +907,7 @@ static AstNode *parse_for(Parser *p) {
         lexer_set_mode(&p->lexer, LEX_MODE_XML);
     }
 
-    consume(p, TOK_GT, "Expected '>' after for header");
+    consume_tag_gt(p);
 
     /* Parse body */
     AstNode *body = NULL;
@@ -938,7 +946,7 @@ static AstNode *parse_match_case(Parser *p, bool is_default) {
         return ast_case(p->arena, pattern, body, is_default, line, col);
     }
 
-    consume(p, TOK_GT, is_default ? "Expected '>' after default" : "Expected '>' after case pattern");
+    consume_tag_gt(p);
 
     AstNode **tail = &body;
     while (!check(p, TOK_LT_SLASH) && !check(p, TOK_EOF)) {
@@ -975,7 +983,7 @@ static AstNode *parse_match(Parser *p) {
     AstNode *value = parse_expression(p);
     lexer_set_mode(&p->lexer, LEX_MODE_XML);
 
-    consume(p, TOK_GT, "Expected '>' after match value");
+    consume_tag_gt(p);
 
     AstNode *cases = NULL;
     AstNode **tail = &cases;
@@ -1155,7 +1163,7 @@ static AstNode *parse_export(Parser *p) {
         return ast_export(p->arena, names, is_default, line, col);
     }
 
-    consume(p, TOK_GT, "Expected '>' after export");
+    consume_tag_gt(p);
 
     if (match(p, TOK_LT_SLASH)) {
         if (!match(p, TOK_EXPORT)) {
@@ -1234,7 +1242,7 @@ static AstNode *parse_interface(Parser *p) {
         return iface;
     }
 
-    consume(p, TOK_GT, "Expected '>' after interface declaration");
+    consume_tag_gt(p);
 
     while (!check(p, TOK_LT_SLASH) && !check(p, TOK_EOF)) {
         advance(p);
@@ -1271,7 +1279,7 @@ static AstNode *parse_require_auth(Parser *p) {
 
     /* Accept either /> or > */
     if (!match(p, TOK_SLASH_GT)) {
-        consume(p, TOK_GT, "Expected '>' or '/>' after require-auth");
+        consume_tag_gt(p);
     }
 
     return ast_require_auth(p->arena, role, line, col);
@@ -1370,7 +1378,7 @@ static AstNode *parse_defcomp(Parser *p) {
         }
     }
 
-    consume(p, TOK_GT, "Expected '>' after defcomp header");
+    consume_tag_gt(p);
 
     /* Parse body */
     AstNode *body = NULL;
@@ -1428,7 +1436,7 @@ static AstNode *parse_macro(Parser *p) {
         consume(p, TOK_PIPE, "Expected '|' after macro params");
     }
 
-    consume(p, TOK_GT, "Expected '>' after macro header");
+    consume_tag_gt(p);
 
     /* Parse body */
     AstNode *body = NULL;
@@ -1492,7 +1500,7 @@ static AstNode *parse_html_element(Parser *p, const char *tag) {
         return ast_element(p->arena, tag, attrs, NULL, true, line, col);
     }
 
-    if (!consume(p, TOK_GT, "Expected '>' or '/>'")) {
+    if (!consume_tag_gt(p)) {
         return ast_element(p->arena, tag, attrs, NULL, true, line, col);
     }
 
@@ -1611,7 +1619,7 @@ static AstNode *parse_insert(Parser *p) {
     }
     char *target = get_identifier(p);
     bool optimistic = !match(p, TOK_PESSIMISTIC);
-    consume(p, TOK_GT, "Expected '>'");
+    consume_tag_gt(p);
 
     /* Parse body */
     AstNode *body = NULL;
@@ -1656,7 +1664,7 @@ static AstNode *parse_update(Parser *p) {
     }
 
     bool optimistic = !match(p, TOK_PESSIMISTIC);
-    consume(p, TOK_GT, "Expected '>'");
+    consume_tag_gt(p);
 
     /* Parse body */
     AstNode *body = NULL;
@@ -1702,7 +1710,7 @@ static AstNode *parse_delete(Parser *p) {
     }
 
     bool optimistic = !match(p, TOK_PESSIMISTIC);
-    consume(p, TOK_GT, "Expected '>'");
+    consume_tag_gt(p);
 
     /* Parse body */
     AstNode *body = NULL;
@@ -1845,7 +1853,7 @@ static AstNode *parse_element(Parser *p) {
         return parse_macro(p);
     }
     if (tag_type == TOK_CHILDREN) {
-        consume(p, TOK_GT, "Expected '>' after children");
+        consume_tag_gt(p);
         return ast_children(p->arena, p->previous.line, p->previous.column);
     }
     if (tag_type == TOK_STYLE) {

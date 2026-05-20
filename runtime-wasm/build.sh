@@ -98,6 +98,7 @@ case "$TARGET" in
             "$CORE_DIR/util/hash.c" \
             "$CORE_DIR/util/vec.c" \
             "$CORE_DIR/util/str.c" \
+            "$CORE_DIR/schema/schema_reader.c" \
             "$CORE_DIR/mot.c"
 
         echo "Built: $BUILD_DIR/mot-runtime.wasm"
@@ -148,6 +149,7 @@ case "$TARGET" in
             "$CORE_DIR/util/hash.c" \
             "$CORE_DIR/util/vec.c" \
             "$CORE_DIR/util/str.c" \
+            "$CORE_DIR/schema/schema_reader.c" \
             "$CORE_DIR/mot.c"
 
         echo "Built: $BUILD_DIR/mot-runtime.wasm (debug)"

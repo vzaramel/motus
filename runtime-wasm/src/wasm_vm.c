@@ -273,6 +273,34 @@ unsigned long strtoul(const char *nptr, char **endptr, int base) {
     return result;
 }
 
+unsigned long long strtoull(const char *nptr, char **endptr, int base) {
+    unsigned long long result = 0;
+    const char *p = nptr;
+
+    while (isspace(*p)) p++;
+    if (*p == '+') p++;
+
+    if ((base == 0 || base == 16) && p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
+        base = 16;
+        p += 2;
+    } else if (base == 0) {
+        base = 10;
+    }
+
+    while (*p) {
+        int digit;
+        if (isdigit(*p)) digit = *p - '0';
+        else if (*p >= 'a' && *p <= 'f') digit = *p - 'a' + 10;
+        else if (*p >= 'A' && *p <= 'F') digit = *p - 'A' + 10;
+        else break;
+        if (digit >= base) break;
+        result = result * (unsigned long long)base + (unsigned long long)digit;
+        p++;
+    }
+    if (endptr) *endptr = (char *)p;
+    return result;
+}
+
 /* Minimal snprintf — handles %s, %d, %u, %zu, %ld, %lu, %c, %p, %%, %x, %02x, %f */
 int vsnprintf(char *buf, size_t size, const char *fmt, __builtin_va_list ap) {
     size_t pos = 0;
@@ -1688,15 +1716,31 @@ WASM_EXPORT uint32_t mot_wasm_compile(uint32_t src_ptr, uint32_t src_len) {
     result = mot_compile(source, (size_t)src_len);
 
     if (result.errors.count > 0) {
-        /* Copy first error message */
-        const char *msg = result.errors.errors[0].message;
-        if (msg) {
-            uint32_t len = (uint32_t)strlen(msg);
-            if (len >= sizeof(g_compile_error)) len = sizeof(g_compile_error) - 1;
-            memcpy(g_compile_error, msg, len);
-            g_compile_error[len] = '\0';
-            g_compile_error_len = len;
+        /* Format error with line/column info */
+        uint32_t off = 0;
+        size_t i;
+        for (i = 0; i < result.errors.count && off < sizeof(g_compile_error) - 1; i++) {
+            MotError *e = &result.errors.errors[i];
+            if (i > 0 && off < sizeof(g_compile_error) - 2) {
+                g_compile_error[off++] = '\n';
+            }
+            int written = snprintf(g_compile_error + off,
+                                   sizeof(g_compile_error) - off,
+                                   "[%d:%d] %s",
+                                   e->line, e->column,
+                                   e->message ? e->message : "Unknown error");
+            if (written > 0) off += (uint32_t)written;
+            /* Also log each error to console */
+            if (e->message) {
+                char logbuf[512];
+                int loglen = snprintf(logbuf, sizeof(logbuf),
+                                      "line %d, col %d: %s",
+                                      e->line, e->column, e->message);
+                if (loglen > 0) host_error(logbuf, (uint32_t)loglen);
+            }
         }
+        g_compile_error[off] = '\0';
+        g_compile_error_len = off;
         mot_result_free(&result);
         return 1; /* error */
     }
