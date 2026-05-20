@@ -305,68 +305,78 @@
             overflow: auto;
         }
 
-        /* ===== Output Tabs ===== */
+        /* ===== Output Panel (split: rendered + log) ===== */
         .output-panel {
             display: flex;
             flex-direction: column;
             min-height: 0;
             height: 100%;
         }
-        .output-tabs {
-            display: none;
-            gap: 0;
-            border-bottom: 1px solid rgba(0,255,179,0.12);
-            background: rgba(15,30,44,0.8);
-            border-radius: 8px 8px 0 0;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        .output-tabs.visible { display: flex; }
-        .output-tab {
-            padding: 6px 16px;
-            border: none;
-            background: transparent;
-            color: rgba(232,240,236,0.4);
-            font-size: 0.82em;
-            font-weight: 600;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            transition: color 0.2s, background 0.2s;
-            border-bottom: 2px solid transparent;
-        }
-        .output-tab:hover {
-            color: rgba(232,240,236,0.7);
-            background: rgba(0,255,179,0.04);
-        }
-        .output-tab.active {
-            color: #00ffb3;
-            border-bottom-color: #00ffb3;
-            background: rgba(0,255,179,0.06);
-        }
-        .output-pane {
-            display: none;
+        .output-panel > .playground-output {
             flex: 1;
-            min-height: 0;
+            min-height: 60px;
             overflow: auto;
-        }
-        .output-pane.active { display: block; }
-        .log-pane-wrap.active { display: flex; }
-        .output-tabs.visible + .output-pane,
-        .output-tabs.visible ~ .output-pane {
-            border-radius: 0 0 8px 8px;
+            border-radius: 8px 8px 0 0;
         }
 
         /* ===== Log Terminal ===== */
+        .log-pane-wrap {
+            display: flex;
+            flex-direction: column;
+            min-height: 120px;
+            max-height: 45%;
+            border-top: 1px solid rgba(0,255,179,0.12);
+        }
+        .log-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: rgba(15,30,44,0.9);
+            flex-shrink: 0;
+        }
+        .log-toolbar-label {
+            font-size: 0.72em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(232,240,236,0.3);
+            margin-right: 6px;
+        }
+        .log-filter {
+            padding: 1px 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: transparent;
+            color: rgba(232,240,236,0.3);
+            font-size: 0.7em;
+            border-radius: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .log-filter:hover { color: rgba(232,240,236,0.6); border-color: rgba(255,255,255,0.15); }
+        .log-filter.active { color: #00ffb3; border-color: rgba(0,255,179,0.3); background: rgba(0,255,179,0.06); }
+        .log-clear-btn {
+            margin-left: auto;
+            background: none;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(232,240,236,0.3);
+            font-size: 0.7em;
+            padding: 1px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .log-clear-btn:hover { color: rgba(232,240,236,0.6); border-color: rgba(255,255,255,0.15); }
         .log-terminal {
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
             font-size: 12px;
             line-height: 1.5;
-            padding: 8px 10px;
+            padding: 4px 10px;
             overflow-y: auto;
             background: #080e14;
             flex: 1;
             min-height: 0;
+            border-radius: 0 0 8px 8px;
         }
         .log-entry { margin: 0; white-space: pre-wrap; word-break: break-all; }
         .log-entry.log-step { color: rgba(232,240,236,0.4); }
@@ -375,106 +385,20 @@
         .log-entry.log-error { color: #ff6b6b; }
         .log-entry.log-output { color: rgba(68,136,255,0.8); }
         .log-entry .log-ts { color: rgba(232,240,236,0.2); margin-right: 6px; }
-        .log-clear-btn {
-            position: absolute;
-            top: 4px;
-            right: 8px;
-            background: none;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: rgba(232,240,236,0.3);
-            font-size: 0.7em;
-            padding: 2px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .log-clear-btn:hover { color: rgba(232,240,236,0.6); border-color: rgba(255,255,255,0.2); }
-        .log-pane-wrap { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; }
-
-        /* Origin panel styles */
-        .bc-summary {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 0.85em;
-            line-height: 1.6;
-            padding: 4px;
-        }
-        .bc-summary table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-        }
-        .bc-summary th {
-            text-align: left;
-            color: #00ffb3;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-bottom: 1px solid rgba(0,255,179,0.1);
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .bc-summary td {
-            padding: 3px 8px;
-            color: rgba(232,240,236,0.7);
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-        }
-        .bc-summary td:first-child {
-            color: rgba(232,240,236,0.5);
-            white-space: nowrap;
-        }
-        .bc-section-label {
-            color: #00ffb3;
-            font-weight: 600;
-            margin: 12px 0 6px;
-            font-size: 0.9em;
-        }
-        .bc-tag {
+        .log-entry .log-tag {
             display: inline-block;
-            padding: 1px 7px;
-            border-radius: 4px;
-            font-size: 0.85em;
-            margin: 2px;
+            font-size: 0.8em;
+            font-weight: 700;
+            padding: 0 4px;
+            border-radius: 2px;
+            margin-right: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
-        .bc-tag.data-req { background: rgba(68,221,170,0.12); color: #44ddaa; border: 1px solid rgba(68,221,170,0.2); }
-        .bc-tag.comp-ref { background: rgba(255,136,68,0.12); color: #ff8844; border: 1px solid rgba(255,136,68,0.2); }
-        .bc-tag.builtin  { background: rgba(68,136,255,0.12); color: #4488ff; border: 1px solid rgba(68,136,255,0.2); }
-        .bc-tag.dep      { background: rgba(170,102,255,0.1); color: #aa66ff; border: 1px solid rgba(170,102,255,0.2); }
-
-        /* Edge panel styles */
-        .edge-html-source {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 0.82em;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-all;
-            color: rgba(232,240,236,0.75);
-            margin: 0;
-            padding: 4px;
-        }
-        .edge-events-list {
-            margin: 0 0 12px;
-            padding: 0;
-            list-style: none;
-        }
-        .edge-events-list li {
-            padding: 3px 8px;
-            font-size: 0.82em;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-            color: rgba(232,240,236,0.6);
-        }
-        .edge-event-label {
-            font-weight: 600;
-            margin-right: 6px;
-        }
-        .edge-event-label.data { color: #44ddaa; }
-        .edge-event-label.component { color: #ff8844; }
-        .edge-event-cache {
-            font-size: 0.85em;
-            margin-left: 6px;
-            padding: 1px 5px;
-            border-radius: 3px;
-        }
-        .edge-event-cache.hit  { background: rgba(0,255,179,0.1); color: #00ffb3; }
-        .edge-event-cache.miss { background: rgba(255,68,68,0.1); color: #ff4444; }
+        .log-tag.tag-browser { color: #4488ff; background: rgba(68,136,255,0.1); }
+        .log-tag.tag-origin { color: #e2c77e; background: rgba(226,199,126,0.1); }
+        .log-tag.tag-edge { color: #c084fc; background: rgba(192,132,252,0.1); }
+        .log-entry.log-hidden { display: none; }
 
         .playground-banner {
             margin: 0;
@@ -775,7 +699,7 @@
                 max-width: unset;
             }
         }
-    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle examples">&#9776;</button><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><span id="playground-mode-wrap"></span><div id="playground-status" class="playground-status"></div></div><div id="pipeline-viz" class="pipeline-viz"><div class="pipeline-controls"><span id="sim-latency-wrap"></span><span id="sim-chunk-wrap"></span><button type="button" id="pipeline-reset" class="pipeline-reset-btn">Reset Cache</button><span id="pipeline-cache-stats" class="pipeline-cache-stats"></span></div><div class="pipeline-diagram"><div class="pipeline-node" id="node-origin"><div class="pipeline-node-icon" id="icon-origin"></div><div class="pipeline-node-label">Origin</div><div class="pipeline-node-status" id="status-origin">Idle</div></div><div class="pipeline-link" id="link-oe"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-oe"></div><div class="pipeline-link-timing" id="timing-oe"></div></div><div class="pipeline-node" id="node-edge"><div class="pipeline-node-icon" id="icon-edge"></div><div class="pipeline-node-label">Edge</div><div class="pipeline-node-status" id="status-edge">Idle</div></div><div class="pipeline-link" id="link-eb"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-eb"></div><div class="pipeline-link-timing" id="timing-eb"></div></div><div class="pipeline-node" id="node-browser"><div class="pipeline-node-icon" id="icon-browser"></div><div class="pipeline-node-label">Browser</div><div class="pipeline-node-status" id="status-browser">Idle</div></div></div><div class="pipeline-waterfall" id="pipeline-waterfall"></div></div><section class="playground-grid"><aside class="examples-sidebar" id="examples-sidebar"></aside><div class="editor-panel"><div class="file-tabs" id="file-tabs"></div><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor no-tabs"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><p class="schema-note" id="schema-note" style="display:none"></p></div><div class="output-panel"><div class="output-tabs visible" id="output-tabs"><button type="button" class="output-tab active" data-tab="browser">Browser</button><button type="button" class="output-tab" data-tab="log">Log</button><button type="button" class="output-tab" data-tab="origin">Origin</button><button type="button" class="output-tab" data-tab="edge">Edge</button></div><div id="playground-output" class="playground-output output-pane active" data-pane="browser"></div><div class="output-pane log-pane-wrap" id="output-log" data-pane="log"><button type="button" class="log-clear-btn" id="log-clear">clear</button><div class="log-terminal" id="log-terminal"></div></div><div id="output-origin" class="playground-output output-pane" data-pane="origin"></div><div id="output-edge" class="playground-output output-pane" data-pane="edge"></div></div></section></section><script>
+    </style><section class="playground-shell"><p class="playground-banner" id="playground-banner"></p><div class="playground-toolbar"><button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle examples">&#9776;</button><button type="button" id="playground-run" class="playground-run" title="Compile and Render" aria-label="Compile and Render">&#9654;</button><span id="playground-mode-wrap"></span><div id="playground-status" class="playground-status"></div></div><div id="pipeline-viz" class="pipeline-viz"><div class="pipeline-controls"><span id="sim-latency-wrap"></span><span id="sim-chunk-wrap"></span><button type="button" id="pipeline-reset" class="pipeline-reset-btn">Reset Cache</button><span id="pipeline-cache-stats" class="pipeline-cache-stats"></span></div><div class="pipeline-diagram"><div class="pipeline-node" id="node-origin"><div class="pipeline-node-icon" id="icon-origin"></div><div class="pipeline-node-label">Origin</div><div class="pipeline-node-status" id="status-origin">Idle</div></div><div class="pipeline-link" id="link-oe"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-oe"></div><div class="pipeline-link-timing" id="timing-oe"></div></div><div class="pipeline-node" id="node-edge"><div class="pipeline-node-icon" id="icon-edge"></div><div class="pipeline-node-label">Edge</div><div class="pipeline-node-status" id="status-edge">Idle</div></div><div class="pipeline-link" id="link-eb"><div class="pipeline-link-line"></div><div class="pipeline-link-arrow"></div><div class="pipeline-packet" id="packet-eb"></div><div class="pipeline-link-timing" id="timing-eb"></div></div><div class="pipeline-node" id="node-browser"><div class="pipeline-node-icon" id="icon-browser"></div><div class="pipeline-node-label">Browser</div><div class="pipeline-node-status" id="status-browser">Idle</div></div></div><div class="pipeline-waterfall" id="pipeline-waterfall"></div></div><section class="playground-grid"><aside class="examples-sidebar" id="examples-sidebar"></aside><div class="editor-panel"><div class="file-tabs" id="file-tabs"></div><form id="playground-form" class="playground-form"><div id="playground-editor" class="playground-editor no-tabs"></div><textarea id="playground-source" class="playground-source" spellcheck="false"></textarea></form><p class="schema-note" id="schema-note" style="display:none"></p></div><div class="output-panel"><div id="playground-output" class="playground-output"></div><div class="log-pane-wrap" id="output-log"><div class="log-toolbar"><span class="log-toolbar-label">Log</span><button type="button" class="log-filter active" data-filter="all">All</button><button type="button" class="log-filter active" data-filter="browser">Browser</button><button type="button" class="log-filter active" data-filter="origin">Origin</button><button type="button" class="log-filter active" data-filter="edge">Edge</button><button type="button" class="log-clear-btn" id="log-clear">clear</button></div><div class="log-terminal" id="log-terminal"></div></div></div></section></section><script>
         (function () {
             var form = document.getElementById('playground-form');
             var editorEl = document.getElementById('playground-editor');
@@ -799,29 +723,57 @@
 
             if (!form || !editorEl || !sourceEl || !statusEl || !outputEl || !runButton) return;
 
-            var outputTabsEl = document.getElementById('output-tabs');
             var logTermEl = document.getElementById('log-terminal');
             var logClearBtn = document.getElementById('log-clear');
-            var logPane = document.getElementById('output-log');
-            var originPane = document.getElementById('output-origin');
-            var edgePane = document.getElementById('output-edge');
+            var logToolbar = document.querySelector('.log-toolbar');
 
             /* ===== Log Terminal ===== */
             var logRunId = 0;
+            var logActiveFilters = { all: true, browser: true, origin: true, edge: true };
+
             function logClear() { if (logTermEl) logTermEl.innerHTML = ''; }
-            function logAppend(level, msg) {
+
+            function logAppend(level, msg, source) {
                 if (!logTermEl) return;
+                source = source || 'browser';
                 var el = document.createElement('div');
                 el.className = 'log-entry log-' + level;
+                el.setAttribute('data-source', source);
+                if (!logActiveFilters.all && !logActiveFilters[source]) el.classList.add('log-hidden');
                 var ts = document.createElement('span');
                 ts.className = 'log-ts';
                 ts.textContent = new Date().toLocaleTimeString('en', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
                 el.appendChild(ts);
+                var tag = document.createElement('span');
+                tag.className = 'log-tag tag-' + source;
+                tag.textContent = source;
+                el.appendChild(tag);
                 el.appendChild(document.createTextNode(msg));
                 logTermEl.appendChild(el);
                 logTermEl.scrollTop = logTermEl.scrollHeight;
             }
+
             if (logClearBtn) logClearBtn.addEventListener('click', logClear);
+
+            if (logToolbar) logToolbar.addEventListener('click', function(e) {
+                var btn = e.target.closest('.log-filter');
+                if (!btn) return;
+                var f = btn.getAttribute('data-filter');
+                if (f === 'all') {
+                    var wasAll = logActiveFilters.all;
+                    logActiveFilters = { all: !wasAll, browser: !wasAll, origin: !wasAll, edge: !wasAll };
+                } else {
+                    logActiveFilters[f] = !logActiveFilters[f];
+                    logActiveFilters.all = logActiveFilters.browser && logActiveFilters.origin && logActiveFilters.edge;
+                }
+                logToolbar.querySelectorAll('.log-filter').forEach(function(b) {
+                    b.classList.toggle('active', logActiveFilters[b.getAttribute('data-filter')]);
+                });
+                if (logTermEl) logTermEl.querySelectorAll('.log-entry').forEach(function(entry) {
+                    var src = entry.getAttribute('data-source');
+                    entry.classList.toggle('log-hidden', !logActiveFilters.all && !logActiveFilters[src]);
+                });
+            });
 
             /* ===== Example Library ===== */
             var examples = [
@@ -1082,21 +1034,7 @@
                 });
             }
 
-            /* ===== Output Tab Switching ===== */
-            function switchOutputTab(tabName) {
-                var tabs = outputTabsEl.querySelectorAll('.output-tab');
-                for (var i = 0; i < tabs.length; i++) {
-                    tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === tabName);
-                }
-                outputEl.classList.toggle('active', tabName === 'browser');
-                logPane.classList.toggle('active', tabName === 'log');
-                originPane.classList.toggle('active', tabName === 'origin');
-                edgePane.classList.toggle('active', tabName === 'edge');
-            }
-            outputTabsEl.addEventListener('click', function(e) {
-                var tab = e.target.closest('.output-tab');
-                if (tab) switchOutputTab(tab.getAttribute('data-tab'));
-            });
+            /* Output tab switching removed — using unified log with source filters */
 
             /* ===== Bytecode Decoder ===== */
             function decodeBytecodeInfo(bytecode) {
@@ -1193,88 +1131,7 @@
                 return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             }
 
-            function renderOriginPanel(info, css) {
-                var h = '<div class="bc-summary">';
-                h += '<div class="bc-section-label">Bytecode Module</div>';
-                h += '<table>';
-                h += '<tr><td>Total size</td><td>' + info.totalSize + ' bytes</td></tr>';
-                h += '<tr><td>Version</td><td>' + info.versionMajor + '.' + info.versionMinor + '</td></tr>';
-                h += '<tr><td>Constants</td><td>' + info.constCount + '</td></tr>';
-                h += '<tr><td>Strings</td><td>' + info.stringCount + '</td></tr>';
-                h += '<tr><td>Main code</td><td>' + info.mainChunkSize + ' bytes</td></tr>';
-                h += '<tr><td>Functions</td><td>' + info.funcCount;
-                if (info.funcChunkSizes.length) {
-                    h += ' (' + info.funcChunkSizes.map(function(s) { return s + 'B'; }).join(', ') + ')';
-                }
-                h += '</td></tr>';
-                h += '</table>';
-                if (info.dataReqs.length) {
-                    h += '<div class="bc-section-label">Data Requirements (' + info.dataReqs.length + ')</div>';
-                    h += '<p style="color:rgba(232,240,236,0.4);font-size:0.85em;margin:0 0 6px">These SQL queries must be resolved at the edge before rendering can complete.</p>';
-                    info.dataReqs.forEach(function(dr) {
-                        h += '<span class="bc-tag data-req">' + escapeHtml(dr.name);
-                        if (dr.params.length) h += '(' + dr.params.map(escapeHtml).join(', ') + ')';
-                        h += '</span>';
-                    });
-                }
-                if (info.compRefs.length) {
-                    h += '<div class="bc-section-label">Component References (' + info.compRefs.length + ')</div>';
-                    h += '<p style="color:rgba(232,240,236,0.4);font-size:0.85em;margin:0 0 6px">External components to be loaded and rendered at the edge.</p>';
-                    info.compRefs.forEach(function(cr) {
-                        h += '<span class="bc-tag comp-ref">' + escapeHtml(cr.name);
-                        if (cr.path) h += ' \u2192 ' + escapeHtml(cr.path);
-                        h += '</span>';
-                    });
-                }
-                if (info.builtins.length) {
-                    h += '<div class="bc-section-label">Builtins (' + info.builtins.length + ')</div>';
-                    info.builtins.forEach(function(b) {
-                        h += '<span class="bc-tag builtin">' + escapeHtml(b.name) + '</span>';
-                    });
-                }
-                if (info.deps.length) {
-                    h += '<div class="bc-section-label">Dependencies (' + info.deps.length + ')</div>';
-                    h += '<p style="color:rgba(232,240,236,0.4);font-size:0.85em;margin:0 0 6px">Fine-grained data paths tracked for cache invalidation.</p>';
-                    info.deps.forEach(function(d) {
-                        h += '<span class="bc-tag dep">' + escapeHtml(d) + '</span>';
-                    });
-                }
-                if (css) {
-                    h += '<div class="bc-section-label">Extracted CSS (' + css.length + ' chars)</div>';
-                    h += '<pre class="edge-html-source" style="max-height:200px;overflow:auto">' + escapeHtml(css) + '</pre>';
-                }
-                h += '</div>';
-                return h;
-            }
 
-            function renderEdgePanel(rawHtml, events) {
-                var h = '';
-                if (events && events.length) {
-                    h += '<div class="bc-summary"><div class="bc-section-label">Pipeline Events (' + events.length + ')</div>';
-                    h += '<ul class="edge-events-list">';
-                    events.forEach(function(ev) {
-                        h += '<li>';
-                        if (ev.type === 'data') {
-                            h += '<span class="edge-event-label data">DATA</span>';
-                            h += escapeHtml(ev.name || '?');
-                            if (ev.params && ev.params !== '{}' && ev.params !== '') h += ' <span style="color:rgba(232,240,236,0.35)">params: ' + escapeHtml(ev.params) + '</span>';
-                            h += ' <span style="color:rgba(232,240,236,0.35)">' + Math.round(ev.time || 0) + 'ms</span>';
-                            if (ev.cache !== undefined) {
-                                h += '<span class="edge-event-cache ' + (ev.cache ? 'hit' : 'miss') + '">' + (ev.cache ? 'HIT' : 'MISS') + '</span>';
-                            }
-                        } else if (ev.type === 'component') {
-                            h += '<span class="edge-event-label component">COMPONENT</span>';
-                            h += escapeHtml(ev.name || '?');
-                            h += ' <span style="color:rgba(232,240,236,0.35)">' + Math.round(ev.time || 0) + 'ms</span>';
-                        }
-                        h += '</li>';
-                    });
-                    h += '</ul></div>';
-                }
-                h += '<div class="bc-summary"><div class="bc-section-label">Raw HTML Output (' + rawHtml.length + ' chars)</div></div>';
-                h += '<pre class="edge-html-source">' + escapeHtml(rawHtml) + '</pre>';
-                return h;
-            }
 
             /* ===== Inject text with "in" keyword (parser workaround) ===== */
             var bannerEl = document.getElementById('playground-banner');
@@ -1710,7 +1567,11 @@
                     statusEl.textContent = 'Added ' + (row.name || 'row') + ' \u2014 invalidated: ' + result.invalidated.join(', ');
 
                     var pipelineEvents = result.events || [];
-                    edgePane.innerHTML = renderEdgePanel(result.html, pipelineEvents);
+                    logAppend('info', 'mutation: inserted into ' + table + ', invalidated: ' + result.invalidated.join(', '), 'origin');
+                    pipelineEvents.forEach(function(ev) {
+                        if (ev.type === 'data') logAppend('info', 're-fetch: ' + ev.name + (ev.cache ? ' [cached]' : '') + ' @ ' + Math.round(ev.time || 0) + 'ms', 'edge');
+                    });
+                    logAppend('info', 're-render ok — ' + result.html.length + ' bytes HTML', 'edge');
 
                     var cacheStatsJson = resp.headers.get('X-Cache-Stats');
                     try { updateCacheStats(cacheStatsJson ? JSON.parse(cacheStatsJson) : null); } catch(e) {}
@@ -1766,8 +1627,8 @@
                 pipelineRunning = true;
                 runButton.disabled = true;
                 outputEl.innerHTML = '';
-                originPane.innerHTML = '<div style="color:rgba(232,240,236,0.3);padding:16px;font-size:0.85em">Waiting for compile...</div>';
-                edgePane.innerHTML = '<div style="color:rgba(232,240,236,0.3);padding:16px;font-size:0.85em">Waiting for render...</div>';
+                logClear();
+                logAppend('step', 'pipeline started (' + source.length + ' bytes source)', 'browser');
                 resetAllNodes();
                 statusEl.textContent = 'Running pipeline...';
 
@@ -1801,6 +1662,7 @@
 
                     if (!compileResp.ok) {
                         var errBody = await compileResp.json().catch(function() { return { error: 'Compile failed' }; });
+                        logAppend('error', 'compile failed: ' + (errBody.error || 'Unknown'), 'origin');
                         statusEl.textContent = 'Error: ' + (errBody.error || 'Unknown');
                         setNodeStatus('origin', 'Error');
                         runButton.disabled = false;
@@ -1820,8 +1682,12 @@
                     setNodeStatus('origin', bcLen + 'B' + cacheTag);
                     setNodeState('origin', 'done');
 
+                    logAppend('info', 'compile ok — ' + bcLen + ' bytes bytecode in ' + Math.round(times.compile) + 'ms' + cacheTag, 'origin');
                     var bcInfo = decodeBytecodeInfo(bytecode);
-                    originPane.innerHTML = renderOriginPanel(bcInfo, css);
+                    if (css) logAppend('info', 'extracted CSS: ' + css.length + ' bytes', 'origin');
+                    if (bcInfo.dataReqs.length) logAppend('step', bcInfo.dataReqs.length + ' data requirement(s): ' + bcInfo.dataReqs.map(function(d) { return d.name; }).join(', '), 'origin');
+                    if (bcInfo.compRefs.length) logAppend('step', bcInfo.compRefs.length + ' component ref(s): ' + bcInfo.compRefs.map(function(c) { return c.name; }).join(', '), 'origin');
+                    if (bcInfo.deps.length) logAppend('step', bcInfo.deps.length + ' dep(s): ' + bcInfo.deps.join(', '), 'origin');
 
                     var t1 = performance.now();
                     await animatePacket('oe');
@@ -1830,6 +1696,7 @@
 
                     setNodeState('edge', 'active');
                     setNodeStatus('edge', 'Rendering...');
+                    logAppend('step', 'render started', 'edge');
                     var t2 = performance.now();
 
                     var renderResp = await fetch(base + '/render', {
@@ -1844,6 +1711,14 @@
                     var eventsJson = renderResp.headers.get('X-Pipeline-Events');
                     var pipelineEvents = [];
                     try { pipelineEvents = eventsJson ? JSON.parse(eventsJson) : []; } catch(e) {}
+
+                    pipelineEvents.forEach(function(ev) {
+                        if (ev.type === 'data') {
+                            logAppend('info', 'data fetch: ' + ev.name + (ev.cache ? ' [cached]' : '') + ' @ ' + Math.round(ev.time || 0) + 'ms', 'edge');
+                        } else if (ev.type === 'component') {
+                            logAppend('info', 'component load: ' + ev.name + ' @ ' + Math.round(ev.time || 0) + 'ms', 'edge');
+                        }
+                    });
 
                     var cacheStatsJson = renderResp.headers.get('X-Cache-Stats');
                     var cacheStatsObj = null;
@@ -1884,7 +1759,7 @@
                     setNodeStatus('edge', 'Streamed');
                     setNodeStatus('browser', 'Done');
 
-                    edgePane.innerHTML = renderEdgePanel(rawEdgeHtml, pipelineEvents);
+                    logAppend('info', 'render ok — ' + rawEdgeHtml.length + ' bytes HTML, ' + chunkCount + ' chunks in ' + Math.round(times.render + times.stream) + 'ms', 'edge');
 
                     attachFormHandlers();
 
@@ -1939,12 +1814,9 @@
             modeSelect.addEventListener('change', function () {
                 var isPipeline = modeSelect.value === 'pipeline';
                 pipelineViz.classList.toggle('visible', isPipeline);
-                outputTabsEl.classList.toggle('visible', isPipeline);
                 if (isPipeline) {
                     if (!swReady) registerSW();
                     ensureMorphdom();
-                } else {
-                    switchOutputTab('browser');
                 }
             });
 
