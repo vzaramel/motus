@@ -751,6 +751,55 @@ static bool build_reactive_expr_program(Compiler *c, AstNode *expr, char **out_p
     return true;
 }
 
+/* Build a serialized action program from <on> handler body.
+ * Format: "SET:<path>\nPROG:<expr-tokens>\n" per action.
+ * Multiple actions separated by blank line. */
+static bool build_on_action_program(Compiler *c, AstNode *body, char **out_result) {
+    if (!c || !body || !out_result) return false;
+
+    size_t cap = 512;
+    size_t len = 0;
+    char *out = arena_alloc(c->arena, cap);
+    out[0] = '\0';
+
+    bool has_action = false;
+
+    for (AstNode *child = body; child; child = child->next) {
+        if (child->type != NODE_SET) continue;
+
+        /* Build target path */
+        char target_path[192] = {0};
+        size_t target_len = 0;
+        if (!build_bindable_output_path(child->data.set.target,
+                target_path, sizeof(target_path), &target_len)) {
+            continue;
+        }
+
+        /* Build expression program */
+        char *expr_prog = NULL;
+        if (!build_reactive_expr_program(c, child->data.set.value, &expr_prog) || !expr_prog) {
+            continue;
+        }
+
+        /* Separator between actions */
+        if (has_action) {
+            sql_append(c->arena, "\n", &out, &len, &cap);
+        }
+
+        /* Emit SET:<path>\nPROG:<program> */
+        sql_append(c->arena, "SET:", &out, &len, &cap);
+        sql_append(c->arena, target_path, &out, &len, &cap);
+        sql_append(c->arena, "\nPROG:", &out, &len, &cap);
+        sql_append(c->arena, expr_prog, &out, &len, &cap);
+
+        has_action = true;
+    }
+
+    if (!has_action) return false;
+    *out_result = out;
+    return true;
+}
+
 /* Serialize SQL AST to query string */
 static void sql_serialize_expr(Arena *arena, AstNode *expr, char **out, size_t *len, size_t *cap);
 
@@ -2087,6 +2136,39 @@ static void compile_element(Compiler *c, AstNode *node) {
         }
     }
 
+    /* Pre-scan children for <on> event handlers and emit data attributes */
+    for (AstNode *child = node->data.element.children; child; child = child->next) {
+        if (child->type != NODE_ON) continue;
+
+        const char *event = child->data.on_handler.event;
+        char *action_program = NULL;
+        if (!build_on_action_program(c, child->data.on_handler.body, &action_program)) {
+            compile_error(c, child->line, child->column,
+                          "Cannot serialize <on %s> action program", event);
+            continue;
+        }
+
+        /* Emit data-mot-on-{event} attribute */
+        char attr_name[64];
+        int an = snprintf(attr_name, sizeof(attr_name), "data-mot-on-%s", event);
+        if (an <= 0 || (size_t)an >= sizeof(attr_name)) continue;
+
+        uint16_t attr_name_idx = bytecode_add_string(c->module, attr_name, (uint32_t)an);
+        emit_op_u16(c, BC_EMIT_ATTR_START, attr_name_idx);
+
+        uint16_t prog_const = make_string_constant(c, action_program, strlen(action_program));
+        emit_op_u16(c, BC_EMIT_LITERAL, prog_const);
+
+        emit_byte(c, BC_EMIT_ATTR_END);
+
+        /* Record @set markers so reactive plan linkage works */
+        for (AstNode *stmt = child->data.on_handler.body; stmt; stmt = stmt->next) {
+            if (stmt->type == NODE_SET) {
+                record_set_target_marker(c, stmt->data.set.target);
+            }
+        }
+    }
+
     /* Self-closing? */
     if (node->data.element.self_closing) {
         emit_byte(c, BC_EMIT_TAG_SELF);  /* Emit /> */
@@ -2096,8 +2178,9 @@ static void compile_element(Compiler *c, AstNode *node) {
     /* Close opening tag with > */
     emit_byte(c, BC_EMIT_TAG_END);
 
-    /* Compile children */
+    /* Compile children (skip <on> handlers, already emitted as data attributes) */
     for (AstNode *child = node->data.element.children; child; child = child->next) {
+        if (child->type == NODE_ON) continue;
         compile_node(c, child);
     }
 
@@ -2324,6 +2407,12 @@ static void compile_node(Compiler *c, AstNode *node) {
             break;
         case NODE_BOUND_INPUT:
             compile_bound_input(c, node);
+            break;
+        case NODE_ON:
+            /* <on> handlers are compiled as data attributes on the parent element.
+             * Reaching here means <on> was used outside an element context. */
+            compile_error(c, node->line, node->column,
+                          "<on> must be a direct child of an HTML element");
             break;
         case NODE_REQUIRE_AUTH:
             /* Set auth flags in bytecode module */

@@ -23,6 +23,7 @@ static AstNode *parse_insert(Parser *p);
 static AstNode *parse_update(Parser *p);
 static AstNode *parse_delete(Parser *p);
 static AstNode *parse_bound_input(Parser *p);
+static AstNode *parse_on(Parser *p);
 
 /* ============ Token Manipulation ============ */
 
@@ -785,6 +786,41 @@ static AstNode *parse_set(Parser *p) {
     }
 
     return ast_set(p->arena, target, value, line, col);
+}
+
+static AstNode *parse_on(Parser *p) {
+    int line = p->previous.line;
+    int col = p->previous.column;
+
+    /* Parse event name: <on click> */
+    if (!match(p, TOK_IDENT)) {
+        error_current(p, "Expected event name after 'on'");
+        return NULL;
+    }
+    char *event = get_identifier(p);
+
+    /* Consume > */
+    consume_tag_gt(p);
+
+    /* Parse body */
+    AstNode *body = NULL;
+    AstNode **tail = &body;
+
+    while (!check(p, TOK_LT_SLASH) && !check(p, TOK_EOF)) {
+        AstNode *child = parse_node(p);
+        if (child) {
+            *tail = child;
+            tail = &child->next;
+        }
+    }
+
+    /* Consume </on> */
+    if (match(p, TOK_LT_SLASH)) {
+        match(p, TOK_ON);
+        consume(p, TOK_GT, "Expected '>' after </on>");
+    }
+
+    return ast_on_handler(p->arena, event, body, line, col);
 }
 
 static AstNode *parse_output(Parser *p) {
@@ -1801,7 +1837,8 @@ static bool is_tag_name(Parser *p) {
            t == TOK_OUTPUT || t == TOK_IMPORT || t == TOK_EXPORT ||
            t == TOK_CHILDREN || t == TOK_INTERFACE ||
            t == TOK_STYLE || t == TOK_SCRIPT || t == TOK_REQUIRE_AUTH ||
-           t == TOK_INSERT || t == TOK_UPDATE || t == TOK_DELETE;
+           t == TOK_INSERT || t == TOK_UPDATE || t == TOK_DELETE ||
+           t == TOK_ON;
 }
 
 static AstNode *parse_element(Parser *p) {
@@ -1873,6 +1910,9 @@ static AstNode *parse_element(Parser *p) {
     }
     if (tag_type == TOK_DELETE) {
         return parse_delete(p);
+    }
+    if (tag_type == TOK_ON) {
+        return parse_on(p);
     }
 
     /* Context-aware bound input: <input contact.name /> inside mutation block */

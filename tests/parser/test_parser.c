@@ -557,6 +557,73 @@ TEST(regular_input_in_mutation) {
     arena_destroy(arena);
 }
 
+TEST(on_handler_basic) {
+    const char *src = "<defcomp X ||><var counter 0 />"
+                      "<button><on click><set counter 1 /></on>Click</button>"
+                      "</defcomp>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    /* defcomp > body > var, button */
+    AstNode *defcomp = doc->data.document.children;
+    ASSERT(defcomp->type == NODE_DEFCOMP, "Expected defcomp");
+
+    AstNode *var_node = defcomp->data.defcomp.body;
+    ASSERT(var_node->type == NODE_VAR, "Expected var");
+
+    AstNode *button = var_node->next;
+    ASSERT(button != NULL, "Expected button element");
+    ASSERT(button->type == NODE_ELEMENT, "Expected element");
+    ASSERT(strcmp(button->data.element.tag, "button") == 0, "Expected button tag");
+
+    /* First child of button should be <on click> */
+    AstNode *on_node = button->data.element.children;
+    ASSERT(on_node != NULL, "Expected on handler");
+    ASSERT(on_node->type == NODE_ON, "Expected NODE_ON");
+    ASSERT(strcmp(on_node->data.on_handler.event, "click") == 0, "Expected click event");
+
+    /* Body of <on> should be <set counter 1 /> */
+    AstNode *set_node = on_node->data.on_handler.body;
+    ASSERT(set_node != NULL, "Expected set in on body");
+    ASSERT(set_node->type == NODE_SET, "Expected NODE_SET");
+    ASSERT(set_node->data.set.target->type == NODE_IDENT, "Expected ident target");
+    ASSERT(strcmp(set_node->data.set.target->data.ident.name, "counter") == 0, "Expected counter target");
+
+    /* Text child "Click" should follow the <on> */
+    AstNode *text = on_node->next;
+    ASSERT(text != NULL, "Expected text after on");
+    ASSERT(text->type == NODE_TEXT, "Expected text node");
+
+    arena_destroy(arena);
+}
+
+TEST(on_handler_expression) {
+    const char *src = "<defcomp X ||><var n 0 />"
+                      "<button><on click><set n n + 1 /></on></button>"
+                      "</defcomp>";
+    Arena *arena = arena_create(4096);
+    Parser parser;
+    parser_init(&parser, src, strlen(src), arena, NULL);
+
+    AstNode *doc = parser_parse(&parser);
+    ASSERT(doc != NULL, "Expected document");
+
+    AstNode *defcomp = doc->data.document.children;
+    AstNode *button = defcomp->data.defcomp.body->next;
+    AstNode *on_node = button->data.element.children;
+    ASSERT(on_node->type == NODE_ON, "Expected NODE_ON");
+
+    AstNode *set_node = on_node->data.on_handler.body;
+    ASSERT(set_node->type == NODE_SET, "Expected SET");
+    ASSERT(set_node->data.set.value->type == NODE_BINARY, "Expected binary expression");
+
+    arena_destroy(arena);
+}
+
 int main(void) {
     printf("=== Parser Tests ===\n");
 
@@ -587,6 +654,8 @@ int main(void) {
     RUN_TEST(delete_pessimistic);
     RUN_TEST(bound_input);
     RUN_TEST(regular_input_in_mutation);
+    RUN_TEST(on_handler_basic);
+    RUN_TEST(on_handler_expression);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return tests_passed == tests_run ? 0 : 1;

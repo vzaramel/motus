@@ -107,7 +107,7 @@ MOT_VM="${MOT_VM:-wasm}"
 MOT_DEBUG="${MOT_DEBUG:-0}"
 MOT_DEV="${MOT_DEV:-1}"
 MOT_HOT="${MOT_HOT:-0}"
-MOT_BROWSER_WASM="${MOT_BROWSER_WASM:-0}"
+MOT_BROWSER_WASM="${MOT_BROWSER_WASM:-1}"
 ORIGIN_URL="${ORIGIN_URL:-}"
 ORIGIN_URL_EXPLICIT=0
 if [[ -n "$ORIGIN_URL" ]]; then
@@ -167,8 +167,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --browser-wasm)
-            MOT_BROWSER_WASM="0"
-            echo -e "${BLUE}Browser wasm/reactivity is temporarily disabled; ignoring --browser-wasm.${NC}"
+            MOT_BROWSER_WASM="1"
             shift
             ;;
         --no-browser-wasm)

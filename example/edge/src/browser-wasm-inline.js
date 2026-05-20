@@ -688,6 +688,7 @@ export function renderBrowserWasmBootstrapScript(options = {}) {
     morphChildList(document.body, parsed.body);
     rebuildVarBindingIndex();
     installAutoReactiveActions();
+    installOnEventHandlers();
   }
 
   function rebuildVarBindingIndex() {
@@ -1666,6 +1667,51 @@ export function renderBrowserWasmBootstrapScript(options = {}) {
     }
   }
 
+  /* ===== <on event> Handler Support ===== */
+
+  function parseOnActions(actionStr) {
+    var actions = [];
+    var blocks = String(actionStr).split('\n');
+    var current = null;
+    for (var i = 0; i < blocks.length; i++) {
+      var line = blocks[i];
+      if (line.indexOf('SET:') === 0) {
+        current = { path: line.slice(4), program: '' };
+        actions.push(current);
+      } else if (line.indexOf('PROG:') === 0 && current) {
+        current.program = line.slice(5);
+      }
+    }
+    return actions;
+  }
+
+  function createOnHandler(actionStr) {
+    var actions = parseOnActions(actionStr);
+    return function () {
+      for (var i = 0; i < actions.length; i++) {
+        var action = actions[i];
+        var value = evaluateReactiveProgram(action.program);
+        applyReactivePathValue(action.path, value);
+      }
+    };
+  }
+
+  function installOnEventHandlers() {
+    var all = document.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      var attrs = el.attributes;
+      for (var j = 0; j < attrs.length; j++) {
+        var name = attrs[j].name;
+        if (name.indexOf('data-mot-on-') !== 0) continue;
+        var eventName = name.slice(12);
+        if (el.getAttribute('data-mot-on-bound-' + eventName) === '1') continue;
+        el.setAttribute('data-mot-on-bound-' + eventName, '1');
+        el.addEventListener(eventName, createOnHandler(attrs[j].value));
+      }
+    }
+  }
+
   /* ===== Optimistic Mutation Engine ===== */
   var pendingMutations = Object.create(null);
   var nextPendingId = 1;
@@ -1956,6 +2002,7 @@ export function renderBrowserWasmBootstrapScript(options = {}) {
 
     window.motInstallActions = function () {
       installAutoReactiveActions();
+      installOnEventHandlers();
     };
   }
 
@@ -2648,6 +2695,7 @@ export function renderBrowserWasmBootstrapScript(options = {}) {
   installReactiveApi();
   initReactiveWasmModule();
   installOptimisticMutationHandlers();
+  installOnEventHandlers();
 
   (async function () {
     try {

@@ -1138,6 +1138,19 @@ static void analyze_node(Analyzer *a, AstNode *node) {
         case NODE_BOUND_INPUT:
             analyze_bound_input(a, node);
             break;
+        case NODE_ON:
+            /* Validate: only <set> allowed inside <on> */
+            for (AstNode *child = node->data.on_handler.body; child; child = child->next) {
+                if (child->type == NODE_SET) {
+                    analyze_set(a, child);
+                } else if (child->type == NODE_TEXT) {
+                    /* Skip whitespace text nodes */
+                } else {
+                    analyzer_error(a, child->line, child->column,
+                                   "Only <set> statements allowed inside <on>");
+                }
+            }
+            break;
         case NODE_ELEMENT:
             analyze_element(a, node);
             break;

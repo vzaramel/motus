@@ -553,6 +553,52 @@ TEST(sql_query_metadata) {
     arena_destroy(arena);
 }
 
+TEST(on_handler_emits_data_attr) {
+    Arena *arena = arena_create(8192);
+
+    BytecodeModule *mod = compile_source(arena,
+        "<defcomp Demo ||>"
+        "<var counter 0 />"
+        "<output counter>"
+        "<button><on click><set counter counter + 1 /></on>Go</button>"
+        "</defcomp>"
+        "<Demo>");
+    ASSERT(mod != NULL, "Compilation should succeed");
+
+    /* Verify the string table contains "data-mot-on-click" */
+    bool has_attr_name = false;
+    bool has_action_program = false;
+    bool has_set_marker = false;
+
+    for (uint32_t i = 0; i < mod->string_count; i++) {
+        if (strcmp(mod->strings[i], "data-mot-on-click") == 0) {
+            has_attr_name = true;
+        }
+    }
+    ASSERT(has_attr_name, "String table should contain data-mot-on-click");
+
+    /* Check that the action program constant exists in the constants pool */
+    for (uint32_t i = 0; i < mod->const_count; i++) {
+        if (mod->constants[i].type == CONST_STRING) {
+            const char *s = mod->constants[i].v.string.data;
+            if (s && strstr(s, "SET:counter") && strstr(s, "PROG:")) {
+                has_action_program = true;
+            }
+        }
+    }
+    ASSERT(has_action_program, "Constants should contain serialized action program");
+
+    /* Check that @set:counter dependency marker was recorded */
+    for (uint32_t i = 0; i < mod->dep_count; i++) {
+        if (strcmp(mod->deps[i].path, "@set:counter") == 0) {
+            has_set_marker = true;
+        }
+    }
+    ASSERT(has_set_marker, "Should have @set:counter dependency marker");
+
+    arena_destroy(arena);
+}
+
 int main(void) {
     printf("=== Compiler Tests ===\n");
 
@@ -579,6 +625,7 @@ int main(void) {
     RUN_TEST(set_target_marker);
     RUN_TEST(reactive_plan_marker);
     RUN_TEST(sql_query_metadata);
+    RUN_TEST(on_handler_emits_data_attr);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return tests_passed == tests_run ? 0 : 1;

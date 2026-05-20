@@ -1,0 +1,80 @@
+<import Layout from "components/Layout">
+
+<Layout title="Reactive Demo" subtitle="Browser-side reactivity with var, set, and on">
+    <style>
+        .reactive-card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .reactive-card h2 {
+            margin: 0 0 16px;
+            color: #333;
+            font-size: 1.3em;
+        }
+        .counter-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 12px 0;
+        }
+        .counter-double {
+            font-size: 1.2em;
+            color: #888;
+            margin-bottom: 16px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-secondary:hover { background: #7f8c8d; }
+    </style>
+
+    <defcomp Counter ||>
+        <var counter 0 />
+
+        <div class="reactive-card">
+            <h2>Counter</h2>
+            <div class="counter-value"><output counter></div>
+            <div class="counter-double">Double: <output counter * 2></div>
+            <div class="btn-group">
+                <button class="btn btn-primary">
+                    <on click>
+                        <set counter counter + 1 />
+                    </on>
+                    Increment
+                </button>
+                <button class="btn btn-danger">
+                    <on click>
+                        <set counter counter - 1 />
+                    </on>
+                    Decrement
+                </button>
+                <button class="btn btn-secondary">
+                    <on click>
+                        <set counter 0 />
+                    </on>
+                    Reset
+                </button>
+            </div>
+        </div>
+    </defcomp>
+
+    <Counter />
+</Layout>

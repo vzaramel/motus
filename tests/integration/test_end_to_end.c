@@ -798,6 +798,31 @@ TEST(e2e_pending_access) {
            "Pending should be falsy server-side");
 }
 
+TEST(e2e_on_handler) {
+    VMResult r = full_pipeline(
+        "<defcomp Counter ||>"
+        "<var counter 0 />"
+        "<output counter>"
+        "<button><on click><set counter counter + 1 /></on>Go</button>"
+        "</defcomp>"
+        "<Counter />"
+    );
+    ASSERT(r == VM_OK, "On handler should compile and run");
+    /* Button should have data-mot-on-click attribute with action program */
+    ASSERT(strstr(output_buffer, "data-mot-on-click=\"") != NULL,
+           "Button should have data-mot-on-click attribute");
+    ASSERT(strstr(output_buffer, "SET:counter") != NULL,
+           "Action program should contain SET:counter");
+    ASSERT(strstr(output_buffer, "PROG:") != NULL,
+           "Action program should contain PROG: prefix");
+    /* The <set> inside <on> should NOT execute server-side, so counter stays 0 */
+    ASSERT(output_buffer[0] == '0',
+           "Counter should remain 0 (on handler not executed server-side)");
+    /* Text "Go" should be present */
+    ASSERT(strstr(output_buffer, "Go") != NULL,
+           "Button text should be present");
+}
+
 /* ======================================================================
  * MAIN
  * ====================================================================== */
@@ -871,6 +896,9 @@ int main(void) {
     RUN_TEST(e2e_bound_input);
     RUN_TEST(e2e_pessimistic_insert);
     RUN_TEST(e2e_pending_access);
+
+    /* On Event Handler */
+    RUN_TEST(e2e_on_handler);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return tests_passed == tests_run ? 0 : 1;

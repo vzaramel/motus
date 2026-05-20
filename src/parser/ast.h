@@ -48,6 +48,7 @@ typedef enum {
     NODE_UPDATE,         /* <update binding where cond> ... </update> */
     NODE_DELETE,         /* <delete from binding where cond> ... </delete> */
     NODE_BOUND_INPUT,    /* <input obj.field /> inside mutation block */
+    NODE_ON,             /* <on event> ... </on> */
 
     /* Component parts */
     NODE_PROP_DEF,       /* Property definition in defcomp */
@@ -298,6 +299,12 @@ struct AstNode {
             AstNode *attrs;      /* Additional HTML attributes */
         } bound_input;
 
+        /* NODE_ON */
+        struct {
+            char *event;         /* Event name: "click", "input", etc. */
+            AstNode *body;       /* Set statements (linked list) */
+        } on_handler;
+
         /* NODE_STYLE, NODE_SCRIPT */
         struct {
             char *code;
@@ -476,6 +483,7 @@ AstNode *ast_insert(Arena *arena, const char *target, AstNode *body, bool optimi
 AstNode *ast_update(Arena *arena, const char *target, AstNode *where, AstNode *body, bool optimistic, int line, int col);
 AstNode *ast_delete_stmt(Arena *arena, const char *target, AstNode *where, AstNode *body, bool optimistic, int line, int col);
 AstNode *ast_bound_input(Arena *arena, const char *object_name, const char *field_name, AstNode *attrs, int line, int col);
+AstNode *ast_on_handler(Arena *arena, const char *event, AstNode *body, int line, int col);
 
 /* Embedded code */
 AstNode *ast_style(Arena *arena, const char *code, size_t length, int line, int col);

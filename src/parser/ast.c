@@ -34,6 +34,7 @@ const char *node_type_name(NodeType type) {
         case NODE_UPDATE: return "UPDATE";
         case NODE_DELETE: return "DELETE";
         case NODE_BOUND_INPUT: return "BOUND_INPUT";
+        case NODE_ON: return "ON";
         case NODE_PROP_DEF: return "PROP_DEF";
         case NODE_SLOT_DEF: return "SLOT_DEF";
         case NODE_SLOT_FILL: return "SLOT_FILL";
@@ -232,6 +233,9 @@ void ast_set_source_path_recursive(AstNode *node, const char *source_path) {
                 break;
             case NODE_BOUND_INPUT:
                 ast_set_source_path_recursive(cur->data.bound_input.attrs, source_path);
+                break;
+            case NODE_ON:
+                ast_set_source_path_recursive(cur->data.on_handler.body, source_path);
                 break;
             case NODE_REQUIRE_AUTH:
             case NODE_COMMENT:
@@ -602,6 +606,13 @@ AstNode *ast_bound_input(Arena *arena, const char *object_name, const char *fiel
     node->data.bound_input.object_name = arena_strdup(arena, object_name);
     node->data.bound_input.field_name = arena_strdup(arena, field_name);
     node->data.bound_input.attrs = attrs;
+    return node;
+}
+
+AstNode *ast_on_handler(Arena *arena, const char *event, AstNode *body, int line, int col) {
+    AstNode *node = ast_node_new(arena, NODE_ON, line, col);
+    node->data.on_handler.event = arena_strdup(arena, event);
+    node->data.on_handler.body = body;
     return node;
 }
 
