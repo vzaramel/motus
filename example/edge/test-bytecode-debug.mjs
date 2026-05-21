@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { buildBytecodeDebugSourceMap, extractBytecodeDebugMetadata } from './src/bytecode-debug.js';
 
-const BYTECODE_MAGIC = 0x00474759;
+const BYTECODE_MAGIC = 0x00544F4D;
 const VERSION_MAJOR = 1;
-const VERSION_MINOR = 2;
-const BYTECODE_DEBUG_MAGIC = 0x47424459;
+const VERSION_MINOR = 4;
+const BYTECODE_DEBUG_MAGIC = 0x4742444D;
 const BC_HALT = 63;
 
 class Writer {

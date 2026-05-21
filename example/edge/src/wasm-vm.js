@@ -9,7 +9,7 @@ import { normalizeComponentRef, normalizeDataRequirement, normalizeU32 } from '.
 
 const BYTECODE_MAGIC = 0x00544F4D;
 const BYTECODE_VERSION_MAJOR = 1;
-const BYTECODE_VERSION_MINOR = 2;
+const BYTECODE_VERSION_MINOR = 4;
 const MOT_OK = 0;
 const MOT_AWAIT = -2;
 
