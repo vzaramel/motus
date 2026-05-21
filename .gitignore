@@ -27,6 +27,7 @@ example/edge/src/*.generated.js
 # Node.js
 node_modules/
 package-lock.json
+!example/edge/package-lock.json
 example/.logs/
 
 # Database files
