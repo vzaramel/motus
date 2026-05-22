@@ -773,7 +773,11 @@ TEST(var_and_set) {
         "<Counter>");
 
     ASSERT(result == VM_OK, "Should succeed");
-    ASSERT(strcmp(output_buffer, "012") == 0, "Should show var updates");
+    /* Output now includes <span data-mot-bind="counter"> wrappers */
+    ASSERT(strstr(output_buffer, "data-mot-bind=\"counter\"") != NULL, "Should have reactive bind wrapper");
+    ASSERT(strstr(output_buffer, ">0<") != NULL, "Should contain initial value 0");
+    ASSERT(strstr(output_buffer, ">1<") != NULL, "Should contain updated value 1");
+    ASSERT(strstr(output_buffer, ">2<") != NULL, "Should contain updated value 2");
 
     arena_destroy(arena);
 }

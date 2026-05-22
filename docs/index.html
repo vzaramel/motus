@@ -623,7 +623,16 @@
                 products.mot
             </div><div class="lp-syntax-body"><pre id="ex-sql"></pre></div></div><div class="lp-syntax-panel lp-syntax-right"><div class="lp-syntax-header">Pipeline</div><div class="lp-syntax-body"><div class="lp-result-label">Compilation Flow</div><p style="color:rgba(232,240,236,0.5); font-size:0.88rem; line-height:1.7; margin:0;"><span style="color:#7edbb5;">.mot source</span><span style="color:rgba(232,240,236,0.25);"> &rarr; </span><span style="color:#e2c77e;">bytecode</span><span style="color:rgba(232,240,236,0.25);"> &rarr; </span><span style="color:#4cc496;">WASM VM</span><span style="color:rgba(232,240,236,0.25);"> &rarr; </span><span style="color:#00ffb3;">streamed HTML</span></p><p id="lp-sql-note" style="color:rgba(232,240,236,0.35); font-size:0.82rem; line-height:1.65; margin:12px 0 0;"></p></div></div></div><div class="lp-syntax-row"><div class="lp-syntax-panel lp-syntax-left"><div class="lp-syntax-header"><span class="lp-dot lp-dot-r"></span><span class="lp-dot lp-dot-y"></span><span class="lp-dot lp-dot-g"></span>
                 reactive.mot
-            </div><div class="lp-syntax-body"><pre id="ex-reactive"></pre></div></div><div class="lp-syntax-panel lp-syntax-right"><div class="lp-syntax-header">Output</div><div class="lp-syntax-body"><div class="lp-result-label">Browser-side Reactivity</div><div class="lp-result-card"><p style="margin:0 0 8px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Count: <strong style="color:#e8f0ec;">0</strong></p><p style="margin:0 0 12px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Double: <strong style="color:#e8f0ec;">0</strong></p><div style="display:inline-block; padding:8px 16px; background:rgba(0,255,179,0.1); border:1px solid rgba(0,255,179,0.25); border-radius:8px; font-size:0.85rem; color:#00ffb3; font-weight:600;">Increment</div></div><p style="color:rgba(232,240,236,0.3); font-size:0.78rem; margin:10px 0 0;">Reactive binding markers enable targeted DOM updates without full re-renders.</p></div></div></div><div class="lp-syntax-row"><div class="lp-syntax-panel lp-syntax-left"><div class="lp-syntax-header"><span class="lp-dot lp-dot-r"></span><span class="lp-dot lp-dot-y"></span><span class="lp-dot lp-dot-g"></span>
+            </div><div class="lp-syntax-body"><pre id="ex-reactive"></pre></div></div><div class="lp-syntax-panel lp-syntax-right"><div class="lp-syntax-header">Output</div><div class="lp-syntax-body"><div class="lp-result-label">Browser-side Reactivity</div><div class="lp-result-card"><p style="margin:0 0 8px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Count: <strong style="color:#e8f0ec;"><span data-mot-bind="counter">0</span></strong></p><p style="margin:0 0 12px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Double: <strong style="color:#e8f0ec;"><span data-mot-expr="P:counter;I:2;O:mul;">0</span></strong></p><div style="display:flex; gap:8px; flex-wrap:wrap;"><div style="display:inline-block; padding:8px 16px; background:rgba(0,255,179,0.1); border:1px solid rgba(0,255,179,0.25); border-radius:8px; font-size:0.85rem; color:#00ffb3; font-weight:600; cursor:pointer; user-select:none;" data-mot-on-click="SET:counter
+PROG:P:counter;I:1;O:add;">
+                Increment
+            </div><div style="display:inline-block; padding:8px 16px; background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.25); border-radius:8px; font-size:0.85rem; color:#ff6464; font-weight:600; cursor:pointer; user-select:none;" data-mot-on-click="SET:counter
+PROG:P:counter;I:1;O:sub;">
+                Decrement
+            </div><div style="display:inline-block; padding:8px 16px; background:rgba(150,150,150,0.1); border:1px solid rgba(150,150,150,0.25); border-radius:8px; font-size:0.85rem; color:#999; font-weight:600; cursor:pointer; user-select:none;" data-mot-on-click="SET:counter
+PROG:I:0;">
+                Reset
+            </div></div></div><p style="color:rgba(232,240,236,0.3); font-size:0.78rem; margin:10px 0 0;">Click the buttons — this is real compiled Motus reactivity, not JavaScript.</p></div></div></div><div class="lp-syntax-row"><div class="lp-syntax-panel lp-syntax-left"><div class="lp-syntax-header"><span class="lp-dot lp-dot-r"></span><span class="lp-dot lp-dot-y"></span><span class="lp-dot lp-dot-g"></span>
                 schema + page.mot
             </div><div class="lp-syntax-body"><pre id="ex-schema"></pre></div></div><div class="lp-syntax-panel lp-syntax-right"><div class="lp-syntax-header">Output</div><div class="lp-syntax-body"><div class="lp-result-label">Compile-time Validation</div><div class="lp-result-card"><p style="margin:0 0 8px; color:#00ffb3; font-size:0.85rem;" id="lp-schema-ok"></p><p style="margin:0; color:#ff5f57; font-size:0.85rem;" id="lp-schema-err"></p></div><p style="color:rgba(232,240,236,0.3); font-size:0.78rem; margin:10px 0 0;" id="lp-schema-note"></p></div></div></div></section><section class="lp-section lp-animate"><div class="lp-section-label">Architecture</div><h2 class="lp-section-title">From Source to Stream</h2><p class="lp-section-sub">The compilation pipeline that powers every page render.</p><div class="lp-pipeline-track"><div class="lp-pipe-node"><div class="lp-pipe-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span class="lp-pipe-label">.mot Source</span></div><div class="lp-pipe-arrow"></div><div class="lp-pipe-node"><div class="lp-pipe-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><span class="lp-pipe-label">Lexer / Parser</span></div><div class="lp-pipe-arrow"></div><div class="lp-pipe-node"><div class="lp-pipe-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div><span class="lp-pipe-label">Compiler</span></div><div class="lp-pipe-arrow"></div><div class="lp-pipe-node"><div class="lp-pipe-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div><span class="lp-pipe-label">Bytecode</span></div><div class="lp-pipe-arrow"></div><div class="lp-pipe-node"><div class="lp-pipe-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><span class="lp-pipe-label">WASM VM</span></div><div class="lp-pipe-arrow"></div><div class="lp-pipe-node"><div class="lp-pipe-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><span class="lp-pipe-label">HTML Stream</span></div></div><div class="lp-arch-grid"><div class="lp-arch-card"><div class="lp-arch-tag">Origin</div><h4>Origin Server</h4><p>Compiles .mot files to binary bytecode on first request. Caches compiled modules. Handles data RPCs for SQL queries.</p></div><div class="lp-arch-card"><div class="lp-arch-tag">Edge</div><h4>Edge Worker</h4><p>Cloudflare Worker interprets bytecode via WASM. Streams HTML chunks to the browser as they're rendered.</p></div><div class="lp-arch-card"><div class="lp-arch-tag">Browser</div><h4>Browser Runtime</h4><p>Receives streamed HTML progressively. Reactive binding markers enable targeted DOM updates without re-renders.</p></div></div></section><section class="lp-cta"><h2 id="lp-cta-title"></h2><p>Write .mot templates, hit compile, see streaming HTML rendered at the edge. No setup required.</p><div class="lp-cta-actions"><a href="/motus/playground" class="lp-cta-primary">Open Playground</a><a href="/motus/docs" class="lp-btn-ghost">Read the Docs</a></div></section><script>
 (function() {
@@ -777,6 +786,118 @@
     var fcards = document.querySelectorAll('.lp-features-grid .lp-fcard');
     for (var n = 0; n < fcards.length; n++) {
         fcards[n].style.animationDelay = (n * 0.08) + 's';
+    }
+})();
+
+/* ===== Motus Reactive Runtime (minimal, for compiled reactive attributes) ===== */
+(function() {
+    var state = {};
+
+    function getPath(obj, path) {
+        var parts = path.split('.');
+        var cur = obj;
+        for (var i = 0; i < parts.length; i++) {
+            if (cur == null) return undefined;
+            cur = cur[parts[i]];
+        }
+        return cur;
+    }
+
+    function setPath(obj, path, val) {
+        var parts = path.split('.');
+        var cur = obj;
+        for (var i = 0; i < parts.length - 1; i++) {
+            if (cur[parts[i]] == null) cur[parts[i]] = {};
+            cur = cur[parts[i]];
+        }
+        cur[parts[parts.length - 1]] = val;
+    }
+
+    function evalProg(prog) {
+        var tokens = prog.split(';');
+        var stack = [];
+        for (var i = 0; i < tokens.length; i++) {
+            var t = tokens[i];
+            if (!t) continue;
+            if (t === 'Z') { stack.push(null); continue; }
+            var sep = t.indexOf(':');
+            var h = sep >= 0 ? t.slice(0, sep) : t;
+            var v = sep >= 0 ? decodeURIComponent(t.slice(sep + 1)) : '';
+            if (h === 'I') stack.push(parseInt(v, 10) || 0);
+            else if (h === 'N') stack.push(Number(v) || 0);
+            else if (h === 'S') stack.push(v);
+            else if (h === 'B') stack.push(v === '1');
+            else if (h === 'P') stack.push(getPath(state, v));
+            else if (h === 'M') { var o = stack.pop(); stack.push(o != null ? o[v] : undefined); }
+            else if (h === 'U') { var a = stack.pop(); stack.push(v === 'neg' ? -a : !a); }
+            else if (h === 'O') {
+                var r = stack.pop(), l = stack.pop();
+                if (v === 'add') stack.push(typeof l === 'number' && typeof r === 'number' ? l + r : String(l == null ? '' : l) + String(r == null ? '' : r));
+                else if (v === 'sub') stack.push((l || 0) - (r || 0));
+                else if (v === 'mul') stack.push((l || 0) * (r || 0));
+                else if (v === 'div') stack.push(r ? (l || 0) / r : 0);
+                else if (v === 'mod') stack.push(r ? (l || 0) % r : 0);
+                else if (v === 'eq') stack.push(l == r);
+                else if (v === 'neq') stack.push(l != r);
+                else if (v === 'lt') stack.push((l || 0) < (r || 0));
+                else if (v === 'lte') stack.push((l || 0) <= (r || 0));
+                else if (v === 'gt') stack.push((l || 0) > (r || 0));
+                else if (v === 'gte') stack.push((l || 0) >= (r || 0));
+                else stack.push(undefined);
+            }
+        }
+        return stack.length ? stack[stack.length - 1] : undefined;
+    }
+
+    function updateAll() {
+        var binds = document.querySelectorAll('[data-mot-bind]');
+        for (var i = 0; i < binds.length; i++) {
+            var path = binds[i].getAttribute('data-mot-bind');
+            var val = getPath(state, path);
+            binds[i].textContent = val == null ? '' : String(val);
+        }
+        var exprs = document.querySelectorAll('[data-mot-expr]');
+        for (var j = 0; j < exprs.length; j++) {
+            var prog = exprs[j].getAttribute('data-mot-expr');
+            if (/^\d+$/.test(prog)) continue;
+            exprs[j].textContent = String(evalProg(prog));
+        }
+    }
+
+    /* Initialize state from data-mot-bind initial values */
+    var inits = document.querySelectorAll('[data-mot-bind]');
+    for (var i = 0; i < inits.length; i++) {
+        var p = inits[i].getAttribute('data-mot-bind');
+        var txt = inits[i].textContent;
+        var num = Number(txt);
+        setPath(state, p, isFinite(num) && txt.trim() !== '' ? num : txt);
+    }
+
+    /* Wire event handlers */
+    var all = document.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        for (var j = 0; j < el.attributes.length; j++) {
+            var name = el.attributes[j].name;
+            if (name.indexOf('data-mot-on-') !== 0) continue;
+            var evt = name.slice(12);
+            var actionStr = el.attributes[j].value;
+            (function(actions) {
+                var parsed = [];
+                var lines = actions.split('\n');
+                var cur = null;
+                for (var k = 0; k < lines.length; k++) {
+                    if (lines[k].indexOf('SET:') === 0) { cur = { path: lines[k].slice(4), prog: '' }; parsed.push(cur); }
+                    else if (lines[k].indexOf('PROG:') === 0 && cur) { cur.prog = lines[k].slice(5); }
+                }
+                el.addEventListener(evt, function() {
+                    for (var m = 0; m < parsed.length; m++) {
+                        setPath(state, parsed[m].path, evalProg(parsed[m].prog));
+                    }
+                    updateAll();
+                });
+            })(actionStr);
+        }
     }
 })();
 </script></main></div><style>

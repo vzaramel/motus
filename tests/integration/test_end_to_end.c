@@ -354,8 +354,11 @@ TEST(e2e_var_and_set_in_component) {
         "</defcomp>"
         "<Counter>");
     ASSERT(r == VM_OK, "Var and set should succeed");
-    ASSERT(strcmp(output_buffer, "012") == 0 || strcmp(output_buffer, "01") == 0,
-           "Should show initial and updated values");
+    /* Output now includes <span data-mot-bind="counter"> wrappers */
+    ASSERT(strstr(output_buffer, "data-mot-bind=\"counter\"") != NULL,
+           "Should have reactive bind wrapper");
+    ASSERT(strstr(output_buffer, ">0<") != NULL, "Should contain initial value 0");
+    ASSERT(strstr(output_buffer, ">1<") != NULL, "Should contain updated value 1");
 }
 
 TEST(e2e_macro_with_body) {
@@ -816,7 +819,7 @@ TEST(e2e_on_handler) {
     ASSERT(strstr(output_buffer, "PROG:") != NULL,
            "Action program should contain PROG: prefix");
     /* The <set> inside <on> should NOT execute server-side, so counter stays 0 */
-    ASSERT(output_buffer[0] == '0',
+    ASSERT(strstr(output_buffer, "data-mot-bind=\"counter\">0<") != NULL,
            "Counter should remain 0 (on handler not executed server-side)");
     /* Text "Go" should be present */
     ASSERT(strstr(output_buffer, "Go") != NULL,

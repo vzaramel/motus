@@ -396,10 +396,10 @@ TEST(dependency_tracking) {
 TEST(direct_var_binding_marker) {
     Arena *arena = arena_create(4096);
 
+    /* @bind markers only emitted for reactive <var> bindings */
     BytecodeModule *mod = compile_source(arena,
-        "<let counterValue 1><output counterValue></let>");
+        "<defcomp X ||><var counterValue 1 /><output counterValue></defcomp><X />");
     ASSERT(mod != NULL, "Compilation should succeed");
-    ASSERT(mod->dep_count > 0, "Should have dependency markers");
 
     bool has_var_marker = false;
     for (uint32_t i = 0; i < mod->dep_count; i++) {
@@ -410,16 +410,29 @@ TEST(direct_var_binding_marker) {
     }
     ASSERT(has_var_marker, "Should include direct variable marker dependency");
 
+    /* Also verify <let> bindings do NOT get @bind markers */
+    BytecodeModule *mod2 = compile_source(arena,
+        "<let x 1><output x></let>");
+    ASSERT(mod2 != NULL, "Let compilation should succeed");
+    bool has_let_bind = false;
+    for (uint32_t i = 0; i < mod2->dep_count; i++) {
+        if (strcmp(mod2->deps[i].path, "@bind:x") == 0) {
+            has_let_bind = true;
+            break;
+        }
+    }
+    ASSERT(!has_let_bind, "Let bindings should NOT get @bind markers");
+
     arena_destroy(arena);
 }
 
 TEST(direct_member_binding_marker) {
     Arena *arena = arena_create(4096);
 
+    /* @bind markers only emitted for reactive <var> bindings */
     BytecodeModule *mod = compile_source(arena,
-        "<let user {name: \"John\"}><output user.name></let>");
+        "<defcomp X ||><var user {name: \"John\"} /><output user.name></defcomp><X />");
     ASSERT(mod != NULL, "Compilation should succeed");
-    ASSERT(mod->dep_count > 0, "Should have dependency markers");
 
     bool has_member_marker = false;
     for (uint32_t i = 0; i < mod->dep_count; i++) {

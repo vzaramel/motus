@@ -28,6 +28,7 @@ typedef struct Local {
     int depth;               /* Scope depth */
     uint16_t slot;           /* Stack slot */
     bool is_captured;        /* Captured by closure */
+    bool is_var;             /* True if declared with <var> (reactive state) */
     struct Local *next;
 } Local;
 

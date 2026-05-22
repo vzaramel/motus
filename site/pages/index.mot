@@ -673,6 +673,26 @@
         </div>
     </div>
 
+    <defcomp ReactiveDemo ||>
+        <var counter 0 />
+        <p style="margin:0 0 8px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Count: <strong style="color:#e8f0ec;"><output counter></strong></p>
+        <p style="margin:0 0 12px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Double: <strong style="color:#e8f0ec;"><output counter * 2></strong></p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <div style="display:inline-block; padding:8px 16px; background:rgba(0,255,179,0.1); border:1px solid rgba(0,255,179,0.25); border-radius:8px; font-size:0.85rem; color:#00ffb3; font-weight:600; cursor:pointer; user-select:none;">
+                <on click><set counter counter + 1 /></on>
+                Increment
+            </div>
+            <div style="display:inline-block; padding:8px 16px; background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.25); border-radius:8px; font-size:0.85rem; color:#ff6464; font-weight:600; cursor:pointer; user-select:none;">
+                <on click><set counter counter - 1 /></on>
+                Decrement
+            </div>
+            <div style="display:inline-block; padding:8px 16px; background:rgba(150,150,150,0.1); border:1px solid rgba(150,150,150,0.25); border-radius:8px; font-size:0.85rem; color:#999; font-weight:600; cursor:pointer; user-select:none;">
+                <on click><set counter 0 /></on>
+                Reset
+            </div>
+        </div>
+    </defcomp>
+
     <div class="lp-syntax-row">
         <div class="lp-syntax-panel lp-syntax-left">
             <div class="lp-syntax-header"><span class="lp-dot lp-dot-r"></span><span class="lp-dot lp-dot-y"></span><span class="lp-dot lp-dot-g"></span>
@@ -685,11 +705,9 @@
             <div class="lp-syntax-body">
                 <div class="lp-result-label">Browser-side Reactivity</div>
                 <div class="lp-result-card">
-                    <p style="margin:0 0 8px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Count: <strong style="color:#e8f0ec;">0</strong></p>
-                    <p style="margin:0 0 12px; color:rgba(232,240,236,0.6); font-size:0.9rem;">Double: <strong style="color:#e8f0ec;">0</strong></p>
-                    <div style="display:inline-block; padding:8px 16px; background:rgba(0,255,179,0.1); border:1px solid rgba(0,255,179,0.25); border-radius:8px; font-size:0.85rem; color:#00ffb3; font-weight:600;">Increment</div>
+                    <ReactiveDemo />
                 </div>
-                <p style="color:rgba(232,240,236,0.3); font-size:0.78rem; margin:10px 0 0;">Reactive binding markers enable targeted DOM updates without full re-renders.</p>
+                <p style="color:rgba(232,240,236,0.3); font-size:0.78rem; margin:10px 0 0;">Click the buttons — this is real compiled Motus reactivity, not JavaScript.</p>
             </div>
         </div>
     </div>
@@ -916,6 +934,118 @@
     var fcards = document.querySelectorAll('.lp-features-grid .lp-fcard');
     for (var n = 0; n < fcards.length; n++) {
         fcards[n].style.animationDelay = (n * 0.08) + 's';
+    }
+})();
+
+/* ===== Motus Reactive Runtime (minimal, for compiled reactive attributes) ===== */
+(function() {
+    var state = {};
+
+    function getPath(obj, path) {
+        var parts = path.split('.');
+        var cur = obj;
+        for (var i = 0; i < parts.length; i++) {
+            if (cur == null) return undefined;
+            cur = cur[parts[i]];
+        }
+        return cur;
+    }
+
+    function setPath(obj, path, val) {
+        var parts = path.split('.');
+        var cur = obj;
+        for (var i = 0; i < parts.length - 1; i++) {
+            if (cur[parts[i]] == null) cur[parts[i]] = {};
+            cur = cur[parts[i]];
+        }
+        cur[parts[parts.length - 1]] = val;
+    }
+
+    function evalProg(prog) {
+        var tokens = prog.split(';');
+        var stack = [];
+        for (var i = 0; i < tokens.length; i++) {
+            var t = tokens[i];
+            if (!t) continue;
+            if (t === 'Z') { stack.push(null); continue; }
+            var sep = t.indexOf(':');
+            var h = sep >= 0 ? t.slice(0, sep) : t;
+            var v = sep >= 0 ? decodeURIComponent(t.slice(sep + 1)) : '';
+            if (h === 'I') stack.push(parseInt(v, 10) || 0);
+            else if (h === 'N') stack.push(Number(v) || 0);
+            else if (h === 'S') stack.push(v);
+            else if (h === 'B') stack.push(v === '1');
+            else if (h === 'P') stack.push(getPath(state, v));
+            else if (h === 'M') { var o = stack.pop(); stack.push(o != null ? o[v] : undefined); }
+            else if (h === 'U') { var a = stack.pop(); stack.push(v === 'neg' ? -a : !a); }
+            else if (h === 'O') {
+                var r = stack.pop(), l = stack.pop();
+                if (v === 'add') stack.push(typeof l === 'number' && typeof r === 'number' ? l + r : String(l == null ? '' : l) + String(r == null ? '' : r));
+                else if (v === 'sub') stack.push((l || 0) - (r || 0));
+                else if (v === 'mul') stack.push((l || 0) * (r || 0));
+                else if (v === 'div') stack.push(r ? (l || 0) / r : 0);
+                else if (v === 'mod') stack.push(r ? (l || 0) % r : 0);
+                else if (v === 'eq') stack.push(l == r);
+                else if (v === 'neq') stack.push(l != r);
+                else if (v === 'lt') stack.push((l || 0) < (r || 0));
+                else if (v === 'lte') stack.push((l || 0) <= (r || 0));
+                else if (v === 'gt') stack.push((l || 0) > (r || 0));
+                else if (v === 'gte') stack.push((l || 0) >= (r || 0));
+                else stack.push(undefined);
+            }
+        }
+        return stack.length ? stack[stack.length - 1] : undefined;
+    }
+
+    function updateAll() {
+        var binds = document.querySelectorAll('[data-mot-bind]');
+        for (var i = 0; i < binds.length; i++) {
+            var path = binds[i].getAttribute('data-mot-bind');
+            var val = getPath(state, path);
+            binds[i].textContent = val == null ? '' : String(val);
+        }
+        var exprs = document.querySelectorAll('[data-mot-expr]');
+        for (var j = 0; j < exprs.length; j++) {
+            var prog = exprs[j].getAttribute('data-mot-expr');
+            if (/^\d+$/.test(prog)) continue;
+            exprs[j].textContent = String(evalProg(prog));
+        }
+    }
+
+    /* Initialize state from data-mot-bind initial values */
+    var inits = document.querySelectorAll('[data-mot-bind]');
+    for (var i = 0; i < inits.length; i++) {
+        var p = inits[i].getAttribute('data-mot-bind');
+        var txt = inits[i].textContent;
+        var num = Number(txt);
+        setPath(state, p, isFinite(num) && txt.trim() !== '' ? num : txt);
+    }
+
+    /* Wire event handlers */
+    var all = document.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        for (var j = 0; j < el.attributes.length; j++) {
+            var name = el.attributes[j].name;
+            if (name.indexOf('data-mot-on-') !== 0) continue;
+            var evt = name.slice(12);
+            var actionStr = el.attributes[j].value;
+            (function(actions) {
+                var parsed = [];
+                var lines = actions.split('\n');
+                var cur = null;
+                for (var k = 0; k < lines.length; k++) {
+                    if (lines[k].indexOf('SET:') === 0) { cur = { path: lines[k].slice(4), prog: '' }; parsed.push(cur); }
+                    else if (lines[k].indexOf('PROG:') === 0 && cur) { cur.prog = lines[k].slice(5); }
+                }
+                el.addEventListener(evt, function() {
+                    for (var m = 0; m < parsed.length; m++) {
+                        setPath(state, parsed[m].path, evalProg(parsed[m].prog));
+                    }
+                    updateAll();
+                });
+            })(actionStr);
+        }
     }
 })();
 </script>

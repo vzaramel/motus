@@ -113,6 +113,7 @@ static uint16_t add_local(Compiler *c, const char *name) {
     local->depth = c->scope_depth;
     local->slot = (uint16_t)c->scope->local_count;
     local->is_captured = false;
+    local->is_var = false;
     local->next = c->scope->locals;
 
     c->scope->locals = local;
@@ -141,6 +142,16 @@ static int resolve_local(Compiler *c, const char *name) {
         }
     }
     return -1;
+}
+
+/* Check if a local variable was declared with <var> (reactive state) */
+static bool is_var_local(Compiler *c, const char *name) {
+    for (Local *local = c->scope->locals; local; local = local->next) {
+        if (strcmp(local->name, name) == 0) {
+            return local->is_var;
+        }
+    }
+    return false;
 }
 
 /* Add a string constant */
@@ -1113,6 +1124,8 @@ static void compile_var(Compiler *c, AstNode *node) {
 
     /* Add as local in current scope (NOT a new scope) */
     add_local(c, name);
+    /* Mark the local as reactive var so output wrappers are emitted */
+    if (c->scope->locals) c->scope->locals->is_var = true;
 
     if (c->partial_eval && c->pe) {
         /* var is mutable at runtime; keep it dynamic for soundness. */
@@ -1237,25 +1250,84 @@ static bool build_bindable_output_path(AstNode *expr, char *out, size_t cap, siz
     return false;
 }
 
-/* Emit synthetic dependency marker for direct output bindings.
- * This allows browser-side runtimes to patch only affected text nodes. */
+/* Get root identifier name from an expression (ident or member chain root) */
+static const char *get_expr_root_name(AstNode *expr) {
+    if (!expr) return NULL;
+    if (expr->type == NODE_IDENT) return expr->data.ident.name;
+    if (expr->type == NODE_MEMBER) return get_expr_root_name(expr->data.member.object);
+    return NULL;
+}
+
+/* Check if an expression tree references any reactive <var> local */
+static bool expr_references_var(Compiler *c, AstNode *expr) {
+    if (!expr) return false;
+    if (expr->type == NODE_IDENT) {
+        return is_var_local(c, expr->data.ident.name);
+    }
+    if (expr->type == NODE_MEMBER) {
+        return expr_references_var(c, expr->data.member.object);
+    }
+    if (expr->type == NODE_BINARY) {
+        return expr_references_var(c, expr->data.binary.left) ||
+               expr_references_var(c, expr->data.binary.right);
+    }
+    if (expr->type == NODE_UNARY) {
+        return expr_references_var(c, expr->data.unary.operand);
+    }
+    if (expr->type == NODE_TERNARY) {
+        return expr_references_var(c, expr->data.ternary.condition) ||
+               expr_references_var(c, expr->data.ternary.then_expr) ||
+               expr_references_var(c, expr->data.ternary.else_expr);
+    }
+    if (expr->type == NODE_PIPE) {
+        return expr_references_var(c, expr->data.pipe.input);
+    }
+    return false;
+}
+
+/* Emit HTML wrapper for direct output bindings of reactive vars.
+ * Produces <span data-mot-bind="path">...</span> at bytecode level so both
+ * the C VM and WASM VM output reactive-ready HTML.
+ * Only emits for <var> bindings, not <let> or other locals. */
 static void emit_direct_var_bind_start(Compiler *c, AstNode *expr) {
     char path[192] = {0};
     size_t path_len = 0;
     if (!build_bindable_output_path(expr, path, sizeof(path), &path_len)) return;
 
+    /* Only wrap reactive <var> bindings, not <let> or other locals */
+    const char *root_name = get_expr_root_name(expr);
+    if (!root_name || !is_var_local(c, root_name)) return;
+
+    /* Keep @bind dependency marker for metadata extraction */
     char marker[224];
     int n = snprintf(marker, sizeof(marker), "@bind:%s", path);
     if (n <= 0 || (size_t)n >= sizeof(marker)) return;
-    uint16_t dep_idx = bytecode_add_dependency(c->module, marker);
-    emit_op_u16(c, BC_DEP_START, dep_idx);
+    (void)bytecode_add_dependency(c->module, marker);
+
+    /* Emit <span data-mot-bind="path"> */
+    uint16_t span_idx = bytecode_add_string(c->module, "span", 4);
+    uint16_t attr_idx = bytecode_add_string(c->module, "data-mot-bind", 13);
+    uint16_t path_const = make_string_constant(c, path, path_len);
+
+    emit_op_u16(c, BC_EMIT_TAG_OPEN, span_idx);
+    emit_op_u16(c, BC_EMIT_ATTR_START, attr_idx);
+    emit_op_u16(c, BC_EMIT_LITERAL, path_const);
+    emit_byte(c, BC_EMIT_ATTR_END);
+    emit_byte(c, BC_EMIT_TAG_END);
 }
 
 static void emit_direct_var_bind_end(Compiler *c, AstNode *expr) {
     char path[192] = {0};
     size_t path_len = 0;
     if (!build_bindable_output_path(expr, path, sizeof(path), &path_len)) return;
-    emit_byte(c, BC_DEP_END);
+
+    /* Only wrap reactive <var> bindings */
+    const char *root_name = get_expr_root_name(expr);
+    if (!root_name || !is_var_local(c, root_name)) return;
+
+    /* Close </span> */
+    uint16_t span_idx = bytecode_add_string(c->module, "span", 4);
+    emit_op_u16(c, BC_EMIT_TAG_CLOSE, span_idx);
 }
 
 static void emit_expr_dep_markers(Compiler *c, uint32_t expr_id, AstNode *expr) {
@@ -1271,18 +1343,16 @@ static void emit_expr_dep_markers(Compiler *c, uint32_t expr_id, AstNode *expr) 
     }
 }
 
-static void emit_expr_output_wrapper_start(Compiler *c, uint32_t expr_id) {
-    char id_buf[32];
-    int id_n = snprintf(id_buf, sizeof(id_buf), "%u", expr_id);
-    if (id_n <= 0 || (size_t)id_n >= sizeof(id_buf)) return;
+static void emit_expr_output_wrapper_start(Compiler *c, const char *program) {
+    if (!program || !program[0]) return;
 
     uint16_t span_tag_idx = bytecode_add_string(c->module, "span", 4);
     uint16_t attr_name_idx = bytecode_add_string(c->module, "data-mot-expr", 13);
-    uint16_t id_const_idx = make_string_constant(c, id_buf, (size_t)id_n);
+    uint16_t prog_const_idx = make_string_constant(c, program, strlen(program));
 
     emit_op_u16(c, BC_EMIT_TAG_OPEN, span_tag_idx);
     emit_op_u16(c, BC_EMIT_ATTR_START, attr_name_idx);
-    emit_op_u16(c, BC_EMIT_LITERAL, id_const_idx);
+    emit_op_u16(c, BC_EMIT_LITERAL, prog_const_idx);
     emit_byte(c, BC_EMIT_ATTR_END);
     emit_byte(c, BC_EMIT_TAG_END);
 }
@@ -1301,6 +1371,9 @@ static bool emit_expr_bind_start(Compiler *c, AstNode *expr, uint32_t *out_expr_
         return false; /* Direct bind path already handled by @bind markers. */
     }
 
+    /* Only emit expression wrappers for expressions referencing reactive vars */
+    if (!expr_references_var(c, expr)) return false;
+
     char *program = NULL;
     if (!build_reactive_expr_program(c, expr, &program) || !program || !program[0]) return false;
 
@@ -1312,7 +1385,7 @@ static bool emit_expr_bind_start(Compiler *c, AstNode *expr, uint32_t *out_expr_
     (void)bytecode_add_dependency(c->module, marker);
 
     emit_expr_dep_markers(c, expr_id, expr);
-    emit_expr_output_wrapper_start(c, expr_id);
+    emit_expr_output_wrapper_start(c, program);
     *out_expr_id = expr_id;
     return true;
 }

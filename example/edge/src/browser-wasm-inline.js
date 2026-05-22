@@ -1613,6 +1613,23 @@ export function renderBrowserWasmBootstrapScript(options = {}) {
         didUpdate = true;
       }
     }
+
+    /* Update expression nodes where data-mot-expr contains the program
+     * string directly (inline format: program embedded in attribute). */
+    var root = rootOfPath(normalizedName);
+    for (var ek in exprNodeIndex) {
+      if (!exprNodeIndex.hasOwnProperty(ek)) continue;
+      /* Skip numeric IDs already handled via candidateExprIds above */
+      if (/^\d+$/.test(ek)) continue;
+      /* Check if this program references the changed path */
+      if (ek.indexOf('P:' + normalizedName + ';') < 0 &&
+          ek.indexOf('P:' + root + ';') < 0 &&
+          ek.indexOf('P:' + root + '.') < 0) continue;
+      var inlineValue = evaluateReactiveProgram(ek);
+      applyTextToBoundNodes(exprNodeIndex[ek], inlineValue);
+      didUpdate = true;
+    }
+
     return didUpdate;
   }
 
@@ -2436,20 +2453,12 @@ export function renderBrowserWasmBootstrapScript(options = {}) {
         },
         host_render_complete: function () {},
         host_dep_start: function (ptr, len) {
-          var depPath = decoder.decode(readBytes(state.memory, ptr, len));
-          var bindPath = parseSyntheticBindPath(depPath);
-          if (bindPath) {
-            state.html += '<span data-mot-bind="' + escapeAttrValue(bindPath) + '">';
-            state.depStack.push({ kind: 'bind' });
-            return;
-          }
+          /* Compiler now emits <span data-mot-bind> at bytecode level,
+           * so @bind: markers no longer need host-side wrapping. */
           state.depStack.push({ kind: 'dep' });
         },
         host_dep_end: function () {
-          var dep = state.depStack.length > 0 ? state.depStack.pop() : null;
-          if (dep && dep.kind === 'bind') {
-            state.html += '</span>';
-          }
+          state.depStack.length > 0 && state.depStack.pop();
         },
         host_component_start: function (_funcIdx) {},
         host_component_end: function (_funcIdx) {},
