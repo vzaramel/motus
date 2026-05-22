@@ -682,15 +682,15 @@
         s('comm','&lt;!-- Reactive state with var/set --&gt;'),
         s('tag','&lt;var') + ' ' + s('var','counter') + ' ' + s('num','0') + ' ' + s('tag','/&gt;'),
         '',
-        s('html','&lt;p&gt;') + 'Count: ' + s('html','&lt;strong&gt;'),
-        '  ' + s('tag','&lt;output') + ' ' + s('var','counter') + s('tag','&gt;'),
-        s('html','&lt;/strong&gt;&lt;/p&gt;'),
+        s('html','&lt;p&gt;') + 'Count: ' + s('tag','&lt;output') + ' ' + s('var','counter') + s('tag','&gt;') + s('html','&lt;/p&gt;'),
+        s('html','&lt;p&gt;') + 'Double: ' + s('tag','&lt;output') + ' ' + s('var','counter') + ' ' + s('punct','*') + ' ' + s('num','2') + s('tag','&gt;') + s('html','&lt;/p&gt;'),
         '',
-        s('html','&lt;p&gt;') + 'Double: ' + s('html','&lt;strong&gt;'),
-        '  ' + s('tag','&lt;output') + ' ' + s('var','counter') + ' ' + s('punct','*') + ' ' + s('num','2') + s('tag','&gt;'),
-        s('html','&lt;/strong&gt;&lt;/p&gt;'),
-        '',
-        s('tag','&lt;set') + ' ' + s('var','counter') + ' ' + s('var','counter') + ' ' + s('punct','+') + ' ' + s('num','1') + ' ' + s('tag','/&gt;')
+        s('html','&lt;button&gt;'),
+        '  ' + s('tag','&lt;on') + ' ' + s('kw','click') + s('tag','&gt;'),
+        '    ' + s('tag','&lt;set') + ' ' + s('var','counter') + ' ' + s('var','counter') + ' ' + s('punct','+') + ' ' + s('num','1') + ' ' + s('tag','/&gt;'),
+        '  ' + s('tag','&lt;/on&gt;'),
+        '  Increment',
+        s('html','&lt;/button&gt;')
     ].join('\n');
 
     /* ===== Inject text that contains reserved keywords ===== */
